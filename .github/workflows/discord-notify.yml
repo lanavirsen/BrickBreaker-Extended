@@ -12,7 +12,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
-      WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      WEBHOOK: ${{ secrets.DISCORD_HOOK }}
     steps:
       - name: Push embed (action)
         uses: rjstone/discord-webhook-notify@v2
