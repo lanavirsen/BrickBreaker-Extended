@@ -8,7 +8,7 @@ namespace BrickBreaker.Game
 {
     /*
     IGame defines a contract: “there is a Run() method that returns a score". 
-    BrickBreakerGame : IGame means the class fulfills that contract.
+    BrickBreakerGame : IGame means the class fulfills that contract. 
 
     Result: Program can call Run() without knowing how the game works or what class implements it.
     */
