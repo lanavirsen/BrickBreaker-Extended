@@ -63,7 +63,8 @@ namespace BrickBreaker.Game
             paddleY = H - 2;
 
             ballX = W / 2; ballY = H / 2; dx = 1; dy = -1;
-            bricks = new bool[cols: 10, rows: 5];
+            bricks = new bool[10, 5];
+            bricks = new bool[10, 5];
             for (int c = 0; c < bricks.GetLength(0); c++)
                 for (int r = 0; r < bricks.GetLength(1); r++)
                     bricks[c, r] = true;
