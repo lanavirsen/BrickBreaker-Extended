@@ -9,13 +9,13 @@ public sealed class LeaderboardStore
 
     public LeaderboardStore(string path)
     {
-        _path = path; // Stores the specified file path in the private field (((_for later use))) :)
+        _path = path; // Stores the specified file path in the private field (((_for later use))) :D
     }
 
     public void Add(ScoreEntry entry)
     {
         var entries = ReadAll(); // Reads the current list of score entries from the fil
-        entries.Add(entry); // Adds the new score entry to the list
+        entries.Add(entry); // Adds the new score entry to the list 
         // Serializes the updated list of score entries to a JSON string with indentation for readability
         var json = JsonSerializer.Serialize(entries, new JsonSerializerOptions { WriteIndented = true });
         // Writes the JSON string to the file (creates or replaces the file)
