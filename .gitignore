@@ -14,3 +14,6 @@
 # OS noise
 .DS_Store
 Thumbs.db
+
+# Codex
+**/codex.debug.log
