@@ -2,6 +2,8 @@
 // Keeps current “run the game and print score” flow via menu option 1.
 
 using BrickBreaker.Game;
+using BrickBreaker.Logic;
+using BrickBreaker.Storage;
 
 enum AppState { LoginMenu, GameplayMenu, Playing, Exit }
 
@@ -32,9 +34,9 @@ class Program
                     int score = game.Run();
                     Console.WriteLine($"\nFinal score: {score}");
 
-                    // TODO (Leaderboard.cs): when implemented, record score:
-                    // var lb = new Logic.Leaderboard(new Storage.LeaderboardStore("data/leaderboard.json"));
-                    // lb.Submit(currentUser ?? "guest", score);
+                    
+                     var lb = new Logic.Leaderboard(new Storage.LeaderboardStore("data/leaderboard.json"));
+                     lb.Submit(currentUser ?? "guest", score);
 
                     Pause();
                     state = currentUser is null ? AppState.LoginMenu : AppState.GameplayMenu;
