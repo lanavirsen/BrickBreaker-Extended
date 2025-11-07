@@ -9,29 +9,32 @@ public sealed class LeaderboardStore
 {
     private readonly string _path;
 
+    // Simplified constructor using expression body
     public LeaderboardStore(string path) => _path = path;
 
     public void Add(ScoreEntry entry)
     {
-        var entries = ReadAll();
-        entries.Add(entry);
+        var entries = ReadAll(); // Read existing entries
+        entries.Add(entry); // Add new entry
+
         var json = JsonSerializer.Serialize(entries, new JsonSerializerOptions { WriteIndented = true });
 
+        // Ensure the directory exists before writing the file
         var dir = Path.GetDirectoryName(_path);
         if (!string.IsNullOrEmpty(dir))
-            Directory.CreateDirectory(dir);
+            Directory.CreateDirectory(dir); // Create directory if it does not exist
 
-        File.WriteAllText(_path, json);
+        File.WriteAllText(_path, json); // Actually write the JSON content to file
     }
 
     public List<ScoreEntry> ReadAll()
     {
         if (!File.Exists(_path))
-            return new List<ScoreEntry>();
+            return new List<ScoreEntry>(); // Return empty list if file missing
 
         var json = File.ReadAllText(_path);
         if (string.IsNullOrWhiteSpace(json))
-            return new List<ScoreEntry>();
+            return new List<ScoreEntry>(); // Handle empty file gracefully
 
         try
         {
@@ -39,6 +42,7 @@ public sealed class LeaderboardStore
         }
         catch (JsonException)
         {
+            // On invalid JSON, avoid crashing and return empty list instead
             return new List<ScoreEntry>();
         }
     }
