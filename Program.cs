@@ -69,6 +69,7 @@ class Program
                 return AppState.LoginMenu;
 
             case '3':
+
                 // TODO: create Auth.Login(username, password) and set currentUser on success
                 Console.WriteLine("\n[TODO] Login: implement Logic/Auth.Login and set currentUser.");
                 // Example target when ready:
@@ -78,6 +79,7 @@ class Program
                 return AppState.LoginMenu;
 
             case '4':
+
                 // TODO: show Top 10 via Logic/Leaderboard.Top(10)
                 Console.WriteLine("\n[TODO] Leaderboard: implement Logic/Leaderboard + Storage/LeaderboardStore.");
                 Pause();
