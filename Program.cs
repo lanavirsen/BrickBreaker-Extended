@@ -2,6 +2,8 @@
 // Keeps current “run the game and print score” flow via menu option 1.
 using BrickBreaker.Models;
 using BrickBreaker.Game;
+using BrickBreaker.Logic;
+using BrickBreaker.Storage;
 
 enum AppState { LoginMenu, GameplayMenu, Playing, Exit }
 
@@ -44,9 +46,9 @@ class Program
                     int score = game.Run();
                     Console.WriteLine($"\nFinal score: {score}");
 
-                    // TODO (Leaderboard.cs): when implemented, record score:
-                    // var lb = new Logic.Leaderboard(new Storage.LeaderboardStore("data/leaderboard.json"));
-                    // lb.Submit(currentUser ?? "guest", score);
+                    // Create a leaderboard service and write the score to the JSON file. 
+                    var lb = new Leaderboard(new LeaderboardStore("data/leaderboard.json"));
+                    lb.Submit(currentUser ?? "guest", score);
 
                     Pause();
                     state = currentUser is null ? AppState.LoginMenu : AppState.GameplayMenu;
@@ -81,6 +83,7 @@ class Program
                 return AppState.LoginMenu;
 
             case '3':
+
                 // TODO: create Auth.Login(username, password) and set currentUser on success
                 Console.WriteLine("\n[TODO] Login: implement Logic/Auth.Login and set currentUser.");
                 // Example target when ready:
@@ -90,6 +93,7 @@ class Program
                 return AppState.LoginMenu;
 
             case '4':
+
                 // TODO: show Top 10 via Logic/Leaderboard.Top(10)
                 Console.WriteLine("\n[TODO] Leaderboard: implement Logic/Leaderboard + Storage/LeaderboardStore.");
                 Pause();
