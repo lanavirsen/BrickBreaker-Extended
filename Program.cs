@@ -8,18 +8,23 @@ using BrickBreaker.Storage;
 
 enum AppState { LoginMenu, GameplayMenu, Playing, Exit }
 
+
 class Program
 {
     static string? currentUser = null; // TODO: set after Login
 
+    private static readonly LeaderboardStore _lbStore = new("data/leaderboard.json");
+    private static readonly Leaderboard _lb = new(_lbStore);
     static void Main()
     {
+        //These are created once and reused for the entire program lifetime
         
         string userFilePath = Path.Combine("data", "users.json");
         var userStore = new UserStore(userFilePath);
         auth = new Auth(userStore);  // Initialize here
 
         AppState state = AppState.LoginMenu;
+
         while (state != AppState.Exit)
 
         while (state != AppState.Exit)
@@ -39,10 +44,9 @@ class Program
                     // Play the game
                     IGame game = new BrickBreakerGame();
                     int score = game.Run();
-                    Console.WriteLine($"\nFinal score: {score}");;
-
-                    var lb = new Leaderboard(new LeaderboardStore(Path.Combine("..", "..", "..", "data/leaderboard.json")));
-                    lb.Submit(currentUser ?? "guest", score);
+                    Console.WriteLine($"\nFinal score: {score}");
+                    //Save result to leaderboard using the shared instance
+                    _lb.Submit(currentUser ?? "guest", score);
 
                     Pause();
                     state = currentUser is null ? AppState.LoginMenu : AppState.GameplayMenu;
