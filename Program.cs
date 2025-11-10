@@ -14,8 +14,7 @@ class Program
 
     static void Main()
     {
-
-
+        
         string userFilePath = Path.Combine("data", "users.json");
         var userStore = new UserStore(userFilePath);
         auth = new Auth(userStore);  // Initialize here
@@ -73,16 +72,18 @@ class Program
                 return AppState.Playing;
 
             case '2':
-                // TODO: create Auth.Register(username, password)
+                // Register new user
                 string path = Path.Combine("..", "..", "..", "data", "users.json");
                 var userStore = new UserStore(path);
                 User user = new User();
 
+                // Get username and password
                 Console.Write("\nChoose a username: ");
                 user.Username = Console.ReadLine()?.Trim() ?? "";
                 Console.Write("Choose a password: ");
                 user.Password = Console.ReadLine()?.Trim() ?? "";
 
+                // Check if username already exists
                 if (userStore.Exists(user.Username))
                 {
                     Console.WriteLine("Username already exists. Please choose another one.");
@@ -90,14 +91,20 @@ class Program
                     return AppState.LoginMenu;
                 }
 
+                // Add user to store
                 userStore.Add(user);
 
-                Console.WriteLine("\n[TODO] Register: implement Logic/Auth.Register and Storage/UserStore.");
+                // Confirm registration
+                Console.WriteLine("Registration successful! You can now log in.");
                 Pause();
                 return AppState.LoginMenu;
 
             case '3':
                 {
+                    var freshPath = Path.Combine("..", "..", "..", "data", "users.json");
+                    auth = new Auth(new UserStore(freshPath));
+
+
                     Console.Write("Username: ");
                     string username = Console.ReadLine()?.Trim() ?? "";
 
