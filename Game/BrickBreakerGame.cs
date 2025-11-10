@@ -60,6 +60,7 @@ namespace BrickBreaker.Game
             Init();
 
             sw.Start(); // Start the stopwatch to measure elapsed time
+            gameTimer.Reset();
             gameTimer.Start(); // Start the game timer
 
 
