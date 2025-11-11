@@ -41,9 +41,15 @@ public sealed class UserStore
 
         if (string.IsNullOrWhiteSpace(json)) return new List<User>();
 
-        var list = JsonSerializer.Deserialize<List<User>>(json);
-
-        return list ?? new List<User>();
+        try
+        {
+            return JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
+        }
+        catch (JsonException)
+        {
+            Console.WriteLine("UserStore: users.json är ogiltig eller skadad. Returnerar tom lista.");
+            return new List<User>();
+        }
     }
     private void WriteAll(List<User> users)
     {
