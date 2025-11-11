@@ -47,7 +47,7 @@ public sealed class UserStore
         }
         catch (JsonException)
         {
-            Console.WriteLine("UserStore: users.json är ogiltig eller skadad. Returnerar tom lista.");
+            Console.WriteLine("UserStore: users.json is invalid or corrupted. Returning an empty list.");
             return new List<User>();
         }
     }
