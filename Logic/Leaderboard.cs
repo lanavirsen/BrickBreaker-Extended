@@ -1,6 +1,6 @@
-using System.Linq; // Added to enable LINQ queries for sorting and filtering
 using BrickBreaker.Models;
 using BrickBreaker.Storage;
+
 
 namespace BrickBreaker.Logic;
 
@@ -17,7 +17,7 @@ public sealed class Leaderboard
     // convenience overload
     public void Submit(string username, int score)
     {
-        _store.Add(new ScoreEntry(username, score, DateTimeOffset.UtcNow));
+        _store.Add(new ScoreEntry(username, score, DateTime.Now));
     }
 
     public List<ScoreEntry> Top(int n)

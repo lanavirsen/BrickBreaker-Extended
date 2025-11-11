@@ -5,27 +5,27 @@ using BrickBreaker.Game;
 using BrickBreaker.Logic;
 using BrickBreaker.Storage;
 
+
 enum AppState { LoginMenu, GameplayMenu, Playing, Exit }
+
 
 class Program
 {
     static string? currentUser = null; // TODO: set after Login
 
+    private static readonly LeaderboardStore _lbStore = new("../../../data/leaderboard.json");
+    private static readonly Leaderboard _lb = new(_lbStore);
     static void Main()
     {
-        /*Add a user to json
-        string path = Path.Combine("..", "..", "..", "data", "users.json");
-
-        var userStore = new UserStore(path);
-
-        User user = new User();
-
-        user.Username = Console.ReadLine();
-
-        userStore.Add(user);*/
-
+        //These are created once and reused for the entire program lifetime
+        
+        string userFilePath = Path.Combine("data", "users.json");
+        var userStore = new UserStore(userFilePath);
+        auth = new Auth(userStore);  // Initialize here
 
         AppState state = AppState.LoginMenu;
+
+        while (state != AppState.Exit)
 
         while (state != AppState.Exit)
         {
@@ -45,10 +45,8 @@ class Program
                     IGame game = new BrickBreakerGame();
                     int score = game.Run();
                     Console.WriteLine($"\nFinal score: {score}");
-
-                    // Create a leaderboard service and write the score to the JSON file. 
-                    var lb = new Leaderboard(new LeaderboardStore("data/leaderboard.json"));
-                    lb.Submit(currentUser ?? "guest", score);
+                    //Save result to leaderboard using the shared instance
+                    _lb.Submit(currentUser ?? "guest", score);
 
                     Pause();
                     state = currentUser is null ? AppState.LoginMenu : AppState.GameplayMenu;
@@ -56,50 +54,93 @@ class Program
             }
         }
     }
+    static Auth auth;
 
     static AppState HandleLoginMenu()
     {
         Console.Clear();
         Console.WriteLine("=== Main Menu ===");
-        Console.WriteLine("1) Quick Play (runs game now)");
-        Console.WriteLine("2) Register   (TODO: Logic/Auth + Storage/UserStore)");
-        Console.WriteLine("3) Login      (TODO: Logic/Auth + Storage/UserStore)");
-        Console.WriteLine("4) Leaderboard (view top 10) (TODO: Logic/Leaderboard + Storage/LeaderboardStore)");
-        Console.WriteLine("5) Exit");
+        
+        Console.WriteLine("1) Register");
+        Console.WriteLine("2) Login");
+        Console.WriteLine("3) Leaderboard (view top 10)");
+        Console.WriteLine("4) Exit");
         Console.Write("Choose: ");
         var key = Console.ReadKey(true).KeyChar;
 
         switch (key)
         {
-            case '1':
+            /*case '1':
                 // Quick Play path: no auth, just run the game
                 currentUser = null;
-                return AppState.Playing;
+                return AppState.Playing;*/
 
-            case '2':
-                // TODO: create Auth.Register(username, password)
-                Console.WriteLine("\n[TODO] Register: implement Logic/Auth.Register and Storage/UserStore.");
+            case '1':
+                // Register new user
+                string path = Path.Combine("..", "..", "..", "data", "users.json");
+                var userStore = new UserStore(path);
+                User user = new User();
+
+                // Get username and password
+                Console.Write("\nChoose a username: ");
+                user.Username = Console.ReadLine()?.Trim() ?? "";
+                Console.Write("Choose a password: ");
+                user.Password = Console.ReadLine()?.Trim() ?? "";
+
+                // Check if username already exists
+                if (userStore.Exists(user.Username))
+                {
+                    Console.WriteLine("Username already exists. Please choose another one.");
+                    Pause();
+                    return AppState.LoginMenu;
+                }
+
+                // Add user to store
+                userStore.Add(user);
+
+                // Confirm registration
+                Console.WriteLine("Registration successful! You can now log in.");
                 Pause();
                 return AppState.LoginMenu;
 
+            case '2':
+                {
+                    var freshPath = Path.Combine("..", "..", "..", "data", "users.json");
+                    auth = new Auth(new UserStore(freshPath));
+
+
+                    Console.Write("Username: ");
+                    string username = Console.ReadLine()?.Trim() ?? "";
+
+                    Console.Write("Password: ");
+                    string password = Console.ReadLine()?.Trim() ?? "";
+
+                    if (auth.Login(username, password))
+                    {
+                        currentUser = username;
+                        return AppState.GameplayMenu;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Login failed (wrong username or password).");
+                        Pause();
+                        return AppState.LoginMenu;
+                    }
+                }
+
             case '3':
 
-                // TODO: create Auth.Login(username, password) and set currentUser on success
-                Console.WriteLine("\n[TODO] Login: implement Logic/Auth.Login and set currentUser.");
-                // Example target when ready:
-                // currentUser = "<username>";
-                // return AppState.GameplayMenu;
+                Console.WriteLine("\nTop 10 leaderboard: ");
+                var top = _lb.Top(10);
+                foreach (var item in top)
+                {
+                    Console.WriteLine($"{item.Username} - {item.Score} - {item.At}");
+                }
+
                 Pause();
                 return AppState.LoginMenu;
 
             case '4':
-
-                // TODO: show Top 10 via Logic/Leaderboard.Top(10)
-                Console.WriteLine("\n[TODO] Leaderboard: implement Logic/Leaderboard + Storage/LeaderboardStore.");
-                Pause();
-                return AppState.LoginMenu;
-
-            case '5':
                 return AppState.Exit;
 
             default:
@@ -109,11 +150,13 @@ class Program
 
     static AppState HandleGameplayMenu()
     {
+        string path = Path.Combine("..", "..", "..", "data", "users.json");
+
         Console.Clear();
         Console.WriteLine($"=== Gameplay Menu (user: {currentUser ?? "guest"}) ===");
         Console.WriteLine("1) Start");
         Console.WriteLine("2) High Score (your best) (TODO: Leaderboard.BestFor)");
-        Console.WriteLine("3) Leaderboard (top 10)  (TODO: Leaderboard.Top)");
+        Console.WriteLine("3) Leaderboard (top 10)");
         Console.WriteLine("4) Logout");
         Console.Write("Choose: ");
         var key = Console.ReadKey(true).KeyChar;
@@ -125,11 +168,18 @@ class Program
 
             case '2':
                 Console.WriteLine("\n[TODO] Show your best score via Leaderboard.BestFor(username).");
+                
                 Pause();
                 return AppState.GameplayMenu;
 
             case '3':
-                Console.WriteLine("\n[TODO] Show Top 10 via Leaderboard.Top(10).");
+                Console.WriteLine("\nTop 10 leaderboard: ");
+                var top = _lb.Top(10);
+                foreach (var item in top)
+                {
+                    Console.WriteLine($"{item.Username} - {item.Score} - {item.At}");
+                }
+
                 Pause();
                 return AppState.GameplayMenu;
 
