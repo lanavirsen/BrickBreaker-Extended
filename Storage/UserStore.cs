@@ -35,16 +35,27 @@ public sealed class UserStore
     }
     public List<User> ReadAll()
     {
-        if (!File.Exists(_path)) return new List<User>();
+        if (!File.Exists(_path)) return new();
 
-        var json = File.ReadAllText(_path);
+        try
+        {
+            var json = File.ReadAllText(_path);
+            if (string.IsNullOrWhiteSpace(json)) return new();
 
-        if (string.IsNullOrWhiteSpace(json)) return new List<User>();
-
-        var list = JsonSerializer.Deserialize<List<User>>(json);
-
-        return list ?? new List<User>();
+            return JsonSerializer.Deserialize<List<User>>(json) ?? new();
+        }
+        catch (JsonException)
+        {
+            // malformed/corrupted JSON -> treat as empty
+            return new();
+        }
+        catch (IOException)
+        {
+            // file busy/missing mid-read -> treat as empty
+            return new();
+        }
     }
+
     private void WriteAll(List<User> users)
     {
         var dir = Path.GetDirectoryName(_path);
