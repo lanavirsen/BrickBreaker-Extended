@@ -54,5 +54,17 @@
   {
     "Username": "olofs",
     "Password": "2222"
+  },
+  {
+    "Username": "1",
+    "Password": "1"
+  },
+  {
+    "Username": "",
+    "Password": ""
+  },
+  {
+    "Username": "natta",
+    "Password": "natta"
   }
 ]
