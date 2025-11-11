@@ -42,17 +42,16 @@ public sealed class UserStore
             var json = File.ReadAllText(_path);
             if (string.IsNullOrWhiteSpace(json)) return new();
 
-            return JsonSerializer.Deserialize<List<User>>(json) ?? new();
+        if (string.IsNullOrWhiteSpace(json)) return new List<User>();
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
         }
         catch (JsonException)
         {
-            // malformed/corrupted JSON -> treat as empty
-            return new();
-        }
-        catch (IOException)
-        {
-            // file busy/missing mid-read -> treat as empty
-            return new();
+            Console.WriteLine("UserStore: users.json is invalid or corrupted. Returning an empty list.");
+            return new List<User>();
         }
     }
 
