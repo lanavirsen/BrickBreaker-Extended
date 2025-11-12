@@ -55,6 +55,8 @@ class Program
                 case AppState.Playing:
                     IGame game = new BrickBreakerGame();
                     int score = game.Run();
+                    int lowerLine = Console.WindowHeight - 4; // a few lines from bottom
+                    Console.SetCursorPosition(0, lowerLine);
                     _dialogs.ShowMessage($"\nFinal score: {score}");
                     _lb.Submit(currentUser ?? "guest", score);
                     _dialogs.Pause();
