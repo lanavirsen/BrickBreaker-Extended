@@ -5,6 +5,7 @@ using BrickBreaker.Storage;
 using BrickBreaker.Ui;
 using BrickBreaker.UI.Ui.Enums;
 using BrickBreaker.UI.Ui.Interfaces;
+using BrickBreaker.UI.Ui.SpecterConsole;
 
 enum AppState { LoginMenu, GameplayMenu, Playing, Exit }
 
@@ -15,8 +16,8 @@ class Program
     private static Auth _auth = null!;
 
     // UI (console implementations for now)
-    static ILoginMenu _loginMenu = new ConsoleLoginMenu();
-    static IGameplayMenu _gameplayMenu = new ConsoleGameplayMenu();
+    static ILoginMenu _loginMenu = new LoginMenu();
+    static IGameplayMenu _gameplayMenu = new GameplayMenu();
     static IConsoleDialogs _dialogs = new ConsoleDialogs();
 
     static void Main()
@@ -28,7 +29,7 @@ class Program
         _lb = new Leaderboard(leaderboardStore);
         _auth = new Auth(userStore);
 
-        AppState state = AppState.LoginMenu;
+        /*AppState state = AppState.LoginMenu;
 
         while (state != AppState.Exit)
         {
@@ -54,7 +55,7 @@ class Program
                     state = currentUser is null ? AppState.LoginMenu : AppState.GameplayMenu;
                     break;
             }
-        }
+        }*/
     }
 
     static AppState HandleLoginMenu()
@@ -87,7 +88,7 @@ class Program
         }
     }
 
-    static AppState HandleGameplayMenu()
+    /*static AppState HandleGameplayMenu()
     {
         ClearInputBuffer();
         var choice = _gameplayMenu.Show(currentUser ?? "guest");
@@ -115,7 +116,7 @@ class Program
             default:
                 return AppState.GameplayMenu;
         }
-    }
+    }*/
 
     static void DoRegister()
     {

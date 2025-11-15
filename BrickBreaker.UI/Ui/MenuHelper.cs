@@ -1,4 +1,5 @@
-﻿using Spectre.Console;
+﻿using Microsoft.VisualBasic;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,11 +8,10 @@ using System.Threading.Tasks;
 
 namespace BrickBreaker.UI.Ui
 {
-    public static class MenuHelper
+    public class MenuHelper
     {
-        public static T ShowMenu<T>(string title) where T : Enum
+        public T ShowMenu<T>(string title) where T : Enum
         {
-            // Convert enum values to string list for Spectre console
             var options = Enum.GetNames(typeof(T));
 
             var choice = AnsiConsole.Prompt(
@@ -24,15 +24,10 @@ namespace BrickBreaker.UI.Ui
             return (T)Enum.Parse(typeof(T), choice);
         }
 
-        public static void Pause(string message = "Press any key to continue...")
+        public void Pause(string message = "Press any key to continue...")
         {
             AnsiConsole.MarkupLine(message);
             Console.ReadKey(true);
-        }
-
-        public static bool Confirm(string message)
-        {
-            return AnsiConsole.Confirm(message);
         }
     }
 }

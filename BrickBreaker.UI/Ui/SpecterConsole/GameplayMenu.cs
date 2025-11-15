@@ -9,20 +9,20 @@ using System.Threading.Tasks;
 
 namespace BrickBreaker.UI.Ui.SpecterConsole
 {
-    public class LoginMenu : ILoginMenu
+    public class GameplayMenu : IGameplayMenu
     {
         private readonly MenuHelper _menuHelper = new MenuHelper();
 
-        public LoginMenuChoice Show()
+        public GameplayMenuChoice Show()
         {
-            // Clear console for a clean display
-            AnsiConsole.Clear();
+             // Clear the console for a clean menu
+             AnsiConsole.Clear();
 
-            // Display menu using Spectre.Console
-            var choice = _menuHelper.ShowMenu<LoginMenuChoice>("=== Main Menu ===");
+             // Use MenuHelper to display the menu
+             var choice = _menuHelper.ShowMenu<GameplayMenuChoice>("=== Gameplay Menu ===");
 
-            return choice;
+             return choice;
         }
     }
-}
 
+}
