@@ -13,16 +13,15 @@ namespace BrickBreaker.UI.Ui.SpecterConsole
     {
         private readonly MenuHelper _menuHelper = new MenuHelper();
 
-        public GameplayMenuChoice Show()
+        public GameplayMenuChoice Show(string username)
         {
-             // Clear the console for a clean menu
-             AnsiConsole.Clear();
+            // Clear the console for a clean menu
+            AnsiConsole.Clear();
 
-             // Use MenuHelper to display the menu
-             var choice = _menuHelper.ShowMenu<GameplayMenuChoice>("=== Gameplay Menu ===");
+            // Use MenuHelper to display the menu
+            var choice = _menuHelper.ShowMenu<GameplayMenuChoice>("=== Gameplay Menu ===");
 
-             return choice;
+            return choice;
         }
     }
-
 }

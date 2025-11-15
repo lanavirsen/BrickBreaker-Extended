@@ -9,6 +9,6 @@ namespace BrickBreaker.UI.Ui.Interfaces
 {
     public interface IGameplayMenu
     {
-        GameplayMenuChoice Show();
+        GameplayMenuChoice Show(string username);
     }
 }

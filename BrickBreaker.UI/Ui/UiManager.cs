@@ -45,15 +45,15 @@ namespace BrickBreaker.UI.Ui
 
         private AppState HandleGameplayMenu()
         {
-            var choice = _gameplayMenu.Show();
+            var choice = _gameplayMenu.Show(currentUser ?? "guest");
 
             return choice switch
             {
-                GameplayMenuChoice.Start => AppState.GameplayMenu,
-                GameplayMenuChoice.Best => AppState.GameplayMenu,
-                GameplayMenuChoice.Leaderboard => AppState.LoginMenu,
-                GameplayMenuChoice.Logout => AppState.LoginMenu,
-                _ => AppState.GameplayMenu
+                GameplayMenuChoice.Start => AppState.Playing,
+                GameplayMenuChoice.Best => { ShowBestScore(); return AppState.GameplayMenu;},
+                GameplayMenuChoice.Leaderboard => { ShowLeaderboard(); return AppState.GameplayMenu;},
+                GameplayMenuChoice.Logout => { currentUser = null; return AppState.LoginMenu; },
+                _ => AppState.GameplayMenuChoice
             };
         }
     }

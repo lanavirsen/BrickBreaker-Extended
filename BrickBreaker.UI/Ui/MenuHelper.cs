@@ -10,24 +10,17 @@ namespace BrickBreaker.UI.Ui
 {
     public class MenuHelper
     {
+        // Generic method to display enum-based menu and return selection
         public T ShowMenu<T>(string title) where T : Enum
         {
-            var options = Enum.GetNames(typeof(T));
+            var items = Enum.GetValues(typeof(T)).Cast<T>().ToList();
 
-            var choice = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title($"[yellow]{title}[/]")
+            return AnsiConsole.Prompt(
+                new SelectionPrompt<T>()
+                    .Title(title)
                     .PageSize(10)
-                    .AddChoices(options)
+                    .AddChoices(items)
             );
-
-            return (T)Enum.Parse(typeof(T), choice);
-        }
-
-        public void Pause(string message = "Press any key to continue...")
-        {
-            AnsiConsole.MarkupLine(message);
-            Console.ReadKey(true);
         }
     }
 }

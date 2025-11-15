@@ -17,7 +17,7 @@ namespace BrickBreaker.UI.Ui.Interfaces
                 void ShowMessage(string message);
                 void Pause();
 
-                void ShowLeaderboard(System.Collections.Generic.IEnumerable<(string Username, int Score, System.DateTimeOffset At)> entries);
+                void ShowLeaderboard(IEnumerable<(string Username, int Score, DateTimeOffset At)> entries);
             }
         }
 
