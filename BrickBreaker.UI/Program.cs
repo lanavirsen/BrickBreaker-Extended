@@ -3,6 +3,8 @@ using BrickBreaker.Game;
 using BrickBreaker.Logic;
 using BrickBreaker.Storage;
 using BrickBreaker.Ui;
+using BrickBreaker.UI.Ui.Enums;
+using BrickBreaker.UI.Ui.Interfaces;
 
 enum AppState { LoginMenu, GameplayMenu, Playing, Exit }
 

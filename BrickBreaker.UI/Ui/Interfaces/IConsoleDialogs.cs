@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-    namespace BrickBreaker.Ui
+namespace BrickBreaker.UI.Ui.Interfaces
     {
    
             public interface IConsoleDialogs
