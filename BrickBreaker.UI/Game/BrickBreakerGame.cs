@@ -21,6 +21,7 @@ namespace BrickBreaker.Game
         // Game State
         private bool _paused = false;
         private bool _prevSpaceDown = false;
+        private bool _prevMusicPauseDown = false;
         private bool running;
         private int lives = 3;
         private int paddleX, paddleY;
@@ -142,7 +143,11 @@ namespace BrickBreaker.Game
 
             // Musikstyrning
             if (_keyboard.IsNPressed()) _audio.Next();
-            if (_keyboard.IsPPressed()) _audio.Pause();
+
+            bool pauseMusicDown = _keyboard.IsPPressed();
+            if (pauseMusicDown && !_prevMusicPauseDown)
+                _audio.Pause();
+            _prevMusicPauseDown = pauseMusicDown;
 
 
 
