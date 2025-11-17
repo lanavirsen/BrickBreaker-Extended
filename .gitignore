@@ -10,7 +10,7 @@ obj/
 # User-specific files
 *.user
 *.suo
-*.BrickBreaker.Storage/Properties/appsettings.json
+BrickBreaker.Storage/Properties/appsettings.json
 
 # OS noise
 .DS_Store
