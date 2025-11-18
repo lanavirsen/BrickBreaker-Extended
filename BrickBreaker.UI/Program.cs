@@ -120,7 +120,7 @@ class Program
                 return AppState.LoginMenu;
 
             default:
-                return AppState.GameplayMenu;
+                return AppState.Exit;
         }
     }
 
