@@ -20,7 +20,6 @@ namespace BrickBreaker.UI.Ui.SpecterConsole
 
             // Use MenuHelper to display the menu
             var choice = _menuHelper.ShowMenu<GameplayMenuChoice>("Brick Breaker", welcomeMessage: $"[bold]Welcome, {username}![/]\n");
-            
 
             return choice;
         }
