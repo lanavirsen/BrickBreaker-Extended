@@ -23,7 +23,7 @@ class Program
     static IConsoleDialogs _dialogs = new ConsoleDialogs();
     static GameMode currentMode = GameMode.Normal;
 
-
+    static Header header = new Header();
 
     static void Main()
     {
@@ -260,7 +260,7 @@ class Program
 
 
         AnsiConsole.Clear();
-
+        header.TitleHeader();
 
         if (!_databaseAvailable)
         {
