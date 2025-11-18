@@ -35,7 +35,17 @@ namespace BrickBreaker.UI.Ui
                     .PageSize(10)
                     .AddChoices(items)
                     .HighlightStyle(new Style(hColor, Color.Black, Decoration.Bold))
+                    .UseConverter(choice =>
+                    {
+                        var text = choice.ToString();
+
+                        return text is "Exit" or "Logout"
+                            ? $"[red]{text}[/]"
+                            : text;
+                    })
             );
+
+            
         }
     }
 }

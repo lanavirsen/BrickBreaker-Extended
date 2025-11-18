@@ -97,7 +97,7 @@ class Program
     // Gameplay Menu Handler
     // =========================
     static AppState HandleGameplayMenu()
-    {
+    { 
         GameplayMenuChoice choice = _gameplayMenu.Show(currentUser ?? "guest");
 
         switch (choice)

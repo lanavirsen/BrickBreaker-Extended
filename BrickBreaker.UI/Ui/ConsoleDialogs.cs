@@ -19,7 +19,7 @@ namespace BrickBreaker.Ui
             var password = AnsiConsole.Prompt(
                 new TextPrompt<string>("Password: ")
                     .PromptStyle("White")
-                    .Secret()); 
+                    .Secret());
 
             return (username, password);
         }
