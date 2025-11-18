@@ -1,7 +1,9 @@
 using BrickBreaker.Game;
 using BrickBreaker.Logic;
+using BrickBreaker.Models;
 using BrickBreaker.Storage;
 using BrickBreaker.Ui;
+using BrickBreaker.UI.Ui;
 using BrickBreaker.UI.Ui.Enums;
 using BrickBreaker.UI.Ui.Interfaces;
 using BrickBreaker.UI.Ui.SpecterConsole;
@@ -21,7 +23,7 @@ class Program
     static IConsoleDialogs _dialogs = new ConsoleDialogs();
     static GameMode currentMode = GameMode.Normal;
 
-
+    static Header header = new Header();
 
     static void Main()
     {
@@ -97,7 +99,7 @@ class Program
     // Gameplay Menu Handler
     // =========================
     static AppState HandleGameplayMenu()
-    {
+    { 
         GameplayMenuChoice choice = _gameplayMenu.Show(currentUser ?? "guest");
 
         switch (choice)
@@ -223,8 +225,8 @@ class Program
 
                     while (!ctx.IsFinished)
                     {
-                        verifyTask.Increment(1.2);
-                        loadTask.Increment(0.7);
+                        verifyTask.Increment(5);
+                        loadTask.Increment(4);
                         Thread.Sleep(40);
                     }
                 });
@@ -236,8 +238,30 @@ class Program
         return false;
     }
 
-    static void ShowLeaderboard()
-    {
+        static void ShowLeaderboard()
+        {
+            AnsiConsole.Progress()
+            .Columns(new ProgressColumn[]
+            {
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new PercentageColumn(),
+                new SpinnerColumn()
+            })
+        .Start(ctx =>
+            {
+                var task = ctx.AddTask("[green]Loading Scores[/]", maxValue: 100);
+                while (!ctx.IsFinished)
+                {
+                    task.Increment(4);
+                    Thread.Sleep(40);
+                }
+            });
+
+
+        AnsiConsole.Clear();
+        header.TitleHeader();
+
         if (!_databaseAvailable)
         {
             ShowDatabaseWarning("Leaderboard is unavailable because the Supabase connection string is missing.");

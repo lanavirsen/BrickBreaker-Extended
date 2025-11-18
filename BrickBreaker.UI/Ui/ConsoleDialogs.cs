@@ -19,41 +19,63 @@ namespace BrickBreaker.Ui
             var password = AnsiConsole.Prompt(
                 new TextPrompt<string>("Password: ")
                     .PromptStyle("White")
-                    .Secret()); 
+                    .Secret());
 
             return (username, password);
         }
 
         public string PromptNewUsername()
         {
-            Console.Write("\nChoose a username: ");
+            AnsiConsole.Write("\nChoose a username: ");
             return Console.ReadLine()?.Trim() ?? "";
         }
 
         public string PromptNewPassword()
         {
-            Console.Write("Choose a password: ");
+           AnsiConsole.Write("Choose a password: ");
             return Console.ReadLine()?.Trim() ?? "";
         }
 
-        public void ShowMessage(string message) => Console.WriteLine(message);
+        public void ShowMessage(string message) => AnsiConsole.MarkupLine(message);
 
         public void Pause()
         {
-            Console.WriteLine("\nPress any key...");
+            AnsiConsole.MarkupLine("[grey]Press any key…[/]");
             Console.ReadKey(true);
         }
 
-        public void ShowLeaderboard(System.Collections.Generic.IEnumerable<(string Username, int Score, DateTimeOffset At)> entries)
+        public void ShowLeaderboard(IEnumerable<(string Username, int Score, DateTimeOffset At)> entries)
         {
-            Console.WriteLine("\nTop 10 leaderboard:");
+            // Create a table
+            var table = new Table()
+                .Border(TableBorder.Rounded)
+                .Title("Top 10 Leaderboard");
+
+            // Add columns
+            table.AddColumn("[bold]#[/]");
+            table.AddColumn("[bold]Username[/]");
+            table.AddColumn("[bold]Score[/]");
+            table.AddColumn("[bold]Date[/]");
+
             int i = 1;
+
             foreach (var e in entries)
             {
-                // Convert stored timestamp to the local timezone for display
                 var localAt = e.At.ToLocalTime();
-                Console.WriteLine($"{i++}. {e.Username}  {e.Score}  {localAt:yyyy-MM-dd HH:mm}");
+
+                table.AddRow(
+                    $"{i++}",
+                    e.Username,
+                    $"{e.Score}",
+                    localAt.ToString("yyyy-MM-dd HH:mm")
+                );
+
+                if (i > 10)
+                    break;
             }
+
+            // Print table
+            AnsiConsole.Write(table);
         }
     }
 }
