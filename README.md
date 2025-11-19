@@ -78,8 +78,9 @@ Run `dotnet test BrickBreaker.sln` to execute the xUnit suite. Tests rely on the
 
 ## Flowchart
 
-<img width="1626" height="493" alt="Flowchart" src="https://github.com/user-attachments/assets/6643ef6c-470c-4cf0-b2f9-c19385b91c9d" />
+<img width="1231" height="491" alt="image" src="https://github.com/user-attachments/assets/bce43212-df89-4663-b631-87512729f4f6" />
 
 ## Class diagram
 
-<img width="788" height="756" alt="Class diagram" src="https://github.com/user-attachments/assets/61565f48-db45-4d2b-b7d3-4128a7e54e80" />
+<img width="970" height="763" alt="image" src="https://github.com/user-attachments/assets/0eba64c1-322c-4232-abb4-f43ab4d0ddb0" />
+
