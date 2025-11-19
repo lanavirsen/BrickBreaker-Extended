@@ -31,6 +31,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             bool[,] bricks,                     // 2D array indicating the presence of bricks
             int paddleX,                        // Leftmost X-coordinate of the paddle
             int paddleWidth,                    // Paddle width in characters/blocks
+            bool paddleWarningBlinkOn,          // Whether paddle should use warning color for blinking
             List<Ball> balls,                   // List of all balls in play
             List<PowerUp> powerUps,             // List of all active power-ups on the field
             List<ScorePop> scorePops)           // List of visual score popups to display
@@ -55,7 +56,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             Console.SetCursorPosition(W + 4, 4);          // Move cursor to under the score area
             Console.Write("Press 'N' for next track, 'P' to pause/resume music"); // Show music controls
 
-            DrawGameBoard(bricks, paddleX, paddleWidth, paddleY, balls, powerUps, scorePops);
+            DrawGameBoard(bricks, paddleX, paddleWidth, paddleY, paddleWarningBlinkOn, balls, powerUps, scorePops);
 
             // If the game is paused, show a "PAUSED" message in the upper-mid area
             if (isPaused)
@@ -73,6 +74,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             int paddleX,
             int paddleWidth,
             int paddleY,
+            bool paddleWarningBlinkOn,
             List<Ball> balls,          // List of balls to render
             List<PowerUp> powerUps,    // List of power-ups to render
             List<ScorePop> scorePops)  // List of score popups to render
@@ -101,6 +103,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
                     // Determine what to draw in this cell
                     var (ch, color) = ResolveCell(
                         x, y, paddleX, paddleWidth, paddleY, bricks, cols, rows, brickTop, brickBottom,
+                        paddleWarningBlinkOn,
                         balls, powerUps, scorePops);
 
                     // Change text color if needed
@@ -146,6 +149,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             int rows,
             int brickTop,
             int brickBottom,
+            bool paddleWarningBlinkOn,
             List<Ball> balls,
             List<PowerUp> powerUps,
             List<ScorePop> scorePops)
@@ -171,7 +175,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             if (y == paddleY && x >= paddleX && x < paddleX + paddleWidth)
             {
                 ch = '█';
-                color = null;
+                color = paddleWarningBlinkOn ? ConsoleColor.DarkRed : null;
             }
 
             // Check for balls
