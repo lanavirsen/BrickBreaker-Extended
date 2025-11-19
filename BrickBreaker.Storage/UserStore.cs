@@ -59,7 +59,7 @@ public sealed class UserStore : IUserStore
             throw new InvalidOperationException("Password must be hashed before storage.");
         }
 
-        const string sql =
+        const string sql = //prepares command for the db
             $""" 
             INSERT INTO {TableName} (username, password_hash, salt)
             VALUES (@username, @password_hash, @salt)
@@ -96,10 +96,10 @@ public sealed class UserStore : IUserStore
         using var reader = command.ExecuteReader();
         if (!reader.Read()) return null;
 
-        var storedUsername = reader.GetString(reader.GetOrdinal("username"));
-        var storedPassword = reader.GetString(reader.GetOrdinal("password_hash"));
-        var storedSaltOrdinal = reader.GetOrdinal("salt");
-        if (!PasswordHasher.TryParse(storedPassword, out var components) && !reader.IsDBNull(storedSaltOrdinal))
+        var storedUsername = reader.GetString(reader.GetOrdinal("username")); //fetches username from username row
+        var storedPassword = reader.GetString(reader.GetOrdinal("password_hash")); //fetches password hash from its row
+        var storedSaltOrdinal = reader.GetOrdinal("salt"); //fethes salt from its row
+        if (!PasswordHasher.TryParse(storedPassword, out var components) && !reader.IsDBNull(storedSaltOrdinal)) //checks validity of the fetched information
         {
             var salt = reader.GetString(storedSaltOrdinal);
             var hashComponents = new PasswordHasher.HashComponents(
