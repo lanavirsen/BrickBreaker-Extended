@@ -11,14 +11,14 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
         // Palette used to color each horizontal brick layer
         private static readonly ConsoleColor[] BrickLayerColors =
         {
-            ConsoleColor.DarkRed,
-            ConsoleColor.Red,
-            ConsoleColor.DarkYellow,
-            ConsoleColor.Yellow,
-            ConsoleColor.Green,
-            ConsoleColor.Cyan,
+            ConsoleColor.DarkBlue,
             ConsoleColor.Blue,
-            ConsoleColor.Magenta
+            ConsoleColor.DarkCyan,
+            ConsoleColor.Cyan,
+            ConsoleColor.DarkGreen,
+            ConsoleColor.Green,
+            ConsoleColor.DarkYellow,
+            ConsoleColor.Yellow
         };
 
         // Renders the entire game frame, including UI, bricks, paddle, balls, power-ups, and score pops
