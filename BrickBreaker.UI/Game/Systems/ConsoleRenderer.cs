@@ -67,37 +67,43 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             }
         }
 
+        // Draw the main game board area including borders, bricks, paddle, balls, power-ups, and score pops
         private void DrawGameBoard(
             bool[,] bricks,
             int paddleX,
             int paddleWidth,
             int paddleY,
-            List<Ball> balls,
-            List<PowerUp> powerUps,
-            List<ScorePop> scorePops)
+            List<Ball> balls,          // List of balls to render
+            List<PowerUp> powerUps,    // List of power-ups to render
+            List<ScorePop> scorePops)  // List of score popups to render
         {
-            Console.SetCursorPosition(0, 1);
-            Console.Write('┌');
-            Console.Write(new string('─', W - 2));
-            Console.Write('┐');
+            Console.SetCursorPosition(0, 1);        // Move to the start of the top border
+            Console.Write('┌');                     // Draw top-left corner
+            Console.Write(new string('─', W - 2));  // Draw top border
+            Console.Write('┐');                     // Draw top-right corner
 
-            int cols = bricks.GetLength(0);
-            int rows = bricks.GetLength(1);
-            int brickTop = TopMargin + 1;
-            int brickBottom = brickTop + rows;
+            // Prepare to draw the game area row by row
+            int cols = bricks.GetLength(0);         // Number of brick columns
+            int rows = bricks.GetLength(1);         // Number of brick rows
+            int brickTop = TopMargin + 1;           // One row below the top border
+            int brickBottom = brickTop + rows;      // Bottom row of bricks
 
+            // Draw each row of the game area
             for (int y = 1; y < H - 1; y++)
             {
-                Console.SetCursorPosition(0, y + 1);
-                Console.Write('│');
+                Console.SetCursorPosition(0, y + 1);  // Move to the start of the current row
+                Console.Write('│');                   // Draw left border
 
+                // Draw each cell in the current row
                 ConsoleColor? currentColor = null;
                 for (int x = 1; x < W - 1; x++)
                 {
+                    // Determine what to draw in this cell
                     var (ch, color) = ResolveCell(
                         x, y, paddleX, paddleWidth, paddleY, bricks, cols, rows, brickTop, brickBottom,
                         balls, powerUps, scorePops);
 
+                    // Change text color if needed
                     if (currentColor != color)
                     {
                         if (color.HasValue)
@@ -107,24 +113,28 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
                         currentColor = color;
                     }
 
+                    // Draw the resolved character
                     Console.Write(ch);
                 }
 
+                // Reset color if it was changed
                 if (currentColor.HasValue)
                 {
                     Console.ResetColor();
                 }
 
+                // Draw right border
                 Console.Write('│');
             }
 
-            Console.SetCursorPosition(0, H);
-            Console.ResetColor();
-            Console.Write('└');
-            Console.Write(new string('─', W - 2));
-            Console.Write('┘');
+            Console.SetCursorPosition(0, H);        // Move to the start of the bottom border
+            Console.ResetColor();                   // Ensure default color for borders
+            Console.Write('└');                     // Draw bottom-left corner
+            Console.Write(new string('─', W - 2));  // Draw bottom border
+            Console.Write('┘');                     // Draw bottom-right corner
         }
 
+        // Determines what character and color to draw at a specific cell in the game area
         private static (char ch, ConsoleColor? color) ResolveCell(
             int x,
             int y,
@@ -140,9 +150,11 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             List<PowerUp> powerUps,
             List<ScorePop> scorePops)
         {
+            // Default to empty space
             char ch = ' ';
-            ConsoleColor? color = null;
+            ConsoleColor? color = null;  // Null means default console color
 
+            // Check for brick presence
             if (cols > 0 && rows > 0 && y >= brickTop && y < brickBottom)
             {
                 int r = y - brickTop;
@@ -155,12 +167,14 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
                 }
             }
 
+            // Check for paddle presence
             if (y == paddleY && x >= paddleX && x < paddleX + paddleWidth)
             {
                 ch = '█';
                 color = null;
             }
 
+            // Check for balls
             foreach (var ball in balls)
             {
                 if (x == ball.X && y == ball.Y)
@@ -170,6 +184,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
                 }
             }
 
+            // Check for power-ups
             foreach (var pu in powerUps)
             {
                 if (x == pu.X && y == pu.Y)
@@ -179,6 +194,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
                 }
             }
 
+            // Check for score pops
             foreach (var pop in scorePops)
             {
                 string scoreText = $"+{pop.Score}";
@@ -192,6 +208,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             return (ch, color);
         }
 
+        // Determines the color for a brick based on its row position
         private static ConsoleColor GetBrickColor(int row, int totalRows)
         {
             if (totalRows <= 1)
