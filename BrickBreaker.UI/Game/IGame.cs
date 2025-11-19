@@ -1,5 +1,5 @@
 namespace BrickBreaker.Game;
-public interface IGame
+public interface IGame // Interface for the main game logic
 {
 
     int Run(); // returns score

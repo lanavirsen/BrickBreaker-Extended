@@ -1,14 +1,14 @@
 ﻿namespace BrickBreaker.UI.Game.Infrastructure
 {
-    public interface IKeyboard
+    public interface IKeyboard // Interface for keyboard input handling
     {
-        bool IsLeftPressed();
-        bool IsRightPressed();
-        bool IsEscapePressed();
-        bool IsSpacePressed();
-        bool IsUpPressed();
-        bool IsNPressed();
-        bool IsPPressed();
+        bool IsLeftPressed(); // Checks if the left key is pressed
+        bool IsRightPressed(); // Checks if the right key is pressed
+        bool IsEscapePressed(); // Checks if the escape key is pressed
+        bool IsSpacePressed(); // Checks if the space key is pressed
+        bool IsUpPressed(); // Checks if the up key is pressed
+        bool IsNPressed(); // Checks if the N key is pressed
+        bool IsPPressed(); // Checks if the P key is pressed
     }
 
 }

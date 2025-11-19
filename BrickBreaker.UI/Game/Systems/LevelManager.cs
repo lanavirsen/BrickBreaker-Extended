@@ -1,54 +1,60 @@
-﻿
-
-namespace BrickBreaker.Game.Systems 
+﻿namespace BrickBreaker.Game.Systems                   // Namespace for system/game-management classes
 {
+    // Manages all logic related to game levels (loading, switching, and managing bricks)
     public class LevelManager
     {
+        // Stores all preset levels as a list of 2D brick arrays
         private readonly List<bool[,]> _levels = new List<bool[,]>();
+
+        // Current state of bricks for the level being played
         public bool[,] Bricks { get; private set; } = default!;
+
+        // Index of the current level in the _levels list
         public int CurrentLevelIndex { get; private set; } = 0;
 
+        // Constructor: initializes level data and loads level 0 as default
         public LevelManager()
         {
-            InitLevels();
-            LoadLevel(0);
+            InitLevels();           // Set up all waypoints/levels
+            LoadLevel(0);           // Load the first level on game start
         }
 
-        // AllBricksCleared logic moved from BrickBreakerGame
+        // Checks if all bricks are cleared (no true values left in Bricks array)
         public bool AllBricksCleared()
         {
-            foreach (var brick in Bricks)
+            foreach (var brick in Bricks)    // Loops through all brick slots
             {
-                if (brick) return false;
+                if (brick) return false;      // If any brick remains, not cleared
             }
-            return true;
+            return true;                      // Returns true if all bricks are gone
         }
 
-        // LoadLevel logic moved from BrickBreakerGame
+        // Loads the specified level into the Bricks property (by copying its brick layout)
         public void LoadLevel(int levelIndex)
         {
-            CurrentLevelIndex = levelIndex;
-            // Must CLONE the array, otherwise all levels share the same state
+            CurrentLevelIndex = levelIndex;   // Sets which level is now active
+            // CLONE ensures that when you change Bricks, you don't change _levels (because 2D arrays are reference types)
             Bricks = (bool[,])_levels[levelIndex].Clone();
         }
 
-        // Logic for progressing to the next level
+        // Tries to progress to the next level, returns true if succeeded, false if no more levels
         public bool TryLoadNextLevel()
         {
-            if (CurrentLevelIndex + 1 < _levels.Count)
+            if (CurrentLevelIndex + 1 < _levels.Count)     // Checks if another level exists
             {
-                LoadLevel(CurrentLevelIndex + 1);
-                return true;
+                LoadLevel(CurrentLevelIndex + 1);          // Loads next level
+                return true;                               // Successful
             }
-            return false; // No more levels
+            return false;                                  // No more levels left
         }
 
-        // InitLevels logic moved from BrickBreakerGame
+        // Initializes the set of available levels (hardcoded layouts)
         private void InitLevels()
         {
-            _levels.Clear();
-            // Level 1 - enkel
-            _levels.Add(new bool[12, 4]
+            _levels.Clear();   // Removes any existing level definitions
+
+            // Level 1 - simple pattern
+            _levels.Add(new bool[12, 4]         // Adds a 12x4 grid for level 1
             {
                 { false, true, true, false },
                 { true, false, true, true },
@@ -64,7 +70,7 @@ namespace BrickBreaker.Game.Systems
                 { false, true, false, true }
             });
 
-            // Level 2 - svår
+            // Level 2 - hard (solid block of bricks, 16x6 grid)
             _levels.Add(new bool[16, 6]
             {
                 { true, true, true, true, true, true },
