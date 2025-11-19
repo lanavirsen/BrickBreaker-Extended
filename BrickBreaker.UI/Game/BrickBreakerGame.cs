@@ -186,6 +186,16 @@ namespace BrickBreaker.Game                        // Main game namespace
                     paddleX = Math.Max(1, paddleX - speed);         // Move left, clamp to left edge
                 if (_keyboard.IsRightPressed())
                     paddleX = Math.Min(W - _paddleWidth - 1, paddleX + speed); // Move right, clamp to right edge
+
+                // Keep the pre-launch ball seated over the paddle center as the player repositions
+                if (waitingForLaunch && balls.Count > 0)
+                {
+                    var tetheredBall = balls[0];
+                    int restingX = paddleX + _paddleWidth / 2;
+                    tetheredBall.SetPosition(restingX, paddleY - 1);
+                    tetheredBall.SetHorizontalVelocity(0, 0);
+                    tetheredBall.SetVerticalVelocity(0);
+                }
             }
         }
 
