@@ -56,16 +56,7 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             Console.SetCursorPosition(W + 4, 4);          // Move cursor to under the score area
             Console.Write("Press 'N' for next track, 'P' to pause/resume music"); // Show music controls
 
-            DrawGameBoard(bricks, paddleX, paddleWidth, paddleY, paddleWarningBlinkOn, balls, powerUps, scorePops);
-
-            // If the game is paused, show a "PAUSED" message in the upper-mid area
-            if (isPaused)
-            {
-                Console.SetCursorPosition(W / 2 - 3, 1); // Move cursor to center-ish
-                Console.ForegroundColor = ConsoleColor.Yellow; // Use yellow text
-                Console.Write("PAUSED ");                // Show paused status
-                Console.ResetColor();                    // Restore default color
-            }
+            DrawGameBoard(bricks, paddleX, paddleWidth, paddleY, paddleWarningBlinkOn, isPaused, balls, powerUps, scorePops);
         }
 
         // Draw the main game board area including borders, bricks, paddle, balls, power-ups, and score pops
@@ -75,14 +66,13 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             int paddleWidth,
             int paddleY,
             bool paddleWarningBlinkOn,
+            bool isPaused,
             List<Ball> balls,          // List of balls to render
             List<PowerUp> powerUps,    // List of power-ups to render
             List<ScorePop> scorePops)  // List of score popups to render
         {
             Console.SetCursorPosition(0, 1);        // Move to the start of the top border
-            Console.Write('┌');                     // Draw top-left corner
-            Console.Write(new string('─', W - 2));  // Draw top border
-            Console.Write('┐');                     // Draw top-right corner
+            DrawTopBorder(isPaused);
 
             // Prepare to draw the game area row by row
             int cols = bricks.GetLength(0);         // Number of brick columns
@@ -135,6 +125,37 @@ namespace BrickBreaker.UI.Game.Renderer            // Namespace for rendering-re
             Console.Write('└');                     // Draw bottom-left corner
             Console.Write(new string('─', W - 2));  // Draw bottom border
             Console.Write('┘');                     // Draw bottom-right corner
+        }
+
+        private static void DrawTopBorder(bool isPaused)
+        {
+            int innerWidth = W - 2;
+            Console.Write('┌');
+            if (!isPaused)
+            {
+                Console.Write(new string('─', innerWidth));
+            }
+            else
+            {
+                const string message = " << PAUSED >> ";
+                if (message.Length >= innerWidth)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write(message.Substring(0, innerWidth));
+                    Console.ResetColor();
+                }
+                else
+                {
+                    int leftCount = Math.Max(0, (innerWidth - message.Length) / 2);
+                    int rightCount = Math.Max(0, innerWidth - leftCount - message.Length);
+                    Console.Write(new string('─', leftCount));
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write(message);
+                    Console.ResetColor();
+                    Console.Write(new string('─', rightCount));
+                }
+            }
+            Console.Write('┐');
         }
 
         // Determines what character and color to draw at a specific cell in the game area
