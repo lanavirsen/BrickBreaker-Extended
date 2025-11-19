@@ -40,6 +40,8 @@ namespace BrickBreaker.Game                        // Main game namespace
         private int score;                               // Player score
         private int _paddleWidth = PaddleW;              // Current paddle width (can expand)
         private int _paddleExtendTimer = 0;              // Timer for paddle expansion duration
+        private const int PaddleExtendWarningFrames = 60; // Frames before shrink where paddle blinks
+        private const int PaddleWarnBlinkInterval = 12;  // Frames per blink toggle
 
         private readonly IKeyboard _keyboard;            // Keyboard input handler
         private readonly IGameAudio _audio;              // Audio/music handler
@@ -87,14 +89,17 @@ namespace BrickBreaker.Game                        // Main game namespace
                 }
 
                 // RENDER CALL: draw the game frame to the console
-                _renderer.Render(
-                    lives, score, _levelManager.CurrentLevelIndex, hitMultiplier, _paused,
-                    _levelManager.Bricks,
-                    paddleX,
-                    _paddleWidth,
-                    balls,
-                    powerUps,
-                    scorePops);
+            bool paddleWarningBlinkOn = ShouldDrawPaddleWarning();
+
+            _renderer.Render(
+                lives, score, _levelManager.CurrentLevelIndex, hitMultiplier, _paused,
+                _levelManager.Bricks,
+                paddleX,
+                _paddleWidth,
+                paddleWarningBlinkOn,
+                balls,
+                powerUps,
+                scorePops);
 
                 var sleep = targetDt - (sw.Elapsed - now);                      // Calculate how long to sleep until next frame
                 if (sleep > TimeSpan.Zero) Thread.Sleep(sleep);                 // Frame delay
@@ -186,7 +191,34 @@ namespace BrickBreaker.Game                        // Main game namespace
                     paddleX = Math.Max(1, paddleX - speed);         // Move left, clamp to left edge
                 if (_keyboard.IsRightPressed())
                     paddleX = Math.Min(W - _paddleWidth - 1, paddleX + speed); // Move right, clamp to right edge
+
+                // Keep the pre-launch ball seated over the paddle center as the player repositions
+                if (waitingForLaunch && balls.Count > 0)
+                {
+                    var tetheredBall = balls[0];
+                    int restingX = paddleX + _paddleWidth / 2;
+                    tetheredBall.SetPosition(restingX, paddleY - 1);
+                    tetheredBall.SetHorizontalVelocity(0, 0);
+                    tetheredBall.SetVerticalVelocity(0);
+                }
             }
+        }
+
+        // Determines if the paddle should be drawn in a warning blink state
+        bool ShouldDrawPaddleWarning()
+        {
+            if (_paddleExtendTimer <= 0 || _paddleWidth <= PaddleW)
+            {
+                return false;
+            }
+
+            if (_paddleExtendTimer > PaddleExtendWarningFrames)
+            {
+                return false;
+            }
+
+            // Blink with a slower cadence during the warning window.
+            return ((_paddleExtendTimer / PaddleWarnBlinkInterval) % 2) == 0;
         }
 
         // Handles all game state updates for each frame
