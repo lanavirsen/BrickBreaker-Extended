@@ -1,4 +1,5 @@
-﻿using BrickBreaker.Logic;
+﻿
+using BrickBreaker.Logic;
 using BrickBreaker.Models;
 
 namespace BrickBreaker.Tests;
@@ -23,7 +24,7 @@ public sealed class AuthTests
     {
         // Username is already seeded, so Register should reject the duplicate.
         var store = new FakeUserStore();
-        store.Seed(new User("Bob", "pw"));
+        store.Seed(CreateHashedUser("Bob", "pw"));
         var sut = new Auth(store);
 
         var result = sut.Register("Bob", "newpw");
@@ -66,7 +67,7 @@ public sealed class AuthTests
         Assert.True(result);
         var savedUser = Assert.Single(store.AddedUsers);
         Assert.Equal("Alice", savedUser.Username);
-        Assert.Equal("pw", savedUser.Password);
+        Assert.True(PasswordHasher.Verify(savedUser.Password, "pw"));
     }
 
     [Fact]
@@ -85,7 +86,7 @@ public sealed class AuthTests
     {
         // Valid username but wrong password should fail to log in.
         var store = new FakeUserStore();
-        store.Seed(new User("Alice", "pw"));
+        store.Seed(CreateHashedUser("Alice", "pw"));
         var sut = new Auth(store);
 
         var loggedIn = sut.Login("Alice", "wrong");
@@ -98,7 +99,7 @@ public sealed class AuthTests
     {
         // Exact match of username/password should succeed.
         var store = new FakeUserStore();
-        store.Seed(new User("Alice", "pw"));
+        store.Seed(CreateHashedUser("Alice", "pw"));
         var sut = new Auth(store);
 
         var loggedIn = sut.Login("Alice", "pw");
@@ -111,11 +112,17 @@ public sealed class AuthTests
     {
         // Ensure the repository is called with a trimmed username.
         var store = new FakeUserStore();
-        store.Seed(new User("Alice", "pw"));
+        store.Seed(CreateHashedUser("Alice", "pw"));
         var sut = new Auth(store);
 
         _ = sut.Login("  Alice  ", "pw");
 
         Assert.Equal("Alice", store.LastGetUsername);
+    }
+
+    private static User CreateHashedUser(string username, string password)
+    {
+        var hashed = PasswordHasher.HashPassword(password);
+        return new User(username, hashed);
     }
 }

@@ -22,9 +22,10 @@ public sealed class Auth
 
         password = (password ?? "").Trim();
         if (password.Length == 0) return false;
-        
 
-        _users.Add(new User(username, password));
+
+        var hashedPassword = PasswordHasher.HashPassword(password);
+        _users.Add(new User(username, hashedPassword));
         return true;
     }
 
@@ -32,6 +33,6 @@ public sealed class Auth
     {
         username = (username ?? "").Trim();
         var u = _users.Get(username);
-        return u is not null && u.Password == password;
+        return u is not null && PasswordHasher.Verify(u.Password, password ?? string.Empty);
     }
 }
