@@ -1,13 +1,13 @@
 ﻿
 namespace BrickBreaker.UI.Game.Infrastructure
 {
-    public interface IGameAudio
+    public interface IGameAudio // Interface for game audio management
     {
-        void StartMusic();
-        void StopMusic();
+        void StartMusic(); // Starts playing music
+        void StopMusic(); // Stops all music
 
-        void Next();
-        void Pause();
+        void Next(); // Jumps to the next track in the playlist
+        void Pause(); // Pauses or resumes the current track
 
     }
 }
