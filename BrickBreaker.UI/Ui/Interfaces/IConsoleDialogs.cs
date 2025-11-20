@@ -7,12 +7,10 @@
     // collection of methods for prompting user input and displaying messages
     public interface IConsoleDialogs
     {
-        // prompts user for username and password
         (string Username, string Password) PromptCredentials();
         string PromptNewUsername();
         string PromptNewPassword();
 
-        // displays a message to the user
         void ShowMessage(string message);
         void Pause();
 

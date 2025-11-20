@@ -7,10 +7,8 @@ namespace BrickBreaker.UI.Ui.SpecterConsole
 
     public class Header
     {
-        // Renders the title header in the console as a method
         public void TitleHeader()
         {
-            // Use FigletText to create a stylized title
             AnsiConsole.Write(
                 new FigletText("Brick Breaker")
                     .Centered()

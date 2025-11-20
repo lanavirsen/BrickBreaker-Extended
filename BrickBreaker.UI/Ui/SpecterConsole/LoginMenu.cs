@@ -8,19 +8,12 @@ namespace BrickBreaker.UI.Ui.SpecterConsole
     // displays options related to user login and registration
     public class LoginMenu : ILoginMenu
     {
-        // helper class for displaying menus
         private readonly MenuHelper _menuHelper = new MenuHelper();
 
-        // shows the login menu and returns the user's choice
         public LoginMenuChoice Show()
         {
-            // Clear console for a clean display
             AnsiConsole.Clear();
-
-            // Display menu using Spectre.Console
             var choice = _menuHelper.ShowMenu<LoginMenuChoice>("Brick Breaker");
-
-            // Return the user's choice
             return choice;
         }
     }

@@ -7,58 +7,46 @@ namespace BrickBreaker.Ui
     // Handles user prompts and messages in the console UI
     public class ConsoleDialogs : IConsoleDialogs
     {
-        // Prompts user for username and password
         public (string Username, string Password) PromptCredentials()
         {
             // Prompt for username
             var username = AnsiConsole.Prompt(
                 new TextPrompt<string>("Username: ")
-                    .PromptStyle("White"));
+                    .PromptStyle("White"))
+                    .Trim();
 
             // Prompt for password (hidden input)
             var password = AnsiConsole.Prompt(
                 new TextPrompt<string>("Password: ")
                     .PromptStyle("White")
-                    .Secret());
+                    .Secret())
+                    .Trim();
 
-            // Return the entered credentials
             return (username, password);
         }
 
-        // Prompts user to choose a new username
         public string PromptNewUsername()
         {
-            // Prompt for new username
             AnsiConsole.Write("\nChoose a username: ");
-            // Read and return the input trimmed of whitespace
             return Console.ReadLine()?.Trim() ?? "";
         }
 
-        // Prompts user to choose a new password
         public string PromptNewPassword()
         {
-            // Prompt for new password
-            AnsiConsole.Write("Choose a password: ");
-            // Read and return the input trimmed of whitespace
-            return Console.ReadLine()?.Trim() ?? "";
+            return AnsiConsole.Prompt(
+                new TextPrompt<string>("\nChoose a password:")
+                    .Secret());
         }
 
-        // Displays a message to the user
-        // Can be used to call diffrent types of messages
         public void ShowMessage(string message) => AnsiConsole.MarkupLine(message);
 
-        // Pauses execution until user presses a key
         public void Pause()
         {
-            // Prompt user to press any key to continue
             AnsiConsole.MarkupLine("[grey]Press any key…[/]");
-            // Wait for a key press
             Console.ReadKey(true);
         }
 
         // Displays leaderboard entries in a formatted table
-        // Shows top 10 entries
-        // Each entry includes username, score, and date
         public void ShowLeaderboard(IEnumerable<(string Username, int Score, DateTimeOffset At)> entries)
         {
             // Create a table
@@ -66,7 +54,6 @@ namespace BrickBreaker.Ui
                 .Border(TableBorder.Rounded)
                 .Title("Top 10 Leaderboard");
 
-            // Add columns
             table.AddColumn("[bold]#[/]");
             table.AddColumn("[bold]Username[/]");
             table.AddColumn("[bold]Score[/]");
@@ -92,7 +79,6 @@ namespace BrickBreaker.Ui
                     break;
             }
 
-            // Print table
             AnsiConsole.Write(table);
         }
     }

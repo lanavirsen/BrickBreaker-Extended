@@ -4,22 +4,15 @@ namespace BrickBreaker.UI.Ui
 {
     // Helper class to display menus using Spectre.Console
     // Generic method to show menus for different enum types
-    // Configurable title, welcome message, and colors
 
     public class MenuHelper
     {
-        // Generic method to show a menu based on an enum type
-        // Parameters: title, welcomeMessage, titleColor, highlightColor
-        // Returns the selected enum value
         public T ShowMenu<T>(string title, string? welcomeMessage = null, Color? titleColor = null, Color? highlightColor = null) where T : Enum
         {
-            // Set colors 
             var tColor = titleColor ?? Color.Orange1;
             var hColor = highlightColor ?? Color.White;
 
-
-
-            // Show Figlet title
+            // Display title in Figlet font
             AnsiConsole.Write(
                 new FigletText(title)
                     .Centered()

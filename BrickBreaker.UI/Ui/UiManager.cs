@@ -15,13 +15,10 @@ namespace BrickBreaker.UI.Ui
         // Stores the current logged-in user
         private string? currentUser = null;
 
-        // Runs the main UI loop, transitioning between menus based on user choices
         public void Run()
         {
-            // Start in the Login Menu state
             AppState state = AppState.LoginMenu;
 
-            // Main loop to handle state transitions
             while (state != AppState.Exit)
             {
                 state = state switch
@@ -37,10 +34,8 @@ namespace BrickBreaker.UI.Ui
         // Triggers by appstate loginmenu
         private AppState HandleLoginMenu()
         {
-            // Show the login menu and get the user's choice
             var choice = _loginMenu.Show();
 
-            // Transition to the next state based on the user's choice
             return choice switch
             {
                 LoginMenuChoice.QuickPlay => AppState.Playing, 
@@ -56,10 +51,8 @@ namespace BrickBreaker.UI.Ui
         // Triggers by appstate gameplaymenu
         private AppState HandleGameplayMenu()
         {
-            // Show the gameplay menu and get the user's choice
             var choice = _gameplayMenu.Show(currentUser ?? "guest");
 
-            // Transition to the next state based on the user's choice
             return choice switch
             {
                 GameplayMenuChoice.Start => AppState.Playing,
