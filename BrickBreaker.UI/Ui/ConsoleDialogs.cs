@@ -27,15 +27,19 @@ namespace BrickBreaker.Ui
 
         public string PromptNewUsername()
         {
-            AnsiConsole.Write("\nChoose a username: ");
-            return Console.ReadLine()?.Trim() ?? "";
+            return AnsiConsole.Prompt(
+                new TextPrompt<string>("\nChoose a username:")
+                    .PromptStyle("White"))
+                .Trim();
         }
 
         public string PromptNewPassword()
         {
             return AnsiConsole.Prompt(
-                new TextPrompt<string>("\nChoose a password:")
-                    .Secret());
+                new TextPrompt<string>("Choose a password:")
+                    .PromptStyle("White")
+                    .Secret())
+                .Trim();
         }
 
         public void ShowMessage(string message) => AnsiConsole.MarkupLine(message);
