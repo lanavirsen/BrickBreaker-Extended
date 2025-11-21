@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace BrickBreaker.UI.Ui.Enums
 {
+    //AppState represents the different states the application can be in, out of the following. 
     public enum AppState
     {
         LoginMenu,
