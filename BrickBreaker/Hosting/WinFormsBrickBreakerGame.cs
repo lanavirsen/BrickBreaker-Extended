@@ -2,7 +2,7 @@ using BrickBreaker.Game;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace BrickBreaker;
+namespace BrickBreaker.Hosting;
 
 /// <summary>
 /// Hosts the WinForms gameplay inside an <see cref="IGame"/> abstraction so other

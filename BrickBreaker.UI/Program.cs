@@ -136,7 +136,7 @@ class Program
     static AppState HandlePlaying()
     {
         AnsiConsole.Clear();
-        IGame game = new BrickBreaker.WinFormsBrickBreakerGame();
+        IGame game = new BrickBreaker.Hosting.WinFormsBrickBreakerGame();
         int score = game.Run();
 
         // Move cursor to lower part of the console
