@@ -4,10 +4,10 @@
     // Connected to the IGameplayMenu interface
     public enum GameplayMenuChoice
     {
-        Start,
-        Best,
-        Leaderboard,
-        Logout,
-        Exit,
+        Start, //Start a new game session.
+        Best, //Show the player's best scores or stats.
+        Leaderboard, //Display the leaderboard.
+        Logout, //Log out the current user and return to the login menu.
+        Exit, //Close the application.
     }
 }

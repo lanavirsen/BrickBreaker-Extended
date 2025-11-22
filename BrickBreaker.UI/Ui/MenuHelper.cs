@@ -19,37 +19,40 @@ namespace BrickBreaker.UI.Ui
                     .Color(tColor)
             );
 
-            // Welcome message 
+            // If a welcome message exists, print it below the title.
             if (!string.IsNullOrWhiteSpace(welcomeMessage))
             {
                 AnsiConsole.MarkupLine(welcomeMessage);
-                AnsiConsole.WriteLine();
+                AnsiConsole.WriteLine(); // Add extra spacing before the menu
             }
 
-            // Menu items 
+            // Retrieve all enum values for the generic type T.
+            // These values will be used as selectable items in the menu.
             var items = Enum.GetValues(typeof(T)).Cast<T>().ToList();
 
-            // Display selection prompt
+            // Create and display a selection menu using Spectre.Console.
+            // The menu allows the user to navigate with arrow keys and confirm with Enter.
             return AnsiConsole.Prompt(
                 new SelectionPrompt<T>()
-                    .Title("[gray]Select an option:[/]")
-                    .PageSize(10)
-                    .AddChoices(items)
+                    .Title("[gray]Select an option:[/]") // Text shown above the choices
+                    .PageSize(10)                       // Max number of items before scrolling
+                    .AddChoices(items)                  // Add all enum values as menu options
+
+                    // Apply highlight styling when hovering over an option.
                     .HighlightStyle(new Style(hColor, Color.Black, Decoration.Bold))
 
-                    // Customize display for specific choices
+                    // Convert enum names to formatted display text.
+                    // Special cases: "Exit" and "Logout" are colored red for emphasis.
                     .UseConverter(choice =>
                     {
                         var text = choice.ToString();
 
                         // Highlight "Exit" and "Logout" in red
                         return text is "Exit" or "Logout"
-                            ? $"[red]{text}[/]"
-                            : text;
+                            ? $"[red]{text}[/]"  // Red text for important actions
+                            : text;              // Default rendering for all other items
                     })
             );
-
-
         }
     }
 }
