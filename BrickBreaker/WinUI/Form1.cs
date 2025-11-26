@@ -25,7 +25,7 @@ namespace BrickBreaker
         public int LatestScore => gameEngine != null ? gameEngine.Score : 0;
 
         // --- 2. UI State ---
-        private System.Windows.Forms.Timer gameTimer;
+        private readonly System.Windows.Forms.Timer gameTimer = new();
         private Rectangle playAreaRect;
         private bool isPaused = false;
         private bool isGameOver = false;
@@ -42,7 +42,12 @@ namespace BrickBreaker
 
         // Fonts & Colors
         private PrivateFontCollection fontCollection = new PrivateFontCollection();
-        private Font fontScore, fontMultiplier, fontCurrentLevel, fontTime, fontLaunch, fontGameOver;
+        private Font fontScore = SystemFonts.DefaultFont;
+        private Font fontMultiplier = SystemFonts.DefaultFont;
+        private Font fontCurrentLevel = SystemFonts.DefaultFont;
+        private Font fontTime = SystemFonts.DefaultFont;
+        private Font fontLaunch = SystemFonts.DefaultFont;
+        private Font fontGameOver = SystemFonts.DefaultFont;
         private Color colorPaddleNormal = Color.FromArgb(36, 162, 255);
 
         public Form1()
@@ -70,7 +75,7 @@ namespace BrickBreaker
         {
             this.FormBorderStyle = FormBorderStyle.None; // No borders for fullscreen
             this.WindowState = FormWindowState.Maximized; // Start maximized
-            this.Bounds = Screen.PrimaryScreen.Bounds; // Cover the whole screen
+            this.Bounds = GetPrimaryBounds(); // Cover the whole screen
             this.DoubleBuffered = true; // Reduce flickering
             this.Paint += Form1_Paint; // Paint event handler
             this.KeyDown += Form1_KeyDown; // KeyDown event handler
@@ -79,14 +84,13 @@ namespace BrickBreaker
 
         private void InitializeTimer()
         {
-            gameTimer = new System.Windows.Forms.Timer(); // Using Windows Forms Timer
             gameTimer.Interval = 16; // ~60 FPS
             gameTimer.Tick += GameTimer_Tick; // Tick event handler
             gameTimer.Start(); // Start the timer
         }
 
         // --- Main Loop ---
-        private void GameTimer_Tick(object sender, EventArgs e) // Called every frame
+        private void GameTimer_Tick(object? sender, EventArgs e) // Called every frame
         {
             if (isGameOver || isPaused) { Invalidate(); return; } // Skip updates if game over or paused
 
@@ -120,7 +124,7 @@ namespace BrickBreaker
         }
 
         // --- Drawing ---
-        private void Form1_Paint(object sender, PaintEventArgs e) // Paint event handler
+        private void Form1_Paint(object? sender, PaintEventArgs e) // Paint event handler
         {
             Graphics g = e.Graphics; // Get Graphics object
             g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit; // Clear background
@@ -370,9 +374,19 @@ namespace BrickBreaker
 
         private void TriggerGameOver()
         {
+            if (isGameOver)
+            {
+                return;
+            }
+
             isGameOver = true;
             gameTimer.Stop(); // Stop the game loop
+            GameFinished?.Invoke(this, gameEngine.Score);
 
+            if (CloseOnGameOver)
+            {
+                BeginInvoke(new MethodInvoker(Close));
+            }
         }
 
         private void RestartGame()
@@ -397,10 +411,15 @@ namespace BrickBreaker
             {
                 FormBorderStyle = FormBorderStyle.None;
                 WindowState = FormWindowState.Maximized;
-                Bounds = Screen.PrimaryScreen.Bounds;
+                Bounds = GetPrimaryBounds();
             }
             SetupGameLayout(); // Recalculate layout
             Invalidate(); // Redraw the screen
+        }
+
+        private Rectangle GetPrimaryBounds()
+        {
+            return Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
         }
 
         // --- Font Loading ---

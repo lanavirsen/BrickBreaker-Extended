@@ -29,9 +29,9 @@ namespace BrickBreaker
         private int paddleExtenderTicksLeft = 0;
 
         // --- Events ---
-        public event EventHandler GameOver;
-        public event EventHandler<int> ScoreChanged;
-        public event EventHandler LevelLoaded;
+        public event EventHandler? GameOver;
+        public event EventHandler<int>? ScoreChanged;
+        public event EventHandler? LevelLoaded;
 
         // --- Main Loop ---
         public void Update(double deltaTime, Rectangle playArea, double paddleX, int paddleY)
@@ -84,8 +84,10 @@ namespace BrickBreaker
                     {
                         HighScore = Score;
                     }
+
+                    GameOver?.Invoke(this, EventArgs.Empty);
                 }
-                
+
                 return;
             }
 
@@ -124,8 +126,8 @@ namespace BrickBreaker
             if (rand.NextDouble() < 0.2)
             {
                 // Pick random type
-                var types = Enum.GetValues(typeof(PowerUpType));
-                PowerUpType randomType = (PowerUpType)types.GetValue(rand.Next(types.Length));
+                PowerUpType[] types = Enum.GetValues<PowerUpType>();
+                PowerUpType randomType = types[rand.Next(types.Length)];
                 PowerUps.Add(new PowerUp(x, y, randomType));
             }
         }
