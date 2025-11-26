@@ -16,7 +16,9 @@ namespace BrickBreaker
         // --- Game State ---
         public int Score { get; private set; }
         public int CurrentLevel { get; private set; } = 1;
+        public int HighScore { get; private set; }
 
+        // Ball speed increases with level
         public double CurrentBallSpeed => 9.0 + (CurrentLevel - 1) * 1.5; // Example speed scaling with level
 
         // --- Paddle State ---
@@ -75,7 +77,14 @@ namespace BrickBreaker
             if (ball.Y > playArea.Bottom)
             {
                 Balls.RemoveAt(ballIndex);
-                if (Balls.Count == 0) GameOver?.Invoke(this, EventArgs.Empty);
+                if (Balls.Count == 0)
+                {
+                    if (Score > HighScore)
+                    {
+                        HighScore = Score;
+                    }
+                }
+                
                 return;
             }
 
