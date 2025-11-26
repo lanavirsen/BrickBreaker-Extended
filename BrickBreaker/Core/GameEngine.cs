@@ -8,6 +8,7 @@ namespace BrickBreaker
     {
         // --- Data ---
         private Random rand = new Random();
+
         public List<Ball> Balls { get; private set; } = new List<Ball>();
         public List<Brick> Bricks { get; private set; } = new List<Brick>();
         public List<PowerUp> PowerUps { get; private set; } = new List<PowerUp>();
@@ -56,7 +57,7 @@ namespace BrickBreaker
             }
 
             // Update PowerUps
-            UpdatePowerUps(paddleX, paddleY);
+            UpdatePowerUps(paddleX, paddleY, playArea);
 
             // D. Check Level Completion
             if (Bricks.All(b => !b.IsVisible))
@@ -100,6 +101,7 @@ namespace BrickBreaker
                     HandleScoring(ball, brick);
                     ScoreChanged?.Invoke(this, Score);
 
+                    // FIX: Do not activate powerup here. Just Try to SPAWN one.
                     TrySpawnPowerUp(brick.X + brick.Width / 2, brick.Y);
 
                     break;
@@ -128,7 +130,7 @@ namespace BrickBreaker
             }
         }
 
-        private void UpdatePowerUps(double paddleX, int paddleY)
+        private void UpdatePowerUps(double paddleX, int paddleY, Rectangle playArea)
         {
             // Define the paddle hitbox using the CURRENT width
             Rectangle paddleRect = new Rectangle((int)paddleX, paddleY, CurrentPaddleWidth, 20);
@@ -143,11 +145,11 @@ namespace BrickBreaker
                 if (paddleRect.IntersectsWith(powerUpRect))
                 {
                     ActivatePowerUp(p.Type); // <--- This triggers the effect!
-                    PowerUps.RemoveAt(i);    // Remove from screen 
+                    PowerUps.RemoveAt(i);    // Remove from screen
                 }
-                else if (p.Y > 1000) // Remove if it falls off screen
+                else if (p.Y > playArea.Bottom) // Remove only after leaving visible area
                 {
-                    PowerUps.RemoveAt(i); 
+                    PowerUps.RemoveAt(i);
                 }
             }
         }
@@ -171,7 +173,7 @@ namespace BrickBreaker
                 IsPaddleBlinking = false;
             }
         }
-        private void UpdatePaddleEffects() 
+        private void UpdatePaddleEffects()
         {
             if (paddleExtenderTicksLeft > 0)
             {
@@ -220,7 +222,7 @@ namespace BrickBreaker
             double ballCenter = ball.X + ball.Radius; // Ball center X
             double paddleCenter = paddleX + paddleWidth / 2.0;
             double hitPos = (ballCenter - paddleCenter) / (paddleWidth / 2.0);
-            
+
             double speed = CurrentBallSpeed; // Current ball speed
             double maxX = speed * 0.75; // Max horizontal speed component
             double newVX = hitPos * maxX; // Scale hit position to maxX
