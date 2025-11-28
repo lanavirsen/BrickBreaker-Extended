@@ -39,6 +39,7 @@ namespace BrickBreaker
         // Fonts & Colors
         private PrivateFontCollection fontCollection = new PrivateFontCollection();
         private Font fontScore = SystemFonts.DefaultFont;
+        private Font fontMultiplier = SystemFonts.DefaultFont;
         private Font fontCurrentLevel = SystemFonts.DefaultFont;
         private Font fontTime = SystemFonts.DefaultFont;
         private Font fontLaunch = SystemFonts.DefaultFont;
