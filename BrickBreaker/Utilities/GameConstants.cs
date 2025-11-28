@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace BrickBreaker.Utilities
 {
     public static class GameConstants
