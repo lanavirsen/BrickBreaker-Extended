@@ -1,9 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0-windows7.0</TargetFramework>
+    <TargetFrameworks>net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IsRunningOnWindows>$([System.Environment]::GetEnvironmentVariable('OS'))</IsRunningOnWindows>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsRunningOnWindows)' == 'Windows_NT'">
+    <TargetFrameworks>net9.0-windows7.0;net9.0</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-windows7.0'">
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
   <ItemGroup>

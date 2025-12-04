@@ -1,4 +1,5 @@
-using BrickBreaker.Utilities;
+using BrickBreaker.Game;
+using BrickBreaker.Game.Utilities;
 using System.ComponentModel;
 using System.Drawing.Text;
 

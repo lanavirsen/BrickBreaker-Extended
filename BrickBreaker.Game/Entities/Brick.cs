@@ -1,3 +1,7 @@
+using System.Drawing;
+
+namespace BrickBreaker.Game.Entities;
+
 public class Brick
 {
     public int X { get; set; }

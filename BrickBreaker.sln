@@ -5,6 +5,8 @@ VisualStudioVersion = 18.3.11206.111 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Core", "BrickBreaker.Core\BrickBreaker.Core.csproj", "{B84D5830-73B6-4623-8ADB-533EB6CEDF21}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Game", "BrickBreaker.Game\BrickBreaker.Game.csproj", "{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Storage", "BrickBreaker.Storage\BrickBreaker.Storage.csproj", "{93391F92-7C82-47FE-B7D5-748ED226D1D9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.UI", "BrickBreaker.UI\BrickBreaker.UI.csproj", "{D597FD8A-145A-4D08-A1B4-142B8F812822}"
@@ -35,6 +37,18 @@ Global
 		{B84D5830-73B6-4623-8ADB-533EB6CEDF21}.Release|x64.Build.0 = Release|Any CPU
 		{B84D5830-73B6-4623-8ADB-533EB6CEDF21}.Release|x86.ActiveCfg = Release|Any CPU
 		{B84D5830-73B6-4623-8ADB-533EB6CEDF21}.Release|x86.Build.0 = Release|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Debug|x64.Build.0 = Debug|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Debug|x86.Build.0 = Debug|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Release|x64.ActiveCfg = Release|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Release|x64.Build.0 = Release|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Release|x86.ActiveCfg = Release|Any CPU
+		{D3C757A5-CA35-44B6-89AE-22AA1FBE96F1}.Release|x86.Build.0 = Release|Any CPU
 		{93391F92-7C82-47FE-B7D5-748ED226D1D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{93391F92-7C82-47FE-B7D5-748ED226D1D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93391F92-7C82-47FE-B7D5-748ED226D1D9}.Debug|x64.ActiveCfg = Debug|Any CPU

@@ -1,5 +1,6 @@
+using System.Drawing;
 
-namespace BrickBreaker.Entities
+namespace BrickBreaker.Game.Entities
 {
     public enum PowerUpType
     {

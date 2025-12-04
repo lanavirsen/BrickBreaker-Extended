@@ -1,4 +1,4 @@
-namespace BrickBreaker.Entities
+namespace BrickBreaker.Game.Entities
 {
     public class Ball
     {

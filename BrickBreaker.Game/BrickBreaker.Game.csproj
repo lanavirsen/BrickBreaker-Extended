@@ -1,49 +1,30 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Library</OutputType>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
   <PropertyGroup>
     <IsRunningOnWindows>$([System.Environment]::GetEnvironmentVariable('OS'))</IsRunningOnWindows>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(IsRunningOnWindows)' == 'Windows_NT'">
     <TargetFrameworks>net9.0-windows7.0;net9.0</TargetFrameworks>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-windows7.0'">
-    <OutputType>WinExe</OutputType>
-    <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
-
   <ItemGroup>
-    <Compile Remove="Hosting/WinFormsBrickBreakerGame.NonWindows.cs" />
+    <Compile Remove="NonWindows/GameUnavailable.cs" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../BrickBreaker.Core/BrickBreaker.Core.csproj" />
-    <ProjectReference Include="../BrickBreaker.Game/BrickBreaker.Game.csproj" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows7.0'">
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <Compile Remove="**\*.cs" />
     <EmbeddedResource Remove="**\*" />
     <None Remove="**\*" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <Compile Include="Hosting/WinFormsBrickBreakerGame.NonWindows.cs" />
+    <Compile Include="NonWindows/GameUnavailable.cs" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Assets\PressStart2P-Regular.ttf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
