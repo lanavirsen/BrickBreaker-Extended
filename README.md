@@ -2,7 +2,7 @@
 
 # BrickBreaker – Extended Edition
 
-![CI](https://github.com/confusedpotatoe/GroupProdject/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/confusedpotatoe/GroupProdject/branch/main/graph/badge.svg)](https://codecov.io/gh/confusedpotatoe/GroupProdject)
+![CI](https://github.com/lanavirsen/BrickBreaker-Group/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/lanavirsen/BrickBreaker-Group/branch/main/graph/badge.svg)](https://codecov.io/gh/lanavirsen/BrickBreaker-Group)
 
 BrickBreaker is a .NET 9 WinForms remake of the classic paddle-and-bricks arcade game.  
 The gameplay runs inside a desktop window, while Spectre.Console menus handle login, Quick Play, and leaderboard actions. Every frame, power-up, and collision is authored directly in code.
