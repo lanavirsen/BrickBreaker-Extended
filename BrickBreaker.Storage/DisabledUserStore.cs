@@ -3,9 +3,7 @@ using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Storage;
 
-/// <summary>
-/// Fallback implementation that keeps the app running when the database connection is unavailable.
-/// </summary>
+// Fallback implementation that keeps the app running when the database connection is unavailable.
 public sealed class DisabledUserStore : IUserStore
 {
     public bool Exists(string username) => false;

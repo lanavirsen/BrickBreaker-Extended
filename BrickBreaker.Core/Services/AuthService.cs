@@ -3,9 +3,7 @@ using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Core.Services;
 
-/// <summary>
-/// Application-layer service that encapsulates user registration and login workflows.
-/// </summary>
+// Application-layer service that encapsulates user registration and login workflows.
 public sealed class AuthService : IAuthService
 {
     private readonly IUserStore _users;

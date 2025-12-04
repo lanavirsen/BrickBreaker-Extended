@@ -3,9 +3,7 @@ using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Core.Services;
 
-/// <summary>
-/// Provides application-level leaderboard workflows independently of persistence concerns.
-/// </summary>
+// Provides application-level leaderboard workflows independently of persistence concerns.
 public sealed class LeaderboardService : ILeaderboardService
 {
     private readonly ILeaderboardStore _store;
