@@ -4,9 +4,7 @@ using System.Collections.Generic;
 
 namespace BrickBreaker.Storage;
 
-/// <summary>
-/// Fallback implementation that no-ops when the Supabase connection string is missing.
-/// </summary>
+// Fallback implementation that no-ops when the Supabase connection string is missing.
 public sealed class DisabledLeaderboardStore : ILeaderboardStore
 {
     public void Add(ScoreEntry entry)

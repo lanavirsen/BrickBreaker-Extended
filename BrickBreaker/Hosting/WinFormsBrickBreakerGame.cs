@@ -4,11 +4,9 @@ using System.Windows.Forms;
 
 namespace BrickBreaker.Hosting;
 
-/// <summary>
-/// Hosts the WinForms gameplay inside an <see cref="IGame"/> abstraction so other
-/// application surfaces (console menus, tests, etc.) can launch the desktop game
-/// without knowing UI details.
-/// </summary>
+// Hosts the WinForms gameplay inside an <see cref="IGame"/> abstraction so other
+// application surfaces (console menus, tests, etc.) can launch the desktop game
+// without knowing UI details.
 public sealed class WinFormsBrickBreakerGame : IGame
 {
     public int Run()

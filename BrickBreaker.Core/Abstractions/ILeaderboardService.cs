@@ -2,9 +2,7 @@ using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Core.Abstractions;
 
-/// <summary>
-/// Provides leaderboard operations for presentation layers.
-/// </summary>
+// Provides leaderboard operations for presentation layers.
 public interface ILeaderboardService
 {
     void Submit(ScoreEntry entry);

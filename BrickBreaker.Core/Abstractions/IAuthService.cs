@@ -1,8 +1,6 @@
 namespace BrickBreaker.Core.Abstractions;
 
-/// <summary>
-/// Exposes authentication-related use cases for UI layers.
-/// </summary>
+// Exposes authentication-related use cases for UI layers.
 public interface IAuthService
 {
     bool UsernameExists(string username);
