@@ -3,6 +3,8 @@ using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Core.Services;
 
+using System.Threading.Tasks;
+
 // Application-layer service that encapsulates user registration and login workflows.
 public sealed class AuthService : IAuthService
 {
@@ -13,16 +15,16 @@ public sealed class AuthService : IAuthService
         _users = users ?? throw new ArgumentNullException(nameof(users));
     }
 
-    public bool UsernameExists(string username)
+    public async Task<bool> UsernameExistsAsync(string username)
     {
         username = (username ?? string.Empty).Trim();
-        return _users.Exists(username);
+        return await _users.ExistsAsync(username).ConfigureAwait(false);
     }
 
-    public bool Register(string username, string password)
+    public async Task<bool> RegisterAsync(string username, string password)
     {
         username = (username ?? string.Empty).Trim();
-        if (_users.Exists(username) || username.Length == 0)
+        if (await _users.ExistsAsync(username).ConfigureAwait(false) || username.Length == 0)
         {
             return false;
         }
@@ -34,14 +36,14 @@ public sealed class AuthService : IAuthService
         }
 
         var hashedPassword = PasswordHasher.HashPassword(password);
-        _users.Add(new User(username, hashedPassword));
+        await _users.AddAsync(new User(username, hashedPassword)).ConfigureAwait(false);
         return true;
     }
 
-    public bool Login(string username, string password)
+    public async Task<bool> LoginAsync(string username, string password)
     {
         username = (username ?? string.Empty).Trim();
-        var storedUser = _users.Get(username);
+        var storedUser = await _users.GetAsync(username).ConfigureAwait(false);
         return storedUser is not null && PasswordHasher.Verify(storedUser.Password, password ?? string.Empty);
     }
 }

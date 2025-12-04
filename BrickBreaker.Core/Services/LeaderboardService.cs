@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Models;
 
@@ -13,34 +16,34 @@ public sealed class LeaderboardService : ILeaderboardService
         _store = store ?? throw new ArgumentNullException(nameof(store));
     }
 
-    public void Submit(ScoreEntry entry)
+    public async Task SubmitAsync(ScoreEntry entry)
     {
         if (entry is null)
         {
             throw new ArgumentNullException(nameof(entry));
         }
 
-        _store.Add(entry);
+        await _store.AddAsync(entry).ConfigureAwait(false);
     }
 
-    public void Submit(string username, int score)
+    public async Task SubmitAsync(string username, int score)
     {
         if (string.IsNullOrWhiteSpace(username) || score < 0)
         {
             return;
         }
 
-        _store.Add(new ScoreEntry(username.Trim(), score, DateTimeOffset.UtcNow));
+        await _store.AddAsync(new ScoreEntry(username.Trim(), score, DateTimeOffset.UtcNow)).ConfigureAwait(false);
     }
 
-    public List<ScoreEntry> Top(int count)
+    public async Task<IReadOnlyList<ScoreEntry>> TopAsync(int count)
     {
         if (count <= 0)
         {
             return [];
         }
 
-        var entries = _store.ReadAll();
+        var entries = await _store.ReadAllAsync().ConfigureAwait(false);
         return entries
             .Where(s => !string.IsNullOrWhiteSpace(s.Username) && s.Score >= 0)
             .OrderByDescending(s => s.Score)
@@ -50,14 +53,14 @@ public sealed class LeaderboardService : ILeaderboardService
             .ToList();
     }
 
-    public ScoreEntry? BestFor(string username)
+    public async Task<ScoreEntry?> BestForAsync(string username)
     {
         if (string.IsNullOrWhiteSpace(username))
         {
             return null;
         }
 
-        var entries = _store.ReadAll();
+        var entries = await _store.ReadAllAsync().ConfigureAwait(false);
         return entries
             .Where(s => !string.IsNullOrWhiteSpace(s.Username) &&
                         s.Username.Equals(username.Trim(), StringComparison.OrdinalIgnoreCase))

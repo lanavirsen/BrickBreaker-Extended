@@ -1,11 +1,13 @@
 namespace BrickBreaker.Core.Abstractions;
 
+using System.Threading.Tasks;
+
 // Exposes authentication-related use cases for UI layers.
 public interface IAuthService
 {
-    bool UsernameExists(string username);
+    Task<bool> UsernameExistsAsync(string username);
 
-    bool Register(string username, string password);
+    Task<bool> RegisterAsync(string username, string password);
 
-    bool Login(string username, string password);
+    Task<bool> LoginAsync(string username, string password);
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using BrickBreaker.Core.Models;
 using BrickBreaker.Core.Services;
 
@@ -6,38 +8,38 @@ namespace BrickBreaker.Tests;
 public sealed class LeaderboardTests
 {
     [Fact]
-    public void SubmitEntry_ForwardsEntryToStore()
+    public async Task SubmitEntry_ForwardsEntryToStore()
     {
         var store = new FakeLeaderboardStore();
         var sut = new LeaderboardService(store);
         var entry = new ScoreEntry("Alice", 42, DateTimeOffset.Parse("2024-05-01T12:00:00+00:00"));
 
-        sut.Submit(entry);
+        await sut.SubmitAsync(entry);
 
         Assert.Same(entry, Assert.Single(store.AddedEntries));
     }
 
     [Fact]
-    public void Submit_WithUsernameAndScore_IgnoresInvalidInputs()
+    public async Task Submit_WithUsernameAndScore_IgnoresInvalidInputs()
     {
         // Reject empty usernames and negative scores.
         var store = new FakeLeaderboardStore();
         var sut = new LeaderboardService(store);
 
-        sut.Submit(" ", 10);
-        sut.Submit("Alice", -1);
+        await sut.SubmitAsync(" ", 10);
+        await sut.SubmitAsync("Alice", -1);
 
         Assert.Empty(store.AddedEntries);
     }
 
     [Fact]
-    public void Submit_WithUsernameAndScore_TrimsNameAndAddsTimestamp()
+    public async Task Submit_WithUsernameAndScore_TrimsNameAndAddsTimestamp()
     {
         // Names should be trimmed and timestamps should be set by the method.
         var store = new FakeLeaderboardStore();
         var sut = new LeaderboardService(store);
 
-        sut.Submit("  Alice  ", 100);
+        await sut.SubmitAsync("  Alice  ", 100);
 
         var submitted = Assert.Single(store.AddedEntries);
         Assert.Equal("Alice", submitted.Username);
@@ -46,7 +48,7 @@ public sealed class LeaderboardTests
     }
 
     [Fact]
-    public void Top_FiltersInvalidEntriesAndSortsByScoreDateAndName()
+    public async Task Top_FiltersInvalidEntriesAndSortsByScoreDateAndName()
     {
         // Entries with blanks/negative scores are removed; ordering is Score desc, At asc, Username asc.
         var store = new FakeLeaderboardStore
@@ -63,7 +65,7 @@ public sealed class LeaderboardTests
         };
         var sut = new LeaderboardService(store);
 
-        var top = sut.Top(3);
+        var top = await sut.TopAsync(3);
 
         Assert.Collection(top,
             entry => Assert.Equal("Charlie", entry.Username), // earliest timestamp overall
@@ -72,7 +74,7 @@ public sealed class LeaderboardTests
     }
 
     [Fact]
-    public void BestFor_ReturnsBestScoreIgnoringCase()
+    public async Task BestFor_ReturnsBestScoreIgnoringCase()
     {
         // Case-insensitive comparisons should find the overall best score.
         var store = new FakeLeaderboardStore
@@ -87,7 +89,7 @@ public sealed class LeaderboardTests
         };
         var sut = new LeaderboardService(store);
 
-        var best = sut.BestFor("ALICE");
+        var best = await sut.BestForAsync("ALICE");
 
         Assert.NotNull(best);
         Assert.Equal(150, best!.Score);
@@ -95,7 +97,7 @@ public sealed class LeaderboardTests
     }
 
     [Fact]
-    public void BestFor_ReturnsNull_WhenUserHasNoEntries()
+    public async Task BestFor_ReturnsNull_WhenUserHasNoEntries()
     {
         // When no matching entries exist, the result should be null.
         var store = new FakeLeaderboardStore
@@ -107,7 +109,7 @@ public sealed class LeaderboardTests
         };
         var sut = new LeaderboardService(store);
 
-        var best = sut.BestFor("Alice");
+        var best = await sut.BestForAsync("Alice");
 
         Assert.Null(best);
     }

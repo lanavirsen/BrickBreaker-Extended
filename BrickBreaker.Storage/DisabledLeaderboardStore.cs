@@ -1,16 +1,20 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Models;
-using System.Collections.Generic;
 
 namespace BrickBreaker.Storage;
 
 // Fallback implementation that no-ops when the Supabase connection string is missing.
 public sealed class DisabledLeaderboardStore : ILeaderboardStore
 {
-    public void Add(ScoreEntry entry)
+    public Task AddAsync(ScoreEntry entry, CancellationToken cancellationToken = default)
     {
         // Intentionally does nothing - leaderboard persistence requires the database.
+        return Task.CompletedTask;
     }
 
-    public List<ScoreEntry> ReadAll() => new();
+    public Task<List<ScoreEntry>> ReadAllAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(new List<ScoreEntry>());
 }
