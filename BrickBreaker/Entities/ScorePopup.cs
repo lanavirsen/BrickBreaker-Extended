@@ -1,4 +1,4 @@
-﻿
+
 namespace BrickBreaker.Entities
 {
     public class ScorePopup
@@ -66,4 +66,4 @@ namespace BrickBreaker.Entities
         }
     }
 }
-    
+

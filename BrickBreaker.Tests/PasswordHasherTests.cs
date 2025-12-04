@@ -1,4 +1,4 @@
-﻿using BrickBreaker.Logic;
+using BrickBreaker.Logic;
 
 namespace BrickBreaker.Tests;
 

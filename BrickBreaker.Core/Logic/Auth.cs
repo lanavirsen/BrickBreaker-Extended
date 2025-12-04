@@ -1,4 +1,4 @@
-﻿using BrickBreaker.Logic.Abstractions;
+using BrickBreaker.Logic.Abstractions;
 using BrickBreaker.Models;
 
 namespace BrickBreaker.Logic;
@@ -8,7 +8,7 @@ public sealed class Auth
     private readonly IUserStore _users;
     public Auth(IUserStore users) => _users = users;
 
-   
+
     public bool UsernameExists(string username)  // Checks if username already exists
     {
         username = (username ?? "").Trim();

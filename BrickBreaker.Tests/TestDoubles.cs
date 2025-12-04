@@ -1,4 +1,4 @@
-﻿// A fake in-memory implementation of IUserStore interface to simulate user data storage and retrieval in tests.
+// A fake in-memory implementation of IUserStore interface to simulate user data storage and retrieval in tests.
 using BrickBreaker.Logic.Abstractions;
 using BrickBreaker.Models;
 

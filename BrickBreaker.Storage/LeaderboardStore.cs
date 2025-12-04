@@ -1,4 +1,4 @@
-﻿using BrickBreaker.Logic.Abstractions;
+using BrickBreaker.Logic.Abstractions;
 using BrickBreaker.Models;
 using Npgsql;
 using NpgsqlTypes;
@@ -28,7 +28,7 @@ public sealed class LeaderboardStore : ILeaderboardStore
     {
         if (entry is null) throw new ArgumentException(nameof(entry));
 
-       //insert values into the table
+        //insert values into the table
         const string sql = $"""
         INSERT INTO {TableName} (username, score, at)
         VALUES (@username, @score, @at);

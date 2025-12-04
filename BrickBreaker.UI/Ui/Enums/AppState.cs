@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.UI.Ui.Enums;
+namespace BrickBreaker.UI.Ui.Enums;
 
 // Represents the major states the UI can be in to drive screen changes.
 public enum AppState

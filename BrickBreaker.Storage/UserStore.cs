@@ -30,7 +30,7 @@ public sealed class UserStore : IUserStore
         {
             return false;
         }
-        const string sql = 
+        const string sql =
              $"""
              SELECT 1
              FROM {TableName}
@@ -71,7 +71,7 @@ public sealed class UserStore : IUserStore
         command.Parameters.AddWithValue("password_hash", password);
         command.Parameters.AddWithValue("salt", components.Salt);
 
-        connection.Open(); 
+        connection.Open();
         command.ExecuteNonQuery(); //executes the sql command
     }
     public User? Get(string username) //method to get information from the db

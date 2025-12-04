@@ -1,4 +1,4 @@
-﻿using BrickBreaker.UI.Ui.Enums;
+using BrickBreaker.UI.Ui.Enums;
 using BrickBreaker.UI.Ui.Interfaces;
 using Spectre.Console;
 
