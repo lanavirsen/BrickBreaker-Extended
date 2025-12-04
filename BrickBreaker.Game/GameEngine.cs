@@ -1,7 +1,8 @@
-using BrickBreaker.Entities;
-using BrickBreaker.Utilities;
+using System.Drawing;
+using BrickBreaker.Game.Entities;
+using BrickBreaker.Game.Utilities;
 
-namespace BrickBreaker
+namespace BrickBreaker.Game
 {
     public class GameEngine
     {

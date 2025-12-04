@@ -1,7 +1,7 @@
 using System.Drawing;
-using BrickBreaker.Entities;
+using BrickBreaker.Game.Entities;
 
-namespace BrickBreaker.Utilities
+namespace BrickBreaker.Game.Utilities
 {
     public static class GameUtils
     {

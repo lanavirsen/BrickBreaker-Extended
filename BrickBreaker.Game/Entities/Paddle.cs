@@ -2,7 +2,7 @@
 //using System.Collections.Generic;
 //using System.Text;
 
-//namespace BrickBreaker.Entities
+//namespace BrickBreaker.Game.Entities
 //{
 //    public class Paddle //dont need this file but keeping for potential future use
 //    {

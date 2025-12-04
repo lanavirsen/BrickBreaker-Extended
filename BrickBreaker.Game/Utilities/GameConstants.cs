@@ -1,5 +1,4 @@
-
-namespace BrickBreaker.Utilities
+namespace BrickBreaker.Game.Utilities
 {
     public static class GameConstants
     {
