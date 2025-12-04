@@ -1,8 +1,8 @@
-using BrickBreaker.Logic;
-using BrickBreaker.Logic.Abstractions;
-using BrickBreaker.Models;
-using System.Text.Json;
+using BrickBreaker.Core.Abstractions;
+using BrickBreaker.Core.Models;
+using BrickBreaker.Core.Services;
 using Npgsql;
+using System.Text.Json;
 
 namespace BrickBreaker.Storage;
 

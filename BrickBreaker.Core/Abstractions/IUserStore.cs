@@ -1,6 +1,6 @@
-using BrickBreaker.Models;
+using BrickBreaker.Core.Models;
 
-namespace BrickBreaker.Logic.Abstractions;
+namespace BrickBreaker.Core.Abstractions;
 
 public interface IUserStore
 {

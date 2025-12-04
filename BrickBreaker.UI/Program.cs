@@ -1,5 +1,6 @@
+using BrickBreaker.Core.Abstractions;
+using BrickBreaker.Core.Services;
 using BrickBreaker.Game;
-using BrickBreaker.Logic;
 using BrickBreaker.Storage;
 using BrickBreaker.Ui;
 using BrickBreaker.UI.Ui.Enums;
@@ -11,8 +12,8 @@ using System.Text;
 class Program
 {
     static string? currentUser = null;
-    private static Leaderboard _lb = null!;
-    private static Auth _auth = null!;
+    private static ILeaderboardService _leaderboard = null!;
+    private static IAuthService _auth = null!;
     private static bool _databaseAvailable = false;
 
     // UI menus and dialogs 
@@ -33,27 +34,29 @@ class Program
         // Get the connection string for the database
         var connectionString = storageConfig.GetConnectionString();
 
+        IUserStore userStore;
+        ILeaderboardStore leaderboardStore;
+
         // Initialize database stores based on the connection string
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
-            var userStore = new UserStore(connectionString);
-            var leaderboardStore = new LeaderboardStore(connectionString);
-
-            _lb = new Leaderboard(leaderboardStore);
-            _auth = new Auth(userStore);
+            userStore = new UserStore(connectionString);
+            leaderboardStore = new LeaderboardStore(connectionString);
             _databaseAvailable = true;
         }
         else
         {
             // Fallback to disabled stores if connection string is missing
-            _lb = new Leaderboard(new DisabledLeaderboardStore());
-            // Initialize authentication manager with disabled user store
-            _auth = new Auth(new DisabledUserStore());
+            userStore = new DisabledUserStore();
+            leaderboardStore = new DisabledLeaderboardStore();
             // Set database availability flag
             _databaseAvailable = false;
             // Show warning about missing database configuration
             ShowDatabaseWarning("Supabase connection string missing. Database features are disabled until it is configured.");
         }
+
+        _leaderboard = new LeaderboardService(leaderboardStore);
+        _auth = new AuthService(userStore);
 
         // Main application loop
         AppState state = AppState.LoginMenu;
@@ -151,7 +154,7 @@ class Program
             // Submit score to leaderboard if database is available
             if (_databaseAvailable)
             {
-                _lb.Submit(currentUser ?? "guest", score);
+                _leaderboard.Submit(currentUser ?? "guest", score);
             }
             else
             {
@@ -278,7 +281,7 @@ class Program
             return;
         }
 
-        var top = _lb.Top(10);
+        var top = _leaderboard.Top(10);
 
         if (!top.Any())
         {
@@ -297,7 +300,7 @@ class Program
             return;
         }
 
-        var best = _lb.BestFor(currentUser!);
+        var best = _leaderboard.BestFor(currentUser!);
 
         if (best == null)
         {

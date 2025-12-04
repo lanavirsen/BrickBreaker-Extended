@@ -1,4 +1,4 @@
-namespace BrickBreaker.Models;
+namespace BrickBreaker.Core.Models;
 
 
 public sealed class ScoreEntry //defining which attributes the classes have

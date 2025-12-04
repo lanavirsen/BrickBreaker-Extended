@@ -1,5 +1,5 @@
-using BrickBreaker.Logic.Abstractions;
-using BrickBreaker.Models;
+using BrickBreaker.Core.Abstractions;
+using BrickBreaker.Core.Models;
 using System.Collections.Generic;
 
 namespace BrickBreaker.Storage;
