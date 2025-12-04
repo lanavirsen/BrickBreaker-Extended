@@ -1,5 +1,5 @@
-using BrickBreaker.Logic;
-using BrickBreaker.Models;
+using BrickBreaker.Core.Models;
+using BrickBreaker.Core.Services;
 
 namespace BrickBreaker.Tests;
 
@@ -9,7 +9,7 @@ public sealed class LeaderboardTests
     public void SubmitEntry_ForwardsEntryToStore()
     {
         var store = new FakeLeaderboardStore();
-        var sut = new Leaderboard(store);
+        var sut = new LeaderboardService(store);
         var entry = new ScoreEntry("Alice", 42, DateTimeOffset.Parse("2024-05-01T12:00:00+00:00"));
 
         sut.Submit(entry);
@@ -22,7 +22,7 @@ public sealed class LeaderboardTests
     {
         // Reject empty usernames and negative scores.
         var store = new FakeLeaderboardStore();
-        var sut = new Leaderboard(store);
+        var sut = new LeaderboardService(store);
 
         sut.Submit(" ", 10);
         sut.Submit("Alice", -1);
@@ -35,7 +35,7 @@ public sealed class LeaderboardTests
     {
         // Names should be trimmed and timestamps should be set by the method.
         var store = new FakeLeaderboardStore();
-        var sut = new Leaderboard(store);
+        var sut = new LeaderboardService(store);
 
         sut.Submit("  Alice  ", 100);
 
@@ -61,7 +61,7 @@ public sealed class LeaderboardTests
                 new("alice", 200, DateTimeOffset.Parse("2024-05-01T10:00:00+00:00")),
             }
         };
-        var sut = new Leaderboard(store);
+        var sut = new LeaderboardService(store);
 
         var top = sut.Top(3);
 
@@ -85,7 +85,7 @@ public sealed class LeaderboardTests
                 new("Bob", 300, DateTimeOffset.Parse("2024-01-01T00:00:00+00:00")),
             }
         };
-        var sut = new Leaderboard(store);
+        var sut = new LeaderboardService(store);
 
         var best = sut.BestFor("ALICE");
 
@@ -105,7 +105,7 @@ public sealed class LeaderboardTests
                 new("Bob", 25, DateTimeOffset.Now)
             }
         };
-        var sut = new Leaderboard(store);
+        var sut = new LeaderboardService(store);
 
         var best = sut.BestFor("Alice");
 

@@ -1,6 +1,5 @@
-
-using BrickBreaker.Logic;
-using BrickBreaker.Models;
+using BrickBreaker.Core.Models;
+using BrickBreaker.Core.Services;
 
 namespace BrickBreaker.Tests;
 
@@ -11,7 +10,7 @@ public sealed class AuthTests
     {
         var store = new FakeUserStore();
         store.Seed(new User("Alice", "secret"));
-        var sut = new Auth(store);
+        var sut = new AuthService(store);
 
         var exists = sut.UsernameExists("  Alice  ");
 
@@ -25,7 +24,7 @@ public sealed class AuthTests
         // Username is already seeded, so Register should reject the duplicate.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Bob", "pw"));
-        var sut = new Auth(store);
+        var sut = new AuthService(store);
 
         var result = sut.Register("Bob", "newpw");
 
@@ -37,7 +36,7 @@ public sealed class AuthTests
     public void Register_Fails_WhenUsernameMissing()
     {
         // Whitespace usernames are invalid.
-        var sut = new Auth(new FakeUserStore());
+        var sut = new AuthService(new FakeUserStore());
 
         var result = sut.Register("   ", "pw");
 
@@ -48,7 +47,7 @@ public sealed class AuthTests
     public void Register_Fails_WhenPasswordMissing()
     {
         // Password cannot be empty, so the call should fail.
-        var sut = new Auth(new FakeUserStore());
+        var sut = new AuthService(new FakeUserStore());
 
         var result = sut.Register("Alice", "");
 
@@ -60,7 +59,7 @@ public sealed class AuthTests
     {
         // Valid username/password should succeed and be stored without extra whitespace.
         var store = new FakeUserStore();
-        var sut = new Auth(store);
+        var sut = new AuthService(store);
 
         var result = sut.Register("  Alice  ", "  pw  ");
 
@@ -74,7 +73,7 @@ public sealed class AuthTests
     public void Login_ReturnsFalse_WhenUserMissing()
     {
         // If the backing store does not contain the user, login should fail.
-        var sut = new Auth(new FakeUserStore());
+        var sut = new AuthService(new FakeUserStore());
 
         var loggedIn = sut.Login("unknown", "pw");
 
@@ -87,7 +86,7 @@ public sealed class AuthTests
         // Valid username but wrong password should fail to log in.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
-        var sut = new Auth(store);
+        var sut = new AuthService(store);
 
         var loggedIn = sut.Login("Alice", "wrong");
 
@@ -100,7 +99,7 @@ public sealed class AuthTests
         // Exact match of username/password should succeed.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
-        var sut = new Auth(store);
+        var sut = new AuthService(store);
 
         var loggedIn = sut.Login("Alice", "pw");
 
@@ -113,7 +112,7 @@ public sealed class AuthTests
         // Ensure the repository is called with a trimmed username.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
-        var sut = new Auth(store);
+        var sut = new AuthService(store);
 
         _ = sut.Login("  Alice  ", "pw");
 

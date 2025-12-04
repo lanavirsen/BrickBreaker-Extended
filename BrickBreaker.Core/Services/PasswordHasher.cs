@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace BrickBreaker.Logic;
+namespace BrickBreaker.Core.Services;
 
 // Provides PBKDF2-based hashing helpers used by the storage layer to persist credentials.
 public static class PasswordHasher

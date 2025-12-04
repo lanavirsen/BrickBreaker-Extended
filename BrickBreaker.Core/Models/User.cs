@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace BrickBreaker.Models;
+namespace BrickBreaker.Core.Models;
 
 public sealed class User //define the attributes the class has
 {
