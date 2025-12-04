@@ -1,8 +1,8 @@
-> Continuation of the original group project. Frozen version: [BrickBreaker-Group](https://github.com/lanavirsen/BrickBreaker-Group)
+> Continuation of the original group project. Frozen version: [BrickBreaker-Group](https://github.com/lanavirsen/BrickBreaker-Extended)
 
 # BrickBreaker – Extended Edition
 
-![CI](https://github.com/lanavirsen/BrickBreaker-Group/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/lanavirsen/BrickBreaker-Group/branch/main/graph/badge.svg)](https://codecov.io/gh/lanavirsen/BrickBreaker-Group)
+![CI](https://github.com/lanavirsen/BrickBreaker-Extended/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended/branch/main/graph/badge.svg)](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended)
 
 BrickBreaker is a .NET 9 WinForms remake of the classic paddle-and-bricks arcade game.  
 The gameplay runs inside a desktop window, while Spectre.Console menus handle login, Quick Play, and leaderboard actions. Every frame, power-up, and collision is authored directly in code.
