@@ -1,4 +1,8 @@
-# BrickBreaker
+> **Note:** This repository is a frozen mirror of the original school group project. It reflects the final submitted state as of 2025-11-02.
+>
+> No further development will occur here.
+
+# BrickBreaker - Group Project (YH Assignment)
 ![CI](https://github.com/confusedpotatoe/GroupProdject/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/confusedpotatoe/GroupProdject/branch/main/graph/badge.svg)](https://codecov.io/gh/confusedpotatoe/GroupProdject)
 
 BrickBreaker is a .NET 9 WinForms remake of the classic paddle-and-bricks arcade game.  
