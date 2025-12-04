@@ -1,4 +1,4 @@
-﻿using BrickBreaker.Entities;
+using BrickBreaker.Entities;
 using BrickBreaker.Utilities;
 
 namespace BrickBreaker

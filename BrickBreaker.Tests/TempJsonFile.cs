@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace BrickBreaker.Tests;
 
@@ -15,7 +15,7 @@ internal sealed class TempJsonFile : IDisposable
             Guid.NewGuid().ToString("N"));
 
         System.IO.Directory.CreateDirectory(_directory);
-        Path = System.IO.Path.Combine(_directory, "data.json"); 
+        Path = System.IO.Path.Combine(_directory, "data.json");
 
         if (initialJson is not null)
         {

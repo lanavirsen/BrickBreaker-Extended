@@ -1,4 +1,4 @@
-﻿
+
 namespace BrickBreaker.Entities
 {
     public enum PowerUpType

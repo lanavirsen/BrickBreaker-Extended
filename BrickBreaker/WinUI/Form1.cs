@@ -263,7 +263,7 @@ namespace BrickBreaker
                     paddleY - 80);
             }
         }
-        private void DrawPowerUps(Graphics g) 
+        private void DrawPowerUps(Graphics g)
         {
             foreach (var p in gameEngine.PowerUps)
             {
@@ -389,7 +389,7 @@ namespace BrickBreaker
         {
             isGameOver = false;
             ballReadyToShoot = true;
-            
+
             gameEngine.StartLevel(1, playAreaRect);
             gameTimer.Start();
         }

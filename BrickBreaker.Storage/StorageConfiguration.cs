@@ -9,7 +9,7 @@ namespace BrickBreaker.Storage
 {
     public sealed class StorageConfiguration
     {
-        private readonly IConfiguration _config; 
+        private readonly IConfiguration _config;
         private readonly string _root;
 
         public StorageConfiguration() //sets the directory for the json file that keeps connectionstring to db
