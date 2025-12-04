@@ -7,8 +7,10 @@ using BrickBreaker.UI.Ui.Enums;
 using BrickBreaker.UI.Ui.Interfaces;
 using BrickBreaker.UI.Ui.SpecterConsole;
 using Spectre.Console;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 class Program
 {
     static string? currentUser = null;
@@ -25,7 +27,7 @@ class Program
     static Header header = new Header();
 
     // Application entry point
-    static void Main()
+    static async Task Main()
     {
         // Ensure UTF-8 encoding for console output
         Console.OutputEncoding = Encoding.UTF8;
@@ -65,16 +67,16 @@ class Program
         {
             state = state switch
             {
-                AppState.LoginMenu => HandleLoginMenu(),
-                AppState.GameplayMenu => HandleGameplayMenu(),
-                AppState.Playing => HandlePlaying(),
+                AppState.LoginMenu => await HandleLoginMenuAsync(),
+                AppState.GameplayMenu => await HandleGameplayMenuAsync(),
+                AppState.Playing => await HandlePlayingAsync(),
                 _ => AppState.Exit
             };
         }
     }
 
     // Login Menu Handler
-    static AppState HandleLoginMenu()
+    static async Task<AppState> HandleLoginMenuAsync()
     {
         var choice = _loginMenu.Show();
 
@@ -85,15 +87,15 @@ class Program
                 currentMode = GameMode.QuickPlay;
                 return AppState.Playing;
             case LoginMenuChoice.Register:
-                DoRegister();
+                await DoRegisterAsync();
                 _dialogs.Pause();
                 return AppState.LoginMenu;
 
             case LoginMenuChoice.Login:
-                return DoLogin() ? AppState.GameplayMenu : AppState.LoginMenu;
+                return await DoLoginAsync() ? AppState.GameplayMenu : AppState.LoginMenu;
 
             case LoginMenuChoice.Leaderboard:
-                ShowLeaderboard();
+                await ShowLeaderboardAsync();
                 _dialogs.Pause();
                 return AppState.LoginMenu;
 
@@ -107,7 +109,7 @@ class Program
 
 
     // Gameplay Menu Handler
-    static AppState HandleGameplayMenu()
+    static async Task<AppState> HandleGameplayMenuAsync()
     {
         GameplayMenuChoice choice = _gameplayMenu.Show(currentUser ?? "guest");
 
@@ -118,11 +120,11 @@ class Program
                 return AppState.Playing;
 
             case GameplayMenuChoice.Best:
-                ShowBestScore();
+                await ShowBestScoreAsync();
                 return AppState.GameplayMenu;
 
             case GameplayMenuChoice.Leaderboard:
-                ShowLeaderboard();
+                await ShowLeaderboardAsync();
                 _dialogs.Pause();
                 return AppState.GameplayMenu;
 
@@ -136,7 +138,7 @@ class Program
     }
 
     // Playing Handler
-    static AppState HandlePlaying()
+    static async Task<AppState> HandlePlayingAsync()
     {
         AnsiConsole.Clear();
         IGame game = new BrickBreaker.Hosting.WinFormsBrickBreakerGame();
@@ -154,7 +156,7 @@ class Program
             // Submit score to leaderboard if database is available
             if (_databaseAvailable)
             {
-                _leaderboard.Submit(currentUser ?? "guest", score);
+                await _leaderboard.SubmitAsync(currentUser ?? "guest", score);
             }
             else
             {
@@ -168,7 +170,7 @@ class Program
     }
 
     // Helper methods
-    static void DoRegister()
+    static async Task DoRegisterAsync()
     {
         if (!_databaseAvailable)
         {
@@ -187,8 +189,8 @@ class Program
             return;
         }
 
-        // Checks so username don´t already exists
-        if (_auth.UsernameExists(username))
+        var exists = await _auth.UsernameExistsAsync(username);
+        if (exists)
         {
             _dialogs.ShowMessage("Username already exists.");
             return;
@@ -197,14 +199,14 @@ class Program
         var password = _dialogs.PromptNewPassword();
 
         // Attempt to register the new user/ add new user to the database
-        bool ok = _auth.Register(username, password);
+        bool ok = await _auth.RegisterAsync(username, password);
         _dialogs.ShowMessage(ok
             ? "Registration successful! You can now log in."
             : "Registration failed (empty or already exists).");
     }
 
     // Login helper method
-    static bool DoLogin()
+    static async Task<bool> DoLoginAsync()
     {
         if (!_databaseAvailable)
         {
@@ -214,7 +216,7 @@ class Program
 
         var (username, password) = _dialogs.PromptCredentials();
 
-        if (_auth.Login(username, password))
+        if (await _auth.LoginAsync(username, password))
         {
             currentUser = username;
 
@@ -249,7 +251,7 @@ class Program
     }
 
     // Leaderboard display method
-    static void ShowLeaderboard()
+    static async Task ShowLeaderboardAsync()
     {
         AnsiConsole.Progress()
         .Columns(new ProgressColumn[]
@@ -281,7 +283,7 @@ class Program
             return;
         }
 
-        var top = _leaderboard.Top(10);
+        var top = await _leaderboard.TopAsync(10);
 
         if (!top.Any())
         {
@@ -292,7 +294,7 @@ class Program
         var items = top.Select(s => (s.Username, s.Score, s.At));
         _dialogs.ShowLeaderboard(items);
     }
-    static void ShowBestScore()
+    static async Task ShowBestScoreAsync()
     {
         if (!_databaseAvailable)
         {
@@ -300,7 +302,7 @@ class Program
             return;
         }
 
-        var best = _leaderboard.BestFor(currentUser!);
+        var best = await _leaderboard.BestForAsync(currentUser!);
 
         if (best == null)
         {

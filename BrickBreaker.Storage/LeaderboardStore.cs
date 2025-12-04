@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Models;
 using Npgsql;
@@ -23,7 +26,7 @@ public sealed class LeaderboardStore : ILeaderboardStore
     }
 
     //Adds a highscore to the table leaderboard 
-    public void Add(ScoreEntry entry)
+    public async Task AddAsync(ScoreEntry entry, CancellationToken cancellationToken = default)
     {
         if (entry is null) throw new ArgumentException(nameof(entry));
 
@@ -33,7 +36,7 @@ public sealed class LeaderboardStore : ILeaderboardStore
         VALUES (@username, @score, @at);
         """;
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         using var command = new NpgsqlCommand(sql, connection);
 
         //takes data from entry. and sends it to the db
@@ -41,29 +44,29 @@ public sealed class LeaderboardStore : ILeaderboardStore
         command.Parameters.AddWithValue("score", entry.Score);
         command.Parameters.AddWithValue("at", NpgsqlDbType.TimestampTz, entry.At.UtcDateTime);
 
-        connection.Open();
-        command.ExecuteNonQuery();
+        await connection.OpenAsync(cancellationToken);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     //methods that reads the db using sql command select
-    public List<ScoreEntry> ReadAll()
+    public async Task<List<ScoreEntry>> ReadAllAsync(CancellationToken cancellationToken = default)
     {
         const string sql = $"""
     SELECT username, score, at
     FROM {TableName};
     """;
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         using var command = new NpgsqlCommand(sql, connection);
 
-        connection.Open();
+        await connection.OpenAsync(cancellationToken);
 
-        using var reader = command.ExecuteReader();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var entries = new List<ScoreEntry>();
 
 
         //reads data from the tables, using reader to iterate rows and GetOrdinal to find the right column/row, then the value gets read wíth GetString or GetInt32
-        while (reader.Read())
+        while (await reader.ReadAsync(cancellationToken))
         {
             var username = reader.GetString(reader.GetOrdinal("username"));
             var score = reader.GetInt32(reader.GetOrdinal("score"));

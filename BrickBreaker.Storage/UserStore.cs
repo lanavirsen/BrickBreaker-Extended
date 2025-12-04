@@ -1,8 +1,9 @@
+using System.Threading;
+using System.Threading.Tasks;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Models;
 using BrickBreaker.Core.Services;
 using Npgsql;
-using System.Text.Json;
 
 namespace BrickBreaker.Storage;
 
@@ -23,7 +24,7 @@ public sealed class UserStore : IUserStore
     }
 
     //method to check if a suername exists
-    public bool Exists(string username)
+    public async Task<bool> ExistsAsync(string username, CancellationToken cancellationToken = default)
     {
         //if it doesnt exist the bool returns false, else it takes the new information
         if (string.IsNullOrWhiteSpace(username))
@@ -37,13 +38,14 @@ public sealed class UserStore : IUserStore
              WHERE LOWER(username) = LOWER(@username)
              LIMIT 1;
              """;
-        using var connection = new NpgsqlConnection(_connectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("username", username.Trim()); //prepping the username to be sent to db
-        connection.Open();
-        return command.ExecuteScalar() is not null;
+        await connection.OpenAsync(cancellationToken);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is not null;
     }
-    public void Add(User user)
+    public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         if (user is null) throw new ArgumentException(nameof(user)); //checks if username is null
 
@@ -65,16 +67,16 @@ public sealed class UserStore : IUserStore
             VALUES (@username, @password_hash, @salt)
             ON CONFLICT (username) DO NOTHING;
             """;
-        using var connection = new NpgsqlConnection(_connectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("username", username);
         command.Parameters.AddWithValue("password_hash", password);
         command.Parameters.AddWithValue("salt", components.Salt);
 
-        connection.Open();
-        command.ExecuteNonQuery(); //executes the sql command
+        await connection.OpenAsync(cancellationToken);
+        await command.ExecuteNonQueryAsync(cancellationToken); //executes the sql command
     }
-    public User? Get(string username) //method to get information from the db
+    public async Task<User?> GetAsync(string username, CancellationToken cancellationToken = default) //method to get information from the db
     {
         if (string.IsNullOrWhiteSpace(username)) //checks if the username and password exist
         {
@@ -87,14 +89,14 @@ public sealed class UserStore : IUserStore
         LIMIT 1;
         """;
         //establishes a connection and prepares a command to execute sql command
-        using var connection = new NpgsqlConnection(_connectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("username", username.Trim());
 
         //connects and then executes command, if it doesnt find anything returns null, else it reads the values from the rows and sends it back
-        connection.Open();
-        using var reader = command.ExecuteReader();
-        if (!reader.Read()) return null;
+        await connection.OpenAsync(cancellationToken);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
 
         var storedUsername = reader.GetString(reader.GetOrdinal("username")); //fetches username from username row
         var storedPassword = reader.GetString(reader.GetOrdinal("password_hash")); //fetches password hash from its row

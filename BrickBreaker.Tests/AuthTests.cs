@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using BrickBreaker.Core.Models;
 using BrickBreaker.Core.Services;
 
@@ -6,62 +7,62 @@ namespace BrickBreaker.Tests;
 public sealed class AuthTests
 {
     [Fact]
-    public void UsernameExists_TrimsInputBeforeDelegating()
+    public async Task UsernameExists_TrimsInputBeforeDelegating()
     {
         var store = new FakeUserStore();
         store.Seed(new User("Alice", "secret"));
         var sut = new AuthService(store);
 
-        var exists = sut.UsernameExists("  Alice  ");
+        var exists = await sut.UsernameExistsAsync("  Alice  ");
 
         Assert.True(exists);
         Assert.Equal("Alice", store.LastExistsUsername);
     }
 
     [Fact]
-    public void Register_Fails_WhenUsernameAlreadyExists()
+    public async Task Register_Fails_WhenUsernameAlreadyExists()
     {
         // Username is already seeded, so Register should reject the duplicate.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Bob", "pw"));
         var sut = new AuthService(store);
 
-        var result = sut.Register("Bob", "newpw");
+        var result = await sut.RegisterAsync("Bob", "newpw");
 
         Assert.False(result);
         Assert.Empty(store.AddedUsers);
     }
 
     [Fact]
-    public void Register_Fails_WhenUsernameMissing()
+    public async Task Register_Fails_WhenUsernameMissing()
     {
         // Whitespace usernames are invalid.
         var sut = new AuthService(new FakeUserStore());
 
-        var result = sut.Register("   ", "pw");
+        var result = await sut.RegisterAsync("   ", "pw");
 
         Assert.False(result);
     }
 
     [Fact]
-    public void Register_Fails_WhenPasswordMissing()
+    public async Task Register_Fails_WhenPasswordMissing()
     {
         // Password cannot be empty, so the call should fail.
         var sut = new AuthService(new FakeUserStore());
 
-        var result = sut.Register("Alice", "");
+        var result = await sut.RegisterAsync("Alice", "");
 
         Assert.False(result);
     }
 
     [Fact]
-    public void Register_Succeeds_AndPersistsTrimmedUser()
+    public async Task Register_Succeeds_AndPersistsTrimmedUser()
     {
         // Valid username/password should succeed and be stored without extra whitespace.
         var store = new FakeUserStore();
         var sut = new AuthService(store);
 
-        var result = sut.Register("  Alice  ", "  pw  ");
+        var result = await sut.RegisterAsync("  Alice  ", "  pw  ");
 
         Assert.True(result);
         var savedUser = Assert.Single(store.AddedUsers);
@@ -70,51 +71,51 @@ public sealed class AuthTests
     }
 
     [Fact]
-    public void Login_ReturnsFalse_WhenUserMissing()
+    public async Task Login_ReturnsFalse_WhenUserMissing()
     {
         // If the backing store does not contain the user, login should fail.
         var sut = new AuthService(new FakeUserStore());
 
-        var loggedIn = sut.Login("unknown", "pw");
+        var loggedIn = await sut.LoginAsync("unknown", "pw");
 
         Assert.False(loggedIn);
     }
 
     [Fact]
-    public void Login_ReturnsFalse_WhenPasswordMismatch()
+    public async Task Login_ReturnsFalse_WhenPasswordMismatch()
     {
         // Valid username but wrong password should fail to log in.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
         var sut = new AuthService(store);
 
-        var loggedIn = sut.Login("Alice", "wrong");
+        var loggedIn = await sut.LoginAsync("Alice", "wrong");
 
         Assert.False(loggedIn);
     }
 
     [Fact]
-    public void Login_ReturnsTrue_WhenCredentialsMatch()
+    public async Task Login_ReturnsTrue_WhenCredentialsMatch()
     {
         // Exact match of username/password should succeed.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
         var sut = new AuthService(store);
 
-        var loggedIn = sut.Login("Alice", "pw");
+        var loggedIn = await sut.LoginAsync("Alice", "pw");
 
         Assert.True(loggedIn);
     }
 
     [Fact]
-    public void Login_TrimsUsernameBeforeLookup()
+    public async Task Login_TrimsUsernameBeforeLookup()
     {
         // Ensure the repository is called with a trimmed username.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
         var sut = new AuthService(store);
 
-        _ = sut.Login("  Alice  ", "pw");
+        _ = await sut.LoginAsync("  Alice  ", "pw");
 
         Assert.Equal("Alice", store.LastGetUsername);
     }

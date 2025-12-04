@@ -1,4 +1,8 @@
 // A fake in-memory implementation of IUserStore interface to simulate user data storage and retrieval in tests.
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Models;
 
@@ -26,35 +30,36 @@ internal sealed class FakeUserStore : IUserStore
     }
 
     // Checks if a username exists in the store.
-    public bool Exists(string username)
+    public Task<bool> ExistsAsync(string username, CancellationToken cancellationToken = default)
     {
         LastExistsUsername = username;
         if (string.IsNullOrWhiteSpace(username))
         {
-            return false;
+            return Task.FromResult(false);
         }
-        return _users.ContainsKey(username.Trim());
+        return Task.FromResult(_users.ContainsKey(username.Trim()));
     }
 
     // Adds a user to the store and tracks the addition.
-    public void Add(User user)
+    public Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         AddedUsers.Add(user);
         if (!string.IsNullOrWhiteSpace(user.Username))
         {
             _users[user.Username.Trim()] = user;
         }
+        return Task.CompletedTask;
     }
 
     // Retrieves a user by username if present, otherwise returns null.
-    public User? Get(string username)
+    public Task<User?> GetAsync(string username, CancellationToken cancellationToken = default)
     {
         LastGetUsername = username;
         if (string.IsNullOrWhiteSpace(username))
         {
-            return null;
+            return Task.FromResult<User?>(null);
         }
-        return _users.TryGetValue(username.Trim(), out var user) ? user : null;
+        return Task.FromResult(_users.TryGetValue(username.Trim(), out var user) ? user : null);
     }
 }
 
@@ -68,17 +73,19 @@ internal sealed class FakeLeaderboardStore : ILeaderboardStore
     public List<ScoreEntry> EntriesToReturn { get; set; } = new();
 
     // Adds a score entry to the internal list.
-    public void Add(ScoreEntry entry)
+    public Task AddAsync(ScoreEntry entry, CancellationToken cancellationToken = default)
     {
         AddedEntries.Add(entry);
+        return Task.CompletedTask;
     }
 
     // returns a copy of the entries to simulate retrieving leaderboard data.
-    public List<ScoreEntry> ReadAll()
+    public Task<List<ScoreEntry>> ReadAllAsync(CancellationToken cancellationToken = default)
     {
         // return deep copies to prevent tests from accidentally mutating internal state.
-        return EntriesToReturn
+        var clone = EntriesToReturn
             .Select(e => new ScoreEntry(e.Username, e.Score, e.At))
             .ToList();
+        return Task.FromResult(clone);
     }
 }

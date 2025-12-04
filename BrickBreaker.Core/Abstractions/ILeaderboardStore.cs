@@ -1,9 +1,11 @@
+using System.Threading;
+using System.Threading.Tasks;
 using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Core.Abstractions;
 
 public interface ILeaderboardStore
 {
-    void Add(ScoreEntry entry);
-    List<ScoreEntry> ReadAll();
+    Task AddAsync(ScoreEntry entry, CancellationToken cancellationToken = default);
+    Task<List<ScoreEntry>> ReadAllAsync(CancellationToken cancellationToken = default);
 }
