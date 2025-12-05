@@ -1,6 +1,5 @@
 using BrickBreaker.Core.Clients;
 using BrickBreaker.Core.Models;
-using BrickBreaker.WinFormsClient.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
