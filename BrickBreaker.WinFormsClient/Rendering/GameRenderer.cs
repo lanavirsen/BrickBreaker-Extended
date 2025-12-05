@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Drawing.Text;
 using BrickBreaker.Game.Entities;
 using BrickBreaker.Game.Utilities;
-using BrickBreaker.WinFormsClient.Gameplay;
+using BrickBreaker.Gameplay;
 
 namespace BrickBreaker.WinFormsClient.Rendering;
 

@@ -4,7 +4,7 @@ using System.Drawing.Text;
 using System.IO;
 using System.Windows.Forms;
 using BrickBreaker.Game.Utilities;
-using BrickBreaker.WinFormsClient.Gameplay;
+using BrickBreaker.Gameplay;
 using BrickBreaker.WinFormsClient.Rendering;
 
 namespace BrickBreaker.WinFormsClient.WinUI;
