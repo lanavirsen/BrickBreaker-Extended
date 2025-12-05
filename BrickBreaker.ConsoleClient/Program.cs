@@ -169,7 +169,7 @@ class Program
         var username = _dialogs.PromptNewUsername();
         var password = _dialogs.PromptNewPassword();
 
-        bool registered = await _auth.RegisterAsync(username, password);
+        bool registered = await RunWithSpinnerAsync("Registering account...", () => _auth.RegisterAsync(username, password));
         _dialogs.ShowMessage(registered
             ? "Registration successful!"
             : "Registration failed. Username might already exist.");
@@ -179,31 +179,10 @@ class Program
     {
         var (username, password) = _dialogs.PromptCredentials();
 
-        bool loggedIn = await _auth.LoginAsync(username, password);
+        bool loggedIn = await RunWithSpinnerAsync("Signing in...", () => _auth.LoginAsync(username, password));
         if (loggedIn)
         {
             currentUser = username;
-            AnsiConsole.Progress()
-                .Columns(new ProgressColumn[]
-                {
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new SpinnerColumn()
-                })
-                .Start(ctx =>
-                {
-                    var verifyTask = ctx.AddTask("[yellow]Verifying user[/]");
-                    var loadTask = ctx.AddTask("[green]Loading game data[/]");
-
-                    while (!ctx.IsFinished)
-                    {
-                        verifyTask.Increment(5);
-                        loadTask.Increment(4);
-                        Thread.Sleep(40);
-                    }
-                });
-
             return true;
         }
 
@@ -213,24 +192,6 @@ class Program
 
     static async Task ShowLeaderboardAsync()
     {
-        AnsiConsole.Progress()
-            .Columns(new ProgressColumn[]
-            {
-                new TaskDescriptionColumn(),
-                new ProgressBarColumn(),
-                new PercentageColumn(),
-                new SpinnerColumn()
-            })
-            .Start(ctx =>
-            {
-                var task = ctx.AddTask("[green]Loading Scores[/]", maxValue: 100);
-                while (!ctx.IsFinished)
-                {
-                    task.Increment(4);
-                    Thread.Sleep(40);
-                }
-            });
-
         AnsiConsole.Clear();
         header.TitleHeader();
 
@@ -240,7 +201,7 @@ class Program
             return;
         }
 
-        var top = await _leaderboard.TopAsync(10);
+        var top = await RunWithSpinnerAsync("Loading leaderboard...", () => _leaderboard.TopAsync(10));
         if (!top.Any())
         {
             _dialogs.ShowMessage("\nTop 10 leaderboard:\nNo scores yet.");
@@ -259,7 +220,7 @@ class Program
             return;
         }
 
-        var best = await _leaderboard.BestForAsync(currentUser ?? string.Empty);
+        var best = await RunWithSpinnerAsync("Fetching best score...", () => _leaderboard.BestForAsync(currentUser ?? string.Empty));
         if (best is null)
         {
             _dialogs.ShowMessage("\nNo scores recorded yet.");
@@ -306,5 +267,15 @@ class Program
         Console.ForegroundColor = ConsoleColor.Red;
         _dialogs.ShowMessage(message);
         Console.ForegroundColor = previousColor;
+    }
+
+    static async Task<T> RunWithSpinnerAsync<T>(string description, Func<Task<T>> action)
+    {
+        T result = default!;
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .SpinnerStyle(Style.Parse("cyan"))
+            .StartAsync(description, async _ => result = await action());
+        return result;
     }
 }
