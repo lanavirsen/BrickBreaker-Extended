@@ -21,7 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="../BrickBreaker.Core/BrickBreaker.Core.csproj" />
     <ProjectReference Include="../BrickBreaker.Storage/BrickBreaker.Storage.csproj" />
-    <ProjectReference Include="../BrickBreaker/BrickBreaker.csproj" />
+    <ProjectReference Include="../BrickBreaker.WinFormsClient/BrickBreaker.WinFormsClient.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Assets/Sounds/Arpent.mp3">

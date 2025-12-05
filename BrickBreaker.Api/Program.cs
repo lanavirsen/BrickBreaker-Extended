@@ -53,7 +53,14 @@ app.MapGet("/leaderboard/top", async (int count, ILeaderboardService leaderboard
     return Results.Ok(entries);
 });
 
+app.MapPost("/leaderboard/submit", async (SubmitScoreRequest request, ILeaderboardService leaderboard) =>
+{
+    await leaderboard.SubmitAsync(request.Username, request.Score);
+    return Results.Ok();
+});
+
 app.Run();
 
 record RegisterRequest(string Username, string Password);
 record LoginRequest(string Username, string Password);
+record SubmitScoreRequest(string Username, int Score);

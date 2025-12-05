@@ -1,6 +1,36 @@
 @BrickBreaker.Api_HostAddress = http://localhost:5190
 
-GET {{BrickBreaker.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+###
+# Register a user
+POST {{BrickBreaker.Api_HostAddress}}/register
+Content-Type: application/json
+
+{
+  "username": "player1",
+  "password": "P@ssword123"
+}
 
 ###
+# Login
+POST {{BrickBreaker.Api_HostAddress}}/login
+Content-Type: application/json
+
+{
+  "username": "player1",
+  "password": "P@ssword123"
+}
+
+###
+# Submit a score
+POST {{BrickBreaker.Api_HostAddress}}/leaderboard/submit
+Content-Type: application/json
+
+{
+  "username": "player1",
+  "score": 4200
+}
+
+###
+# Read the top 10 scores
+GET {{BrickBreaker.Api_HostAddress}}/leaderboard/top?count=10
+Accept: application/json

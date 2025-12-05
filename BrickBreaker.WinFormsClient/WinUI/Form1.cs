@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Drawing.Text;
 
 
-namespace BrickBreaker
+namespace BrickBreaker.WinFormsClient.WinUI
 {
     public partial class Form1 : Form
     {
