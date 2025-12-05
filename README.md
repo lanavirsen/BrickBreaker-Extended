@@ -30,6 +30,7 @@ The gameplay runs inside a desktop window, while Spectre.Console menus handle lo
 BrickBreaker/
 ├── BrickBreaker.sln             Solution root (net9.0)
 ├── BrickBreaker.Gameplay/       Shared GameSession + render models (used by WinForms + Blazor)
+├── BrickBreaker.ConsoleClient/  Spectre.Console client with terminal renderer + Supabase auth
 ├── BrickBreaker.WinFormsClient/ WinForms client (launcher + Form1 gameplay)
 │   ├── Hosting/                 IGame implementation for desktop play
 │   └── WinUI/                   WinForms forms, drawing, input, assets
@@ -55,6 +56,9 @@ dotnet restore
 
 # Launch the WinForms client (API-backed login + gameplay)
 dotnet run --project BrickBreaker.WinFormsClient
+
+# Launch the Spectre.Console client (terminal renderer)
+dotnet run --project BrickBreaker.ConsoleClient
 
 # Launch the Blazor WebAssembly client (canvas renderer)
 dotnet run --project BrickBreaker.WebClient
