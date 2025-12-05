@@ -3,24 +3,21 @@ using BrickBreaker.ConsoleClient.Ui;
 using BrickBreaker.ConsoleClient.Ui.Enums;
 using BrickBreaker.ConsoleClient.Ui.Interfaces;
 using BrickBreaker.ConsoleClient.Ui.SpecterConsole;
-using BrickBreaker.Core.Abstractions;
-using BrickBreaker.Core.Services;
-using BrickBreaker.Storage;
+using BrickBreaker.ConsoleClient.WebApi;
 using Spectre.Console;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 class Program
 {
-    static string? currentUser = null;
-    private static ILeaderboardService _leaderboard = null!;
-    private static IAuthService _auth = null!;
-    private static bool _databaseAvailable = false;
+    private const string DefaultApiBase = "http://127.0.0.1:5080";
 
-    // UI menus and dialogs 
+    private static string? currentUser;
+    private static bool _isLoggedIn;
+    private static ConsoleApiClient? _api;
+
     static ILoginMenu _loginMenu = new LoginMenu();
     static IGameplayMenu _gameplayMenu = new GameplayMenu();
     static IConsoleDialogs _dialogs = new ConsoleDialogs();
@@ -32,31 +29,17 @@ class Program
     {
         Console.OutputEncoding = Encoding.UTF8;
 
-        var storageConfig = new StorageConfiguration();
-        var connectionString = storageConfig.GetConnectionString();
-
-        IUserStore userStore;
-        ILeaderboardStore leaderboardStore;
-
-        if (!string.IsNullOrWhiteSpace(connectionString))
+        var apiBase = Environment.GetEnvironmentVariable("BRICKBREAKER_API_URL") ?? DefaultApiBase;
+        try
         {
-            userStore = new UserStore(connectionString);
-            leaderboardStore = new LeaderboardStore(connectionString);
-            _databaseAvailable = true;
+            _api = new ConsoleApiClient(apiBase);
         }
-        else
+        catch (Exception ex)
         {
-            userStore = new DisabledUserStore();
-            leaderboardStore = new DisabledLeaderboardStore();
-            _databaseAvailable = false;
-            ShowDatabaseWarning("Supabase connection string missing. Database features are disabled until it is configured.");
+            ShowDatabaseWarning($"Failed to initialize API client: {ex.Message}");
         }
-
-        _leaderboard = new LeaderboardService(leaderboardStore);
-        _auth = new AuthService(userStore);
 
         AppState state = AppState.LoginMenu;
-
         while (state != AppState.Exit)
         {
             state = state switch
@@ -140,6 +123,7 @@ class Program
         static AppState Logout()
         {
             currentUser = null;
+            _isLoggedIn = false;
             return AppState.LoginMenu;
         }
     }
@@ -155,9 +139,9 @@ class Program
         Console.SetCursorPosition(0, lowerLine);
 
         _dialogs.ShowMessage($"\nFinal score: {score}");
-        if (currentMode != GameMode.QuickPlay && _databaseAvailable)
+        if (currentMode != GameMode.QuickPlay && _isLoggedIn && _api is not null)
         {
-            await _leaderboard.SubmitAsync(currentUser ?? "guest", score);
+            await RunWithSpinnerAsync("Submitting score...", () => _api.SubmitScoreAsync(currentUser!, score));
         }
 
         _dialogs.Pause();
@@ -166,27 +150,40 @@ class Program
 
     static async Task DoRegisterAsync()
     {
+        if (_api is null)
+        {
+            ShowDatabaseWarning("API base URL not configured.");
+            return;
+        }
+
         var username = _dialogs.PromptNewUsername();
         var password = _dialogs.PromptNewPassword();
 
-        bool registered = await RunWithSpinnerAsync("Registering account...", () => _auth.RegisterAsync(username, password));
-        _dialogs.ShowMessage(registered
+        var result = await RunWithSpinnerAsync("Registering account...", () => _api.RegisterAsync(username, password));
+        _dialogs.ShowMessage(result.Success
             ? "Registration successful!"
-            : "Registration failed. Username might already exist.");
+            : result.Error ?? "Registration failed.");
     }
 
     static async Task<bool> DoLoginAsync()
     {
+        if (_api is null)
+        {
+            ShowDatabaseWarning("API base URL not configured.");
+            return false;
+        }
+
         var (username, password) = _dialogs.PromptCredentials();
 
-        bool loggedIn = await RunWithSpinnerAsync("Signing in...", () => _auth.LoginAsync(username, password));
-        if (loggedIn)
+        var result = await RunWithSpinnerAsync("Signing in...", () => _api.LoginAsync(username, password));
+        if (result.Success)
         {
             currentUser = username;
+            _isLoggedIn = true;
             return true;
         }
 
-        _dialogs.ShowMessage("Login failed (wrong username or password).");
+        _dialogs.ShowMessage(result.Error ?? "Login failed (wrong username or password).");
         return false;
     }
 
@@ -195,38 +192,51 @@ class Program
         AnsiConsole.Clear();
         header.TitleHeader();
 
-        if (!_databaseAvailable)
+        if (_api is null)
         {
-            ShowDatabaseWarning("Leaderboard is unavailable because the Supabase connection string is missing.");
+            ShowDatabaseWarning("Leaderboard is unavailable because the API base URL is not configured.");
             return;
         }
 
-        var top = await RunWithSpinnerAsync("Loading leaderboard...", () => _leaderboard.TopAsync(10));
-        if (!top.Any())
+        var result = await RunWithSpinnerAsync("Loading leaderboard...", () => _api.GetLeaderboardAsync(10));
+        if (!result.Success || result.Value is null)
+        {
+            ShowDatabaseWarning(result.Error ?? "Failed to load leaderboard.");
+            return;
+        }
+
+        if (result.Value.Count == 0)
         {
             _dialogs.ShowMessage("\nTop 10 leaderboard:\nNo scores yet.");
             return;
         }
 
-        var items = top.Select(s => (s.Username, s.Score, s.At));
+        var items = result.Value.Select(s => (s.Username, s.Score, s.At));
         _dialogs.ShowLeaderboard(items);
     }
 
     static async Task ShowBestScoreAsync()
     {
-        if (!_databaseAvailable)
+        if (_api is null || !_isLoggedIn || string.IsNullOrWhiteSpace(currentUser))
         {
-            ShowDatabaseWarning("Best score lookup requires the Supabase database. Please configure the connection string first.");
+            ShowDatabaseWarning("Best score lookup requires an active API connection and login.");
             return;
         }
 
-        var best = await RunWithSpinnerAsync("Fetching best score...", () => _leaderboard.BestForAsync(currentUser ?? string.Empty));
-        if (best is null)
+        var result = await RunWithSpinnerAsync("Fetching best score...", () => _api.GetBestAsync(currentUser!));
+        if (!result.Success)
+        {
+            ShowDatabaseWarning(result.Error ?? "Failed to load best score.");
+            return;
+        }
+
+        if (result.Value is null)
         {
             _dialogs.ShowMessage("\nNo scores recorded yet.");
         }
         else
         {
+            var best = result.Value;
             _dialogs.ShowMessage($"\nYour best score: {best.Score} on {best.At.ToLocalTime():yyyy-MM-dd HH:mm}");
         }
         _dialogs.Pause();
@@ -257,7 +267,6 @@ class Program
         }
         catch
         {
-            // ignore for non-Windows terminals
         }
     }
 
