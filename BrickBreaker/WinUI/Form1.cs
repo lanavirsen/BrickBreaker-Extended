@@ -1,4 +1,5 @@
 using BrickBreaker.Game;
+using BrickBreaker.Game.Entities;
 using BrickBreaker.Game.Utilities;
 using System.ComponentModel;
 using System.Drawing.Text;
@@ -268,14 +269,42 @@ namespace BrickBreaker
         {
             foreach (var p in gameEngine.PowerUps)
             {
-                p.Draw(g, fontLaunch);
+                Rectangle rect = new Rectangle(p.X, p.Y, p.Width, p.Height);
+                Brush fill = p.Type switch
+                {
+                    PowerUpType.Multiball => Brushes.Yellow,
+                    PowerUpType.PaddleExtender => Brushes.Cyan,
+                    _ => Brushes.White
+                };
+
+                g.FillEllipse(fill, rect);
+                g.DrawEllipse(Pens.Black, rect);
+
+                using StringFormat format = new()
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                };
+                string letter = p.Type == PowerUpType.Multiball ? "M" : "E";
+                g.DrawString(letter, fontLaunch, Brushes.Black, rect, format);
             }
         }
         private void DrawScorePopups(Graphics g)
         {
             foreach (var pop in gameEngine.ScorePopups)
             {
-                pop.Draw(g);
+                int alpha = (int)(255 * pop.Opacity);
+                Color shadowColor = Color.FromArgb(alpha, Color.Black);
+                Color mainColor = pop.IsMultiplier
+                    ? Color.FromArgb(alpha, Color.OrangeRed)
+                    : Color.FromArgb(alpha, Color.Yellow);
+
+                using Brush shadow = new SolidBrush(shadowColor);
+                using Brush main = new SolidBrush(mainColor);
+
+                string text = pop.DisplayText;
+                g.DrawString(text, fontMultiplier, shadow, pop.X + 2, pop.Y + 2);
+                g.DrawString(text, fontMultiplier, main, pop.X, pop.Y);
             }
         }
 

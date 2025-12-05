@@ -1,0 +1,161 @@
+@implements IAsyncDisposable
+@using BrickBreaker.WebClient.Services
+@inject IJSRuntime JS
+
+<div class="game-shell">
+    <canvas class="game-canvas"
+            @ref="_canvasRef"
+            tabindex="0"
+            @onkeydown="HandleKeyDown"
+            @onkeyup="HandleKeyUp"
+            @onblur="HandleBlur"
+            @onkeydown:preventDefault
+            @onkeyup:preventDefault>
+    </canvas>
+
+    <div class="hud">
+        <span>Score: @_host?.Score ?? 0</span>
+        <span>Level: @_host?.Level ?? 1</span>
+    </div>
+
+    @if (_host is not null)
+    {
+        <div class="status">
+            @if (_host.IsGameOver)
+            {
+                <span>Game over! Press Space or Restart.</span>
+            }
+            else if (_host.IsPaused)
+            {
+                <span>Paused</span>
+            }
+            else if (_host.BallReady)
+            {
+                <span>Press ↑ / W to launch the ball.</span>
+            }
+        </div>
+    }
+
+    <div class="controls">
+        <button @onclick="TogglePause" disabled="@(_host is null)">
+            @((_host?.IsPaused ?? false) ? "Resume" : "Pause")
+        </button>
+        <button @onclick="Restart" disabled="@(_host is null)">Restart</button>
+    </div>
+</div>
+
+@code {
+    private ElementReference _canvasRef;
+    private WebGameHost? _host;
+
+    protected override void OnInitialized()
+    {
+        _host = new WebGameHost(JS);
+        _host.StateChanged += HandleStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _host is not null)
+        {
+            await _host.InitializeAsync(_canvasRef);
+            await _canvasRef.FocusAsync();
+        }
+    }
+
+    private async void HandleStateChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (_host is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        switch (args.Key)
+        {
+            case "ArrowLeft":
+            case "a":
+            case "A":
+                _host.SetLeftPressed(true);
+                break;
+            case "ArrowRight":
+            case "d":
+            case "D":
+                _host.SetRightPressed(true);
+                break;
+            case "ArrowUp":
+            case "w":
+            case "W":
+                _host.TryLaunchBall();
+                break;
+            case " ":
+                if (_host.IsGameOver)
+                {
+                    _host.Restart();
+                }
+                else
+                {
+                    _host.TryLaunchBall();
+                }
+                break;
+            case "p":
+            case "P":
+                _host.TogglePause();
+                break;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandleKeyUp(KeyboardEventArgs args)
+    {
+        if (_host is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        switch (args.Key)
+        {
+            case "ArrowLeft":
+            case "a":
+            case "A":
+                _host.SetLeftPressed(false);
+                break;
+            case "ArrowRight":
+            case "d":
+            case "D":
+                _host.SetRightPressed(false);
+                break;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void HandleBlur()
+    {
+        _host?.ClearInput();
+    }
+
+    private void TogglePause()
+    {
+        _host?.TogglePause();
+    }
+
+    private void Restart()
+    {
+        _host?.Restart();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_host is not null)
+        {
+            _host.StateChanged -= HandleStateChanged;
+            await _host.DisposeAsync();
+        }
+    }
+}

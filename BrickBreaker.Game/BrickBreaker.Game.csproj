@@ -1,30 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net9.0</TargetFrameworks>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-  <PropertyGroup>
-    <IsRunningOnWindows>$([System.Environment]::GetEnvironmentVariable('OS'))</IsRunningOnWindows>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(IsRunningOnWindows)' == 'Windows_NT'">
-    <TargetFrameworks>net9.0-windows7.0;net9.0</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-windows7.0'">
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="NonWindows/GameUnavailable.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows7.0'">
-    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <Compile Remove="**\*.cs" />
-    <EmbeddedResource Remove="**\*" />
-    <None Remove="**\*" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <Compile Include="NonWindows/GameUnavailable.cs" />
-  </ItemGroup>
 </Project>
