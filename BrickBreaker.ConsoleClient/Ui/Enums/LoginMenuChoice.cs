@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Ui.Enums
+namespace BrickBreaker.ConsoleClient.Ui.Enums
 {
     // LoginMenuChoice defines the options available to the user
     public enum LoginMenuChoice

@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Game.Models
+namespace BrickBreaker.ConsoleClient.Game.Models
 {
     public static class Constants // Static class containing game constants
     {

@@ -1,4 +1,4 @@
-﻿using BrickBreaker.ConsoleClient.Ui.Enums;
+using BrickBreaker.ConsoleClient.Ui.Enums;
 using BrickBreaker.ConsoleClient.Ui.SpecterConsole;
 
 namespace BrickBreaker.ConsoleClient.Ui
@@ -26,7 +26,7 @@ namespace BrickBreaker.ConsoleClient.Ui
                 // Switch to the appropriate handler based on the current application state
                 state = state switch
                 {
-                    AppState.LoginMenu => HandleLoginMenu(), 
+                    AppState.LoginMenu => HandleLoginMenu(),
                     AppState.GameplayMenu => HandleGameplayMenu(),
                     _ => AppState.Exit
                 };

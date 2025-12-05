@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Game.Infrastructure
+namespace BrickBreaker.ConsoleClient.Game.Infrastructure
 {
     public interface IKeyboard // Interface for keyboard input handling
     {

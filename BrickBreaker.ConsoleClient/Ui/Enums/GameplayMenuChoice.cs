@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Ui.Enums
+namespace BrickBreaker.ConsoleClient.Ui.Enums
 {
     // Represents the various options available in the gameplay menu
     // Connected to the IGameplayMenu interface

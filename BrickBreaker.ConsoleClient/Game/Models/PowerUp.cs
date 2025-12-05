@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Game.Models
+namespace BrickBreaker.ConsoleClient.Game.Models
 {
     public enum PowerUpType // Enumeration for different types of power-ups
     {

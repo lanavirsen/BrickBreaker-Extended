@@ -1,4 +1,4 @@
-﻿using BrickBreaker.ConsoleClient.Ui.Interfaces;
+using BrickBreaker.ConsoleClient.Ui.Interfaces;
 using Spectre.Console;
 
 namespace BrickBreaker.ConsoleClient.Ui

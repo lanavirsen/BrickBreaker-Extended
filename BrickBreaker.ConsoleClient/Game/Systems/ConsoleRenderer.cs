@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BrickBreaker.ConsoleClient.Game.Models;                    // Imports core game models (Ball, PowerUp, ScorePop, etc.)
 using static BrickBreaker.ConsoleClient.Game.Models.Constants;   // Imports constants directly for easy access (W, H, TopMargin, etc.)
 

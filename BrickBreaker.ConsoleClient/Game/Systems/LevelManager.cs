@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Game.Systems                   // Namespace for system/game-management classes
+namespace BrickBreaker.ConsoleClient.Game.Systems                   // Namespace for system/game-management classes
 {
     // Manages all logic related to game levels (loading, switching, and managing bricks)
     public class LevelManager

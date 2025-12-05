@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Game.Models
+namespace BrickBreaker.ConsoleClient.Game.Models
 {
     public enum BallType { Ball }
 

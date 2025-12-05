@@ -1,4 +1,4 @@
-﻿using BrickBreaker.ConsoleClient.Game.Infrastructure;
+using BrickBreaker.ConsoleClient.Game.Infrastructure;
 using System.Runtime.InteropServices;
 
 public sealed class Win32Keyboard : IKeyboard // Implementation of keyboard input handling using Win32 API

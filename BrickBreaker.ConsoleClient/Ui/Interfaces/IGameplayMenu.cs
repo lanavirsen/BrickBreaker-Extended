@@ -1,4 +1,4 @@
-﻿using BrickBreaker.ConsoleClient.Ui.Enums;
+using BrickBreaker.ConsoleClient.Ui.Enums;
 
 namespace BrickBreaker.ConsoleClient.Ui.Interfaces
 {

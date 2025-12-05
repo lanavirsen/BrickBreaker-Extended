@@ -1,4 +1,4 @@
-﻿using BrickBreaker.ConsoleClient.Game.Models;                           // Imports game models (e.g., Ball, ScorePop)
+using BrickBreaker.ConsoleClient.Game.Models;                           // Imports game models (e.g., Ball, ScorePop)
 using static BrickBreaker.ConsoleClient.Game.Models.Constants;           // Imports constants for direct use (e.g., W, H, TopMargin)
 
 namespace BrickBreaker.ConsoleClient.Game.Systems                       // Defines the namespace for organizational structure

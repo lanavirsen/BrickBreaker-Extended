@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Ui.Interfaces
+namespace BrickBreaker.ConsoleClient.Ui.Interfaces
 {
     // interface for console dialog interactions
     // handles user prompts and messages in the console UI

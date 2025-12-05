@@ -1,4 +1,4 @@
-﻿
+
 namespace BrickBreaker.ConsoleClient.Game.Models
 {
     public class ScorePop // Class representing a score popup in the game

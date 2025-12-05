@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker.ConsoleClient.Ui.Enums;
+namespace BrickBreaker.ConsoleClient.Ui.Enums;
 
 // Represents the major states the UI can be in to drive screen changes.
 public enum AppState

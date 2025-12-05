@@ -1,4 +1,4 @@
-﻿using BrickBreaker.ConsoleClient.Game.Models;                 // Imports game models used by power-ups (like PowerUp, PowerUpType, Ball)
+using BrickBreaker.ConsoleClient.Game.Models;                 // Imports game models used by power-ups (like PowerUp, PowerUpType, Ball)
 
 namespace BrickBreaker.ConsoleClient.Game.Systems                // Namespace for system/game logic classes
 {
