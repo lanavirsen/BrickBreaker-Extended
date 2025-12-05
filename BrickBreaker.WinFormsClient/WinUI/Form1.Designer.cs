@@ -31,15 +31,8 @@
             ClientSize = new Size(784, 561);
             Name = "Form1";
             Text = "Brick Breaker";
-            Load += Form1_Load;
             ResumeLayout(false);
         }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            // Any code you want to run when the form first loads.
-        }
-
 
         #endregion
     }

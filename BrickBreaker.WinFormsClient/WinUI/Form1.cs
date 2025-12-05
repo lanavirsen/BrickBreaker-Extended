@@ -1,499 +1,216 @@
-using BrickBreaker.Game;
-using BrickBreaker.Game.Entities;
-using BrickBreaker.Game.Utilities;
 using System.ComponentModel;
+using System.Drawing;
 using System.Drawing.Text;
+using System.IO;
+using System.Windows.Forms;
+using BrickBreaker.Game.Utilities;
+using BrickBreaker.WinFormsClient.Gameplay;
+using BrickBreaker.WinFormsClient.Rendering;
 
+namespace BrickBreaker.WinFormsClient.WinUI;
 
-namespace BrickBreaker.WinFormsClient.WinUI
+public partial class Form1 : Form
 {
-    public partial class Form1 : Form
+    private readonly GameSession _session = new();
+    private readonly GameRenderer _renderer = new();
+    private readonly System.Windows.Forms.Timer _gameTimer = new();
+    private Rectangle _playAreaRect;
+    private bool _leftPressed;
+    private bool _rightPressed;
+    private FontResources _fonts = null!;
+    private Font _fontScore = SystemFonts.DefaultFont;
+    private Font _fontMultiplier = SystemFonts.DefaultFont;
+    private Font _fontCurrentLevel = SystemFonts.DefaultFont;
+    private Font _fontTime = SystemFonts.DefaultFont;
+    private Font _fontLaunch = SystemFonts.DefaultFont;
+    private Font _fontGameOver = SystemFonts.DefaultFont;
+    private Font _fontTitle = SystemFonts.DefaultFont;
+    private readonly PrivateFontCollection _fontCollection = new();
+    private readonly Color _paddleColor = Color.FromArgb(36, 162, 255);
+
+    public event EventHandler<int>? GameFinished;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Browsable(false)]
+    public bool CloseOnGameOver { get; set; }
+
+    public int LatestScore => _session.Snapshot.Score;
+
+    public Form1()
     {
-        // --- 1. The Engine ---
-        private GameEngine gameEngine = null!;
+        InitializeComponent();
+        LoadFonts();
+        InitializeFormSettings();
+        _playAreaRect = CalculatePlayAreaRect();
+        _session.GameFinished += (_, score) => HandleGameFinished(score);
+        _session.Initialize(_playAreaRect);
+        _session.SetInput(false, false);
 
-        public event EventHandler<int>? GameFinished;
+        _gameTimer.Interval = 16;
+        _gameTimer.Tick += (_, _) => OnTick();
+        _gameTimer.Start();
+    }
 
+    private void OnTick()
+    {
+        double delta = _gameTimer.Interval / 1000.0;
+        _session.Update(delta);
+        Invalidate();
+    }
 
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [Browsable(false)]
-        public bool CloseOnGameOver { get; set; }
+    private void InitializeFormSettings()
+    {
+        FormBorderStyle = FormBorderStyle.None;
+        WindowState = FormWindowState.Maximized;
+        Bounds = GetPrimaryBounds();
+        DoubleBuffered = true;
+        Paint += (_, e) => _renderer.Draw(e.Graphics, _session.Snapshot, _fonts, ClientRectangle, _paddleColor);
+        KeyDown += Form1_KeyDown;
+        KeyUp += Form1_KeyUp;
+    }
 
-        // FIX: Read the score from the gameEngine, not a local variable
-        public int LatestScore => gameEngine != null ? gameEngine.Score : 0;
+    private Rectangle GetPrimaryBounds()
+        => Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
 
-        // --- 2. UI State ---
-        private readonly System.Windows.Forms.Timer gameTimer = new();
-        private Rectangle playAreaRect;
-        private bool isPaused = false;
-        private bool isGameOver = false;
-        private bool ballReadyToShoot = true;
-        private double elapsedSeconds = 0;
+    private Rectangle CalculatePlayAreaRect()
+    {
+        int boardW = (GameConstants.InitialBrickCols - 1) * GameConstants.BrickXSpacing + GameConstants.BrickWidth;
+        int boardH = (GameConstants.InitialBrickRows - 1) * GameConstants.BrickYSpacing + GameConstants.BrickHeight + GameConstants.PaddleAreaHeight;
+        int startX = (ClientSize.Width - boardW) / 2;
+        int startY = (ClientSize.Height - boardH) / 2;
 
-        // Paddle (UI Input controls this)
-        private double paddleX;
-        private int paddleY;
-        private bool leftPressed, rightPressed;
+        return new Rectangle(
+            startX - GameConstants.PlayAreaMargin,
+            startY - GameConstants.PlayAreaMargin,
+            boardW + GameConstants.PlayAreaMargin * 2,
+            boardH + GameConstants.PlayAreaMargin
+        );
+    }
 
-        // Visual Effects
-        private float borderHue = 0f;
-
-        // Fonts & Colors
-        private PrivateFontCollection fontCollection = new PrivateFontCollection();
-        private Font fontScore = SystemFonts.DefaultFont;
-        private Font fontMultiplier = SystemFonts.DefaultFont;
-        private Font fontCurrentLevel = SystemFonts.DefaultFont;
-        private Font fontTime = SystemFonts.DefaultFont;
-        private Font fontLaunch = SystemFonts.DefaultFont;
-        private Font fontGameOver = SystemFonts.DefaultFont;
-        private Color colorPaddleNormal = Color.FromArgb(36, 162, 255);
-
-        public Form1()
+    private void HandleGameFinished(int score)
+    {
+        _gameTimer.Stop();
+        GameFinished?.Invoke(this, score);
+        if (CloseOnGameOver)
         {
-            InitializeComponent();
-            InitializeFormSettings();
-            LoadFonts();
+            BeginInvoke(new MethodInvoker(Close));
+        }
+    }
 
-            // Setup Engine
-            gameEngine = new GameEngine();
+    private void RestartGame()
+    {
+        _session.Restart();
+        _session.SetInput(_leftPressed, _rightPressed);
+        _gameTimer.Start();
+    }
 
-            // Listen for Events from Engine
-            gameEngine.GameOver += (s, e) => TriggerGameOver();
-            gameEngine.ScoreChanged += (s, newScore) => { /* Optional: Play Sound */ };
-            gameEngine.LevelLoaded += (s, e) => { ballReadyToShoot = true; };
-
-            SetupGameLayout();
-
-            // Start Game
-            gameEngine.StartLevel(1, playAreaRect);
-            InitializeTimer();
+    private void ToggleFullscreen()
+    {
+        if (WindowState == FormWindowState.Maximized)
+        {
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            WindowState = FormWindowState.Normal;
+            Size = new Size(1000, 900);
+            CenterToScreen();
+        }
+        else
+        {
+            FormBorderStyle = FormBorderStyle.None;
+            WindowState = FormWindowState.Maximized;
+            Bounds = GetPrimaryBounds();
         }
 
-        private void InitializeFormSettings()
+        var newRect = CalculatePlayAreaRect();
+        _playAreaRect = newRect;
+        _session.UpdatePlayArea(newRect);
+        Invalidate();
+    }
+
+    private void Form1_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Escape) Application.Exit();
+        if (e.KeyCode == Keys.F) ToggleFullscreen();
+        if (e.KeyCode == Keys.P) _session.TogglePause();
+
+        if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A)
         {
-            this.FormBorderStyle = FormBorderStyle.None; // No borders for fullscreen
-            this.WindowState = FormWindowState.Maximized; // Start maximized
-            this.Bounds = GetPrimaryBounds(); // Cover the whole screen
-            this.DoubleBuffered = true; // Reduce flickering
-            this.Paint += Form1_Paint; // Paint event handler
-            this.KeyDown += Form1_KeyDown; // KeyDown event handler
-            this.KeyUp += Form1_KeyUp; // KeyUp event handler
+            _leftPressed = true;
+            _session.SetInput(_leftPressed, _rightPressed);
         }
 
-        private void InitializeTimer()
+        if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D)
         {
-            gameTimer.Interval = 16; // ~60 FPS
-            gameTimer.Tick += GameTimer_Tick; // Tick event handler
-            gameTimer.Start(); // Start the timer
+            _rightPressed = true;
+            _session.SetInput(_leftPressed, _rightPressed);
         }
 
-        // --- Main Loop ---
-        private void GameTimer_Tick(object? sender, EventArgs e) // Called every frame
+        if ((e.KeyCode == Keys.Up || e.KeyCode == Keys.W))
         {
-            if (isGameOver || isPaused) { Invalidate(); return; } // Skip updates if game over or paused
-
-            double deltaTime = gameTimer.Interval / 1000.0; // Convert ms to seconds
-
-            // 1. ALWAYS allow paddle movement and visual effects (so you can aim before shooting)
-            UpdatePaddleMovement(); // Handle paddle movement based on input
-            UpdateVisualEffects(); // Update visual effects like border color
-
-            // 2. ONLY update Game Logic (Physics & Time) if the ball has been launched
-            if (!ballReadyToShoot)
-            {
-                elapsedSeconds += deltaTime; // Update elapsed time
-
-                // Update Physics
-                gameEngine.Update(deltaTime, playAreaRect, paddleX, paddleY);
-            }
-
-            // 3. Handle "Ball Stuck to Paddle" Logic
-            // This keeps the ball glued to the paddle before you press Up
-            if (ballReadyToShoot && gameEngine.Balls.Count > 0)
-            {
-                var b = gameEngine.Balls[0]; // Assume single ball for this logic
-                b.X = (int)(paddleX + gameEngine.CurrentPaddleWidth / 2 - GameConstants.BallRadius); // Center ball on paddle
-                b.Y = paddleY - 40; // Position ball just above paddle
-                b.VX = 0; // No horizontal movement
-                b.VY = 0; // No vertical movement
-            }
-
-            Invalidate(); // Draw the screen
+            _session.TryLaunchBall();
         }
 
-        // --- Drawing ---
-        private void Form1_Paint(object? sender, PaintEventArgs e) // Paint event handler
+        if (e.KeyCode == Keys.Space && _session.Snapshot.IsGameOver)
         {
-            Graphics g = e.Graphics; // Get Graphics object
-            g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit; // Clear background
-            g.Clear(Color.Black); // Clear background
+            RestartGame();
+        }
+    }
 
-            DrawPlayArea(g); // Draw the play area
-            DrawPowerUps(g); // Draw power-ups
-            DrawScorePopups(g); // Draw score popups
-            DrawBricks(g);
-            DrawBalls(g);
-            DrawHUD(g);
-            DrawOverlays(g);
-            DrawPaddle(g);
+    private void Form1_KeyUp(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A)
+        {
+            _leftPressed = false;
+            _session.SetInput(_leftPressed, _rightPressed);
         }
 
-        private void DrawPlayArea(Graphics g) // Draw the play area with border
+        if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D)
         {
-            Color borderColor = ColorFromHSV(borderHue, 1.0f, 1.0f); // Dynamic rainbow border color
-            using (Pen borderPen = new Pen(borderColor, 12)) // Thick border
-            {
-                g.DrawRectangle(borderPen, playAreaRect); // Draw border
-            }
-            using (Brush bgBrush = new SolidBrush(Color.FromArgb(22, 22, 40))) // Dark background
-            {
-                g.FillRectangle(bgBrush, playAreaRect); // Fill play area
-            }
+            _rightPressed = false;
+            _session.SetInput(_leftPressed, _rightPressed);
+        }
+    }
+
+    private void LoadFonts()
+    {
+        string path = Path.Combine(Application.StartupPath, "Assets", "PressStart2P-Regular.ttf");
+        if (File.Exists(path))
+        {
+            _fontCollection.AddFontFile(path);
+            FontFamily family = _fontCollection.Families[0];
+            _fontScore = new Font(family, 12, FontStyle.Regular);
+            _fontMultiplier = new Font(family, 12, FontStyle.Regular);
+            _fontCurrentLevel = new Font(family, 12, FontStyle.Regular);
+            _fontTime = new Font(family, 12, FontStyle.Regular);
+            _fontLaunch = new Font(family, 10, FontStyle.Regular);
+            _fontGameOver = new Font(family, 15, FontStyle.Bold);
+            _fontTitle = new Font(family, 18, FontStyle.Bold);
+        }
+        else
+        {
+            _fontScore = new Font("Consolas", 18, FontStyle.Bold);
+            _fontMultiplier = new Font("Consolas", 18, FontStyle.Bold);
+            _fontCurrentLevel = new Font("Arial", 12, FontStyle.Bold);
+            _fontTime = new Font("Consolas", 18, FontStyle.Bold);
+            _fontLaunch = new Font("Arial", 16, FontStyle.Bold);
+            _fontGameOver = new Font("Arial", 20, FontStyle.Bold);
+            _fontTitle = new Font("Arial", 22, FontStyle.Bold);
         }
 
-        private void DrawBricks(Graphics g) // Draw all visible bricks 
-        {
-            using (Pen outlinePen = new Pen(Color.Black, 2)) // Black outline for bricks
-            {
-                foreach (var brick in gameEngine.Bricks.Where(b => b.IsVisible)) // Only draw visible bricks
-                {
-                    Rectangle r = new Rectangle(brick.X, brick.Y, brick.Width, brick.Height); // Brick rectangle
-                    using (SolidBrush bBrush = new SolidBrush(brick.BrickColor)) // Brick color
-                    {
-                        g.FillRectangle(bBrush, r); // Fill brick
-                    }
-                    g.DrawRectangle(outlinePen, r); // Draw brick outline
-                }
-            }
-        }
+        _fonts = new FontResources(
+            _fontScore,
+            _fontMultiplier,
+            _fontCurrentLevel,
+            _fontTime,
+            _fontLaunch,
+            _fontGameOver,
+            _fontTitle);
+    }
 
-        private void DrawBalls(Graphics g) // Draw all balls
-        {
-            using (Brush b = new SolidBrush(Color.Red)) // Ball color
-            using (Pen p = new Pen(Color.White, 2)) // Ball outline
-            {
-                foreach (var ball in gameEngine.Balls) // Draw each ball
-                {
-                    Rectangle r = new Rectangle(ball.X, ball.Y, ball.Radius * 2, ball.Radius * 2); // Ball rectangle
-                    g.FillEllipse(b, r); // Fill ball
-                    g.DrawEllipse(p, r); // Draw ball outline
-                }
-            }
-        }
-
-        private void DrawPaddle(Graphics g) // Draw the player's paddle
-        {
-            Rectangle r = new Rectangle((int)paddleX, paddleY, gameEngine.CurrentPaddleWidth, 20); // Paddle rectangle
-
-            // Check if paddle is blinking (visual effect for extender ending)
-            Color c = gameEngine.IsPaddleBlinking && (DateTime.Now.Millisecond / 100) % 2 == 0 // Blink logic
-                      ? Color.OrangeRed // Change color to OrangeRed when blinking
-                      : colorPaddleNormal; // Normal paddle color
-
-            using (var b = new SolidBrush(c)) // Paddle brush
-            using (var p = new Pen(Color.Blue, 2)) // Paddle outline pen
-            {
-                g.FillRectangle(b, r); // Draw paddle
-                g.DrawRectangle(p, r); // Draw paddle outline
-            }
-        }
-
-        private void DrawHUD(Graphics g) // Draw Heads-Up Display (Score, Time, Level)
-        {
-            int hudY = playAreaRect.Top - GameConstants.HudHeightOffset; // Y position for HUD
-
-            // --- TITLE LOGIC ---
-            string title = "BRICK BREAKER";
-            SizeF titleSize = g.MeasureString(title, fontGameOver); // Measure title size
-
-            float titleX = (ClientSize.Width - titleSize.Width) / 2;
-
-            float titleY = playAreaRect.Top - 100; // Position above play area
-            if (titleY < 0) titleY = 10; // Ensure title is visible
-
-            // Draw Shadow (Gray)
-            g.DrawString(title, fontGameOver, Brushes.Gray, titleX + 4, titleY + 4);
-            // Draw Text (Cyan)
-            g.DrawString(title, fontGameOver, Brushes.Cyan, titleX, titleY);
-            // -------------------
-
-            // Stats
-            string timeStr = $"{(int)elapsedSeconds / 60:D2}:{(int)elapsedSeconds % 60:D2}";
-            DrawStatBox(g, $"Score: {gameEngine.Score}", fontScore, playAreaRect.Left, hudY);
-            DrawStatBox(g, timeStr, fontTime, playAreaRect.Right - 110, hudY);
-
-            // Level
-            string lvlStr = $"Level {gameEngine.CurrentLevel}";
-            Font safeFont = fontCurrentLevel ?? SystemFonts.DefaultFont;
-            g.DrawString(lvlStr, safeFont, Brushes.White, playAreaRect.Left + 300, hudY + 6);
-        }
-
-        private void DrawStatBox(Graphics g, string text, Font font, int x, int y) // Draw individual stat box
-        {
-            SizeF size = g.MeasureString(text, font); // Measure text size
-            int padding = 10; // Padding around text
-            Rectangle box = new Rectangle(x, y, (int)size.Width + padding * 2, (int)size.Height + padding * 2); // Box rectangle
-
-            using (Brush bg = new SolidBrush(Color.FromArgb(0, 0, 20))) // Semi-transparent background
-            using (Pen border = new Pen(Color.LightGray, 2)) // Light gray border
-            {
-                g.FillRectangle(bg, box); // Draw background
-                g.DrawRectangle(border, box); // Draw border
-            }
-            g.DrawString(text, font, Brushes.White, x + padding, y + padding); // Draw text
-        }
-
-        private void DrawOverlays(Graphics g)
-        {
-            if (isGameOver)
-            {
-                using (SolidBrush dim = new SolidBrush(Color.FromArgb(150, 0, 0, 0)))
-                    g.FillRectangle(dim, ClientRectangle);
-
-                string txt = "Game Over! Press SPACE to restart";
-                SizeF sz = g.MeasureString(txt, fontGameOver);
-                g.DrawString(txt, fontGameOver, Brushes.Red,
-                    (ClientSize.Width - sz.Width) / 2,
-                    (ClientSize.Height - sz.Height) / 2);
-            }
-            else if (ballReadyToShoot && !isPaused)
-            {
-                string txt = "Press UP ARROW to launch";
-                SizeF sz = g.MeasureString(txt, fontLaunch);
-                g.DrawString(txt, fontLaunch, Brushes.White,
-                    (ClientSize.Width - sz.Width) / 2,
-                    paddleY - 80);
-            }
-        }
-        private void DrawPowerUps(Graphics g)
-        {
-            foreach (var p in gameEngine.PowerUps)
-            {
-                Rectangle rect = new Rectangle(p.X, p.Y, p.Width, p.Height);
-                Brush fill = p.Type switch
-                {
-                    PowerUpType.Multiball => Brushes.Yellow,
-                    PowerUpType.PaddleExtender => Brushes.Cyan,
-                    _ => Brushes.White
-                };
-
-                g.FillEllipse(fill, rect);
-                g.DrawEllipse(Pens.Black, rect);
-
-                using StringFormat format = new()
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                };
-                string letter = p.Type == PowerUpType.Multiball ? "M" : "E";
-                g.DrawString(letter, fontLaunch, Brushes.Black, rect, format);
-            }
-        }
-        private void DrawScorePopups(Graphics g)
-        {
-            foreach (var pop in gameEngine.ScorePopups)
-            {
-                int alpha = (int)(255 * pop.Opacity);
-                Color shadowColor = Color.FromArgb(alpha, Color.Black);
-                Color mainColor = pop.IsMultiplier
-                    ? Color.FromArgb(alpha, Color.OrangeRed)
-                    : Color.FromArgb(alpha, Color.Yellow);
-
-                using Brush shadow = new SolidBrush(shadowColor);
-                using Brush main = new SolidBrush(mainColor);
-
-                string text = pop.DisplayText;
-                g.DrawString(text, fontMultiplier, shadow, pop.X + 2, pop.Y + 2);
-                g.DrawString(text, fontMultiplier, main, pop.X, pop.Y);
-            }
-        }
-
-        // --- Game Updates ---
-
-        private void UpdatePaddleMovement()
-        {
-            if (leftPressed && paddleX > playAreaRect.Left) // Move left
-                paddleX -= GameConstants.BasePaddleSpeed;
-
-            if (rightPressed && paddleX < playAreaRect.Right - gameEngine.CurrentPaddleWidth) // Move right
-                paddleX += GameConstants.BasePaddleSpeed;
-        }
-
-        private void UpdateVisualEffects()
-        {
-            borderHue = (borderHue + 1.5f) % 360f; // Increment hue for rainbow effect
-        }
-
-        // --- Input Handling ---
-        private void Form1_KeyDown(object? sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Escape) Application.Exit();
-            if (e.KeyCode == Keys.F) ToggleFullscreen();
-            if (e.KeyCode == Keys.P) { isPaused = !isPaused; Invalidate(); }
-
-            if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A) leftPressed = true;
-            if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D) rightPressed = true;
-
-            if ((e.KeyCode == Keys.Up || e.KeyCode == Keys.W) && ballReadyToShoot)
-            {
-                if (gameEngine.Balls.Count > 0)
-                {
-                    gameEngine.Balls[0].VY = -9;
-                    ballReadyToShoot = false;
-                }
-            }
-
-            if (isGameOver && e.KeyCode == Keys.Space) RestartGame(); // Restart on Space
-        }
-
-        private void Form1_KeyUp(object? sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A) leftPressed = false; // Stop moving left
-            if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D) rightPressed = false; // Stop moving right
-        }
-
-        // --- Helper Methods ---
-
-        private void SetupGameLayout()
-        {
-            // 1. Calculate the Board Size (This doesn't change)
-            int boardW = (GameConstants.InitialBrickCols - 1) * GameConstants.BrickXSpacing + GameConstants.BrickWidth;
-            int boardH = (GameConstants.InitialBrickRows - 1) * GameConstants.BrickYSpacing + GameConstants.BrickHeight + GameConstants.PaddleAreaHeight;
-
-            // 2. Keep a copy of the OLD area before we change it
-            Rectangle oldRect = playAreaRect;
-
-            // 3. Calculate the NEW area (Centered in window)
-            int startX = (ClientSize.Width - boardW) / 2;
-            int startY = (ClientSize.Height - boardH) / 2;
-
-            Rectangle newRect = new Rectangle(
-                startX - GameConstants.PlayAreaMargin,
-                startY - GameConstants.PlayAreaMargin,
-                boardW + GameConstants.PlayAreaMargin * 2,
-                boardH + GameConstants.PlayAreaMargin
-            );
-
-            // 4. Apply the change to the Form's variables
-            playAreaRect = newRect;
-
-            // 5. Calculate the difference and shift objects accordingly
-            if (oldRect.Width > 0 && oldRect.Height > 0)
-            {
-                int dx = newRect.X - oldRect.X;
-                int dy = newRect.Y - oldRect.Y;
-
-                // Tell Engine to move bricks/balls
-                gameEngine.ShiftWorld(dx, dy);
-
-                // Move the Paddle (which is controlled by Form1)
-                paddleX += dx;
-                paddleY = playAreaRect.Bottom - 40; // Recalculate Y just to be safe
-            }
-            else
-            {
-                // Initial Setup (First time run)
-                paddleY = playAreaRect.Bottom - 40;
-                paddleX = playAreaRect.Left + (playAreaRect.Width - gameEngine.CurrentPaddleWidth) / 2;
-            }
-        }
-
-        private void TriggerGameOver()
-        {
-            if (isGameOver)
-            {
-                return;
-            }
-
-            isGameOver = true;
-            gameTimer.Stop(); // Stop the game loop
-            GameFinished?.Invoke(this, gameEngine.Score);
-
-            if (CloseOnGameOver)
-            {
-                BeginInvoke(new MethodInvoker(Close));
-            }
-        }
-
-        private void RestartGame()
-        {
-            isGameOver = false;
-            ballReadyToShoot = true;
-
-            gameEngine.StartLevel(1, playAreaRect);
-            gameTimer.Start();
-        }
-
-        private void ToggleFullscreen()
-        {
-            if (WindowState == FormWindowState.Maximized)
-            {
-                FormBorderStyle = FormBorderStyle.FixedSingle; // Restore borders
-                WindowState = FormWindowState.Normal; // Restore windowed mode
-                Size = new Size(1000, 900); // Set to a reasonable size
-                CenterToScreen();
-            }
-            else
-            {
-                FormBorderStyle = FormBorderStyle.None;
-                WindowState = FormWindowState.Maximized;
-                Bounds = GetPrimaryBounds();
-            }
-            SetupGameLayout(); // Recalculate layout
-            Invalidate(); // Redraw the screen
-        }
-
-        private Rectangle GetPrimaryBounds()
-        {
-            return Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
-        }
-
-        // --- Font Loading ---
-        private void LoadFonts()
-        {
-            string path = Path.Combine(Application.StartupPath, "Assets", "PressStart2P-Regular.ttf"); // font path
-            if (File.Exists(path))
-            {
-                fontCollection.AddFontFile(path);
-                FontFamily family = fontCollection.Families[0]; // Use the loaded font family
-                fontScore = new Font(family, 12, FontStyle.Regular); // Create fonts with different sizes/styles
-                fontMultiplier = new Font(family, 12, FontStyle.Regular);
-                fontCurrentLevel = new Font(family, 12, FontStyle.Regular);
-                fontTime = new Font(family, 12, FontStyle.Regular);
-                fontLaunch = new Font(family, 10, FontStyle.Regular);
-                fontGameOver = new Font(family, 15, FontStyle.Bold);
-            }
-            else
-            {
-                fontScore = new Font("Consolas", 18, FontStyle.Bold);
-                fontMultiplier = new Font("Consolas", 18, FontStyle.Bold);
-                fontCurrentLevel = new Font("Arial", 12, FontStyle.Bold);
-                fontTime = new Font("Consolas", 18, FontStyle.Bold);
-                fontLaunch = new Font("Arial", 16, FontStyle.Bold);
-                fontGameOver = new Font("Arial", 20, FontStyle.Bold);
-            }
-        }
-
-        // --- Color RainbowEffect ---
-        private Color ColorFromHSV(float hue, float saturation, float value) // Convert HSV to RGB Color
-        {
-            int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6; // Determine color sector
-            double f = hue / 60.0 - Math.Floor(hue / 60.0); // Fractional part of hue sector
-            value = value * 255;
-            int v = Convert.ToInt32(value);
-            int p = Convert.ToInt32(value * (1 - saturation)); // Calculate p component
-            int q = Convert.ToInt32(value * (1 - f * saturation)); // Calculate q component
-            int t = Convert.ToInt32(value * (1 - (1 - f) * saturation)); // Calculate t component
-
-            return hi switch
-            {
-                0 => Color.FromArgb(255, v, t, p), // Red to Yellow
-                1 => Color.FromArgb(255, q, v, p), // Yellow to Green
-                2 => Color.FromArgb(255, p, v, t),
-                3 => Color.FromArgb(255, p, q, v),
-                4 => Color.FromArgb(255, t, p, v),
-                _ => Color.FromArgb(255, v, p, q)
-            };
-        }
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        var newRect = CalculatePlayAreaRect();
+        _playAreaRect = newRect;
+        _session.UpdatePlayArea(newRect);
     }
 }
