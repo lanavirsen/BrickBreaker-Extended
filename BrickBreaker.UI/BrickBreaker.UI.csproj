@@ -21,6 +21,11 @@
   <ItemGroup>
     <ProjectReference Include="../BrickBreaker.Core/BrickBreaker.Core.csproj" />
     <ProjectReference Include="../BrickBreaker.Storage/BrickBreaker.Storage.csproj" />
+    <ProjectReference Include="../BrickBreaker.Game/BrickBreaker.Game.csproj" />
+    <ProjectReference Include="../BrickBreaker.Gameplay/BrickBreaker.Gameplay.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows7.0'">
     <ProjectReference Include="../BrickBreaker.WinFormsClient/BrickBreaker.WinFormsClient.csproj" />
   </ItemGroup>
   <ItemGroup>

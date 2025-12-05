@@ -7,6 +7,9 @@ using BrickBreaker.UI.Ui.Enums;
 using BrickBreaker.UI.Ui.Interfaces;
 using BrickBreaker.UI.Ui.SpecterConsole;
 using Spectre.Console;
+#if WINDOWS
+using BrickBreaker.WinFormsClient.Hosting;
+#endif
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -22,9 +25,9 @@ class Program
     static ILoginMenu _loginMenu = new LoginMenu();
     static IGameplayMenu _gameplayMenu = new GameplayMenu();
     static IConsoleDialogs _dialogs = new ConsoleDialogs();
-    static GameMode currentMode = GameMode.Normal;
 
-    static Header header = new Header();
+static Header header = new Header();
+static GameMode currentMode = GameMode.Normal;
 
     // Application entry point
     static async Task Main()
@@ -140,20 +143,21 @@ class Program
     // Playing Handler
     static async Task<AppState> HandlePlayingAsync()
     {
+#if !WINDOWS
+        _dialogs.ShowMessage("WinForms gameplay is only available on Windows.");
+        _dialogs.Pause();
+        return AppState.GameplayMenu;
+#else
         AnsiConsole.Clear();
-        IGame game = new BrickBreaker.WinFormsClient.Hosting.WinFormsBrickBreakerGame();
-        int score = game.Run();
+        IGame game = new WinFormsBrickBreakerGame();
+        int score = await Task.Run(() => game.Run());
 
-        // Move cursor to lower part of the console
         int lowerLine = Console.WindowHeight - 4;
-        // Ensure we don't move the cursor above the current line
-        Console.SetCursorPosition(0, lowerLine);
+        Console.SetCursorPosition(0, Math.Max(lowerLine, 0));
 
-        // Show final score message
         _dialogs.ShowMessage($"\nFinal score: {score}");
         if (currentMode != GameMode.QuickPlay)
         {
-            // Submit score to leaderboard if database is available
             if (_databaseAvailable)
             {
                 await _leaderboard.SubmitAsync(currentUser ?? "guest", score);
@@ -167,6 +171,7 @@ class Program
         _dialogs.Pause();
 
         return currentUser is null ? AppState.LoginMenu : AppState.GameplayMenu;
+#endif
     }
 
     // Helper methods
