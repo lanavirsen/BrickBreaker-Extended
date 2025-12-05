@@ -7,6 +7,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddSingleton(sp =>
 {
@@ -35,6 +44,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors();
+
 app.MapPost("/register", async (RegisterRequest request, IAuthService auth) =>
 {
     var success = await auth.RegisterAsync(request.Username, request.Password);
@@ -51,6 +62,12 @@ app.MapGet("/leaderboard/top", async (int count, ILeaderboardService leaderboard
 {
     var entries = await leaderboard.TopAsync(count);
     return Results.Ok(entries);
+});
+
+app.MapGet("/leaderboard/best/{username}", async (string username, ILeaderboardService leaderboard) =>
+{
+    var best = await leaderboard.BestForAsync(username);
+    return best is null ? Results.NotFound() : Results.Ok(best);
 });
 
 app.MapPost("/leaderboard/submit", async (SubmitScoreRequest request, ILeaderboardService leaderboard) =>

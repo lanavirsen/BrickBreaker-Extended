@@ -1,4 +1,6 @@
 ﻿@page "/"
+@using System.Linq
+@inject BrickBreaker.WebClient.Services.ApiClient Api
 
 <PageTitle>BrickBreaker Web</PageTitle>
 
@@ -7,4 +9,223 @@
     <p>Use ←/→ or A/D to move, ↑/W to launch, and P to pause. Space restarts after a game over.</p>
 </section>
 
-<GameCanvas />
+<section class="api-panel">
+    <label>API base URL</label>
+    <div class="api-input">
+        <input @bind="_apiBase" @bind:event="oninput" placeholder="https://localhost:5080" />
+        <button @onclick="ApplyApiBase" disabled="@_isBusy">Apply</button>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <p class="status">@_statusMessage</p>
+    }
+</section>
+
+@if (!_isLoggedIn)
+{
+    <section class="auth-grid">
+        <div class="card">
+            <h3>Login</h3>
+            <label>Username</label>
+            <input @bind="_loginUsername" @bind:event="oninput" />
+            <label>Password</label>
+            <input type="password" @bind="_loginPassword" @bind:event="oninput" />
+            <button @onclick="LoginAsync" disabled="@_isBusy">Login</button>
+        </div>
+        <div class="card">
+            <h3>Register</h3>
+            <label>Username</label>
+            <input @bind="_registerUsername" @bind:event="oninput" />
+            <label>Password</label>
+            <input type="password" @bind="_registerPassword" @bind:event="oninput" />
+            <button @onclick="RegisterAsync" disabled="@_isBusy">Create Account</button>
+        </div>
+    </section>
+}
+else
+{
+    <section class="auth-grid">
+        <div class="card">
+            <h3>Player</h3>
+            <p>Signed in as <strong>@_currentUser</strong></p>
+            <p>Best score: @(_bestEntry?.Score.ToString() ?? "—")</p>
+            <button @onclick="Logout" disabled="@_isBusy">Logout</button>
+        </div>
+    </section>
+}
+
+<section class="leaderboard">
+    <h3>Leaderboard</h3>
+    @if (_leaderboard.Count == 0)
+    {
+        <p>No scores yet.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Score</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < _leaderboard.Count; i++)
+                {
+                    var entry = _leaderboard[i];
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td>@entry.Username</td>
+                        <td>@entry.Score</td>
+                        <td>@entry.At.ToLocalTime().ToString("g")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+<section class="game-section">
+    <GameCanvas OnGameFinished="HandleGameFinished" />
+</section>
+
+@code {
+    private string _apiBase = string.Empty;
+    private string _statusMessage = string.Empty;
+    private bool _isBusy;
+    private bool _isLoggedIn;
+    private string _currentUser = string.Empty;
+    private string _loginUsername = string.Empty;
+    private string _loginPassword = string.Empty;
+    private string _registerUsername = string.Empty;
+    private string _registerPassword = string.Empty;
+    private List<LeaderboardEntry> _leaderboard = new();
+    private LeaderboardEntry? _bestEntry;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _apiBase = Api.BaseAddress;
+        await RefreshLeaderboardAsync();
+    }
+
+    private async Task ApplyApiBase()
+    {
+        try
+        {
+            Api.SetBaseAddress(_apiBase);
+            _statusMessage = "API base updated.";
+            await RefreshLeaderboardAsync();
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Failed to update base URL: {ex.Message}";
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _statusMessage = string.Empty;
+        var username = (_loginUsername ?? string.Empty).Trim();
+        var password = _loginPassword ?? string.Empty;
+        var result = await Api.LoginAsync(username, password);
+        if (result.Success)
+        {
+            _isLoggedIn = true;
+            _currentUser = username;
+            _loginPassword = string.Empty;
+            await LoadBestAsync();
+            _statusMessage = "Signed in.";
+        }
+        else
+        {
+            _statusMessage = result.Error ?? "Login failed.";
+        }
+        _isBusy = false;
+    }
+
+    private async Task RegisterAsync()
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _statusMessage = string.Empty;
+        var username = (_registerUsername ?? string.Empty).Trim();
+        var result = await Api.RegisterAsync(username, _registerPassword ?? string.Empty);
+        _statusMessage = result.Success ? "Registration successful." : result.Error ?? "Registration failed.";
+        if (result.Success)
+        {
+            _loginUsername = _registerUsername;
+            _registerUsername = string.Empty;
+            _registerPassword = string.Empty;
+        }
+        _isBusy = false;
+    }
+
+    private void Logout()
+    {
+        _isLoggedIn = false;
+        _currentUser = string.Empty;
+        _bestEntry = null;
+        _statusMessage = "Signed out.";
+    }
+
+    private async Task RefreshLeaderboardAsync()
+    {
+        var result = await Api.GetLeaderboardAsync(10);
+        if (result.Success && result.Value is not null)
+        {
+            _leaderboard = result.Value.ToList();
+        }
+        else
+        {
+            _leaderboard.Clear();
+            if (!string.IsNullOrWhiteSpace(result.Error))
+            {
+                _statusMessage = result.Error;
+            }
+        }
+    }
+
+    private async Task LoadBestAsync()
+    {
+        if (!_isLoggedIn)
+        {
+            _bestEntry = null;
+            return;
+        }
+
+        var result = await Api.GetBestAsync(_currentUser);
+        if (result.Success)
+        {
+            _bestEntry = result.Value;
+        }
+    }
+
+    private async Task HandleGameFinished(int score)
+    {
+        if (!_isLoggedIn || string.IsNullOrWhiteSpace(_currentUser))
+        {
+            _statusMessage = "Score not submitted (not logged in).";
+            return;
+        }
+
+        var result = await Api.SubmitScoreAsync(_currentUser, score);
+        _statusMessage = result.Success ? $"Score {score} submitted." : result.Error ?? "Score submission failed.";
+        if (result.Success)
+        {
+            await RefreshLeaderboardAsync();
+            await LoadBestAsync();
+        }
+    }
+}
