@@ -35,6 +35,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\BrickBreaker.Core\BrickBreaker.Core.csproj" />
+		<ProjectReference Include="..\BrickBreaker.ConsoleClient\BrickBreaker.ConsoleClient.csproj" />
 		<ProjectReference Include="..\BrickBreaker.Storage\BrickBreaker.Storage.csproj" />
 		<ProjectReference Include="..\BrickBreaker.Gameplay\BrickBreaker.Gameplay.csproj" />
 	</ItemGroup>

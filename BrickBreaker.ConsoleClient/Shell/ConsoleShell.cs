@@ -1,41 +1,37 @@
-using BrickBreaker.ConsoleClient.Game;
-using BrickBreaker.ConsoleClient.Ui;
+using System.Linq;
 using BrickBreaker.ConsoleClient.Ui.Enums;
 using BrickBreaker.ConsoleClient.Ui.Interfaces;
-using BrickBreaker.ConsoleClient.Ui.SpecterConsole;
 using BrickBreaker.Core.Clients;
 using BrickBreaker.Core.Models;
-using Spectre.Console;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace BrickBreaker.ConsoleClient.Shell;
 
-internal sealed class ConsoleShell : IDisposable
+public sealed class ConsoleShell : IDisposable
 {
-    private readonly ILoginMenu _loginMenu = new LoginMenu();
-    private readonly IGameplayMenu _gameplayMenu = new GameplayMenu();
-    private readonly IConsoleDialogs _dialogs = new ConsoleDialogs();
-    private readonly Header _header = new();
-    private readonly GameApiClient _apiClient = new();
+    private readonly ILoginMenu _loginMenu;
+    private readonly IGameplayMenu _gameplayMenu;
+    private readonly IConsoleDialogs _dialogs;
+    private readonly IConsoleRenderer _renderer;
+    private readonly IGameApiClient _apiClient;
+    private readonly IGameHost _gameHost;
+    private readonly bool _ownsApiClient;
 
     private string? _currentUser;
     private bool _isLoggedIn;
     private GameMode _currentMode = GameMode.Normal;
-    private bool _apiConfigured;
 
-    public ConsoleShell()
+    public ConsoleShell(ConsoleShellDependencies? dependencies = null)
     {
-        try
-        {
-            var apiBase = ApiConfiguration.ResolveBaseAddress();
-            _apiClient.SetBaseAddress(apiBase);
-            _apiConfigured = true;
-        }
-        catch (Exception ex)
-        {
-            ShowDatabaseWarning($"Failed to initialize API client: {ex.Message}");
-        }
+        dependencies ??= ConsoleShellDependencies.CreateDefault();
+
+        _loginMenu = dependencies.LoginMenu;
+        _gameplayMenu = dependencies.GameplayMenu;
+        _dialogs = dependencies.Dialogs;
+        _renderer = dependencies.Renderer;
+        _apiClient = dependencies.ApiClient;
+        _gameHost = dependencies.GameHost;
+        _ownsApiClient = dependencies.OwnsApiClient;
     }
 
     public async Task RunAsync()
@@ -129,22 +125,17 @@ internal sealed class ConsoleShell : IDisposable
 
     private async Task<AppState> HandlePlayingAsync()
     {
-        AnsiConsole.Clear();
-        IGame game = new BrickBreakerGame();
-        int score = game.Run();
+        _renderer.ClearScreen();
+        var score = _gameHost.Run();
 
-        int lowerLine = Console.WindowHeight - 4;
-        if (lowerLine < 0)
-        {
-            lowerLine = 0;
-        }
+        int lowerLine = Math.Max(GetWindowHeightSafe() - 4, 0);
 
-        Console.SetCursorPosition(0, lowerLine);
+        TrySetCursorPosition(0, lowerLine);
         _dialogs.ShowMessage($"\nFinal score: {score}");
 
-        if (_currentMode != GameMode.QuickPlay && _isLoggedIn && _apiConfigured && score > 0)
+        if (_currentMode != GameMode.QuickPlay && _isLoggedIn && score > 0)
         {
-            await RunWithSpinnerAsync("Submitting score...", () => _apiClient.SubmitScoreAsync(_currentUser!, score));
+            await _renderer.RunStatusAsync("Submitting score...", () => _apiClient.SubmitScoreAsync(_currentUser!, score));
         }
 
         _dialogs.Pause();
@@ -153,16 +144,15 @@ internal sealed class ConsoleShell : IDisposable
 
     private async Task DoRegisterAsync()
     {
-        if (!_apiConfigured)
+        if (!EnsureApiConfigured())
         {
-            ShowDatabaseWarning("API base URL not configured.");
             return;
         }
 
         var username = _dialogs.PromptNewUsername();
         var password = _dialogs.PromptNewPassword();
 
-        var result = await RunWithSpinnerAsync("Registering account...", () => _apiClient.RegisterAsync(username, password));
+        var result = await _renderer.RunStatusAsync("Registering account...", () => _apiClient.RegisterAsync(username, password));
         _dialogs.ShowMessage(result.Success
             ? "Registration successful!"
             : result.Error ?? "Registration failed.");
@@ -170,15 +160,14 @@ internal sealed class ConsoleShell : IDisposable
 
     private async Task<bool> DoLoginAsync()
     {
-        if (!_apiConfigured)
+        if (!EnsureApiConfigured())
         {
-            ShowDatabaseWarning("API base URL not configured.");
             return false;
         }
 
         var (username, password) = _dialogs.PromptCredentials();
 
-        var result = await RunWithSpinnerAsync("Signing in...", () => _apiClient.LoginAsync(username, password));
+        var result = await _renderer.RunStatusAsync("Signing in...", () => _apiClient.LoginAsync(username, password));
         if (result.Success)
         {
             _currentUser = username;
@@ -192,16 +181,15 @@ internal sealed class ConsoleShell : IDisposable
 
     private async Task ShowLeaderboardAsync()
     {
-        AnsiConsole.Clear();
-        _header.TitleHeader();
+        _renderer.ClearScreen();
+        _renderer.RenderHeader();
 
-        if (!_apiConfigured)
+        if (!EnsureApiConfigured())
         {
-            ShowDatabaseWarning("Leaderboard is unavailable because the API base URL is not configured.");
             return;
         }
 
-        var result = await RunWithSpinnerAsync("Loading leaderboard...", () => _apiClient.GetLeaderboardAsync(10));
+        var result = await _renderer.RunStatusAsync("Loading leaderboard...", () => _apiClient.GetLeaderboardAsync(10));
         if (!result.Success || result.Value is null)
         {
             ShowDatabaseWarning(result.Error ?? "Failed to load leaderboard.");
@@ -220,13 +208,13 @@ internal sealed class ConsoleShell : IDisposable
 
     private async Task ShowBestScoreAsync()
     {
-        if (!_apiConfigured || !_isLoggedIn || string.IsNullOrWhiteSpace(_currentUser))
+        if (!EnsureApiConfigured() || !_isLoggedIn || string.IsNullOrWhiteSpace(_currentUser))
         {
             ShowDatabaseWarning("Best score lookup requires an active API connection and login.");
             return;
         }
 
-        var result = await RunWithSpinnerAsync("Fetching best score...", () => _apiClient.GetBestAsync(_currentUser!));
+        var result = await _renderer.RunStatusAsync("Fetching best score...", () => _apiClient.GetBestAsync(_currentUser!));
         if (!result.Success)
         {
             ShowDatabaseWarning(result.Error ?? "Failed to load best score.");
@@ -246,14 +234,37 @@ internal sealed class ConsoleShell : IDisposable
         _dialogs.Pause();
     }
 
+    private bool EnsureApiConfigured()
+    {
+        if (!string.IsNullOrWhiteSpace(_apiClient.BaseAddress))
+        {
+            return true;
+        }
+
+        ShowDatabaseWarning("API base URL not configured.");
+        return false;
+    }
+
     private static (string Username, int Score, DateTimeOffset At) ToTuple(ScoreEntry entry)
         => (entry.Username, entry.Score, entry.At);
 
     private static void ClearInputBuffer()
     {
-        while (Console.KeyAvailable)
+        if (Console.IsInputRedirected)
         {
-            Console.ReadKey(true);
+            return;
+        }
+
+        try
+        {
+            while (Console.KeyAvailable)
+            {
+                Console.ReadKey(true);
+            }
+        }
+        catch
+        {
+            return;
         }
 
         try
@@ -269,6 +280,39 @@ internal sealed class ConsoleShell : IDisposable
         }
     }
 
+    private static int GetWindowHeightSafe()
+    {
+        if (Console.IsOutputRedirected)
+        {
+            return 0;
+        }
+
+        try
+        {
+            return Console.WindowHeight;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private static void TrySetCursorPosition(int left, int top)
+    {
+        if (Console.IsOutputRedirected)
+        {
+            return;
+        }
+
+        try
+        {
+            Console.SetCursorPosition(left, top);
+        }
+        catch
+        {
+        }
+    }
+
     private void ShowDatabaseWarning(string message)
     {
         var previousColor = Console.ForegroundColor;
@@ -277,19 +321,12 @@ internal sealed class ConsoleShell : IDisposable
         Console.ForegroundColor = previousColor;
     }
 
-    private async Task<T> RunWithSpinnerAsync<T>(string description, Func<Task<T>> action)
-    {
-        T result = default!;
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .SpinnerStyle(Style.Parse("cyan"))
-            .StartAsync(description, async _ => result = await action());
-        return result;
-    }
-
     public void Dispose()
     {
-        _apiClient.Dispose();
+        if (_ownsApiClient)
+        {
+            _apiClient.Dispose();
+        }
     }
 
     [DllImport("kernel32.dll", SetLastError = true)]
