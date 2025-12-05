@@ -1,4 +1,4 @@
-﻿namespace BrickBreaker
+﻿namespace BrickBreaker.WinFormsClient.WinUI
 {
     partial class Form1
     {

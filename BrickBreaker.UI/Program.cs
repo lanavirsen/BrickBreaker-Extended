@@ -141,7 +141,7 @@ class Program
     static async Task<AppState> HandlePlayingAsync()
     {
         AnsiConsole.Clear();
-        IGame game = new BrickBreaker.Hosting.WinFormsBrickBreakerGame();
+        IGame game = new BrickBreaker.WinFormsClient.Hosting.WinFormsBrickBreakerGame();
         int score = game.Run();
 
         // Move cursor to lower part of the console

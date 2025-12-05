@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.UI", "BrickBre
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Tests", "BrickBreaker.Tests\BrickBreaker.Tests.csproj", "{EEF64C61-89D2-4A7F-A911-12730D132C9B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker", "BrickBreaker\BrickBreaker.csproj", "{6F4659C4-A682-47AA-B149-F44A14D0A668}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.WinFormsClient", "BrickBreaker.WinFormsClient\BrickBreaker.WinFormsClient.csproj", "{6F4659C4-A682-47AA-B149-F44A14D0A668}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Api", "BrickBreaker.Api\BrickBreaker.Api.csproj", "{D4187094-928F-4E7C-B6F1-714D82F01AEF}"
 EndProject

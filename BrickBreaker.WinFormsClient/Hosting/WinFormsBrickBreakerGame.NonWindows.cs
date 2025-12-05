@@ -1,7 +1,7 @@
 using System;
 using BrickBreaker.Game;
 
-namespace BrickBreaker.Hosting;
+namespace BrickBreaker.WinFormsClient.Hosting;
 
 // Minimal placeholder used when the WinForms host is built on non-Windows platforms.
 // It ensures the solution continues to compile (so test projects can run) while
