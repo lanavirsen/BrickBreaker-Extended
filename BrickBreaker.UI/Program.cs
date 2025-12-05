@@ -26,8 +26,8 @@ class Program
     static IGameplayMenu _gameplayMenu = new GameplayMenu();
     static IConsoleDialogs _dialogs = new ConsoleDialogs();
 
-static Header header = new Header();
-static GameMode currentMode = GameMode.Normal;
+    static Header header = new Header();
+    static GameMode currentMode = GameMode.Normal;
 
     // Application entry point
     static async Task Main()
