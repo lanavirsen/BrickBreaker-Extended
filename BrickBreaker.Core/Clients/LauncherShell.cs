@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using BrickBreaker.Core.Clients;
 using BrickBreaker.Core.Models;
 
-namespace BrickBreaker.WinFormsClient.Hosting;
+namespace BrickBreaker.Core.Clients;
 
 /// <summary>
 /// Encapsulates the WinForms launcher state and API interactions so the UI layer stays thin.

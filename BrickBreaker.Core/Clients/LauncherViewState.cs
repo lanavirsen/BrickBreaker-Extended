@@ -1,4 +1,4 @@
-namespace BrickBreaker.WinFormsClient.Hosting;
+namespace BrickBreaker.Core.Clients;
 
 public sealed record LauncherViewState(
     string PlayerLabel,
