@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Game", "BrickB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Storage", "BrickBreaker.Storage\BrickBreaker.Storage.csproj", "{93391F92-7C82-47FE-B7D5-748ED226D1D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.UI", "BrickBreaker.UI\BrickBreaker.UI.csproj", "{D597FD8A-145A-4D08-A1B4-142B8F812822}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Tests", "BrickBreaker.Tests\BrickBreaker.Tests.csproj", "{EEF64C61-89D2-4A7F-A911-12730D132C9B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.WinFormsClient", "BrickBreaker.WinFormsClient\BrickBreaker.WinFormsClient.csproj", "{6F4659C4-A682-47AA-B149-F44A14D0A668}"
@@ -69,18 +67,6 @@ Global
 		{93391F92-7C82-47FE-B7D5-748ED226D1D9}.Release|x64.Build.0 = Release|Any CPU
 		{93391F92-7C82-47FE-B7D5-748ED226D1D9}.Release|x86.ActiveCfg = Release|Any CPU
 		{93391F92-7C82-47FE-B7D5-748ED226D1D9}.Release|x86.Build.0 = Release|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Debug|x64.Build.0 = Debug|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Debug|x86.Build.0 = Debug|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Release|x64.ActiveCfg = Release|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Release|x64.Build.0 = Release|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Release|x86.ActiveCfg = Release|Any CPU
-		{D597FD8A-145A-4D08-A1B4-142B8F812822}.Release|x86.Build.0 = Release|Any CPU
 		{EEF64C61-89D2-4A7F-A911-12730D132C9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EEF64C61-89D2-4A7F-A911-12730D132C9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EEF64C61-89D2-4A7F-A911-12730D132C9B}.Debug|x64.ActiveCfg = Debug|Any CPU

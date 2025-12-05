@@ -19,7 +19,7 @@ The gameplay runs inside a desktop window, while Spectre.Console menus handle lo
 - **WinForms client shell** – `BrickBreaker.WinFormsClient` layers a login/register menu, Quick Play toggle, and leaderboard viewer on top of the renderer while talking to the ASP.NET API for auth + score submission.
 - **Shared gameplay loop** – `BrickBreaker.Gameplay` wraps `GameEngine` into a reusable session + render-state model that both the WinForms and Blazor clients consume.
 - **Engine features** – `GameEngine` drives multi-ball, paddle-extender power-ups, brick layouts, score multipliers, and ball tethering before launch so runs stay fair on a keyboard.
-- **Spectre.Console shell** – `BrickBreaker.UI` offers registration, login, best-score lookup, leaderboard browsing, Quick Play, and exit flows using a small state machine.
+- **Spectre.Console shell** – `BrickBreaker.ConsoleClient` offers registration, login, best-score lookup, leaderboard browsing, Quick Play, and exit flows using a small state machine.
 - **Blazor web client** – `BrickBreaker.WebClient` reuses the `GameEngine` inside a `<canvas>` via WebAssembly so the browser build stays feature-complete with the desktop renderer.
 - **Supabase/PostgreSQL persistence** – When a connection string is available, credentials are hashed, scores are written through `BrickBreaker.Storage`, and the UI surfaces per-user best scores plus a Top-10 leaderboard. When offline, disabled stores keep the game playable and the console warns that persistence is unavailable.
 - **Automated tests** – `BrickBreaker.Tests` uses xUnit to validate authentication, password hashing, and leaderboard ordering via the shared abstractions so logic stays correct regardless of the backing store.
@@ -41,7 +41,6 @@ BrickBreaker/
 │   ├── UserStore.cs             Npgsql-backed implementation
 │   ├── LeaderboardStore.cs      Npgsql-backed implementation
 │   └── Disabled*.cs             Null-object stores for offline play
-├── BrickBreaker.UI/             Spectre.Console menus (login → gameplay shell)
 ├── BrickBreaker.Tests/          xUnit tests for Auth + Leaderboard logic
 └── README.md
 ```
@@ -63,9 +62,6 @@ dotnet run --project BrickBreaker.ConsoleClient
 # Launch the Blazor WebAssembly client (canvas renderer)
 dotnet run --project BrickBreaker.WebClient
 
-# Run the Spectre.Console shell + WinForms gameplay loop (login, Quick Play, leaderboard)
-dotnet run --project BrickBreaker.UI
-
 # Optional: build every project or run the unit tests
 dotnet build BrickBreaker.sln
 dotnet test BrickBreaker.sln
@@ -77,7 +73,7 @@ The Blazor client lets you edit the API base URL from the landing page (or set t
 
 ### Configure Supabase/PostgreSQL
 
-The Spectre.Console UI checks for a connection string at startup:
+Both the WinForms and Spectre console clients surface authentication + leaderboard journeys through the ASP.NET API, which in turn uses Supabase/PostgreSQL. Configure the connection string once and every client benefits:
 
 1. Update `BrickBreaker.Storage/Properties/appsettings.json` **or** set an environment variable named `Supabase` / `ConnectionString:Supabase`.
 2. Provide a standard Npgsql connection string, for example:

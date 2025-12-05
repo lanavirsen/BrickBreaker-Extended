@@ -18,14 +18,13 @@ ignore:
   - "**/*.g.cs"
   - "**/*.g.i.cs"
   - "**/*.Generated.cs"
-  - "BrickBreaker.UI/Assets/**"
+  - "BrickBreaker.ConsoleClient/Assets/**"
   - "BrickBreaker.Storage/Properties/appsettings.json"
   - "BrickBreaker.Tests/**"
   # Console rendering, state-machine UI, and Spectre front-end pieces are highly coupled to
   # terminal state and ANSI cursor positions, so we accept visual/manual testing there.
-  - "BrickBreaker.UI/Game/Renderer/**"
-  - "BrickBreaker.UI/Ui/**"
-  - "BrickBreaker.UI/Game/Infrastructure/**"
+  - "BrickBreaker.ConsoleClient/Game/**"
+  - "BrickBreaker.ConsoleClient/Ui/**"
   # Native interop/audio glue is similarly impractical to cover in CI.
-  - "BrickBreaker.UI/Game/Systems/ConsoleRenderer.cs"
-  - "BrickBreaker.UI/Game/BrickBreakerGame.cs"
+  - "BrickBreaker.ConsoleClient/Game/Systems/ConsoleRenderer.cs"
+  - "BrickBreaker.ConsoleClient/Game/BrickBreakerGame.cs"
