@@ -1,0 +1,51 @@
+.game-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  color: #f5f7ff;
+}
+
+.game-canvas {
+  width: min(95vw, 960px);
+  max-width: 960px;
+  background: #05050d;
+  border: 1px solid #161a2c;
+  border-radius: 12px;
+  outline: none;
+  box-shadow: 0 10px 40px rgba(4, 7, 20, 0.65);
+}
+
+.hud {
+  display: flex;
+  gap: 1.5rem;
+  font-family: 'Consolas', monospace;
+  font-size: 1rem;
+}
+
+.status {
+  min-height: 1.5rem;
+  color: #ffd966;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.controls button {
+  background: #6226ff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.95rem;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.controls button[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}

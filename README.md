@@ -18,6 +18,7 @@ The gameplay runs inside a desktop window, while Spectre.Console menus handle lo
 - **WinForms renderer @ 60 FPS** – `Form1` maximizes to a borderless window, locks the frame rate with a Windows Forms timer, and uses custom fonts, rainbow borders, and score pop-ups.
 - **Engine features** – `GameEngine` drives multi-ball, paddle-extender power-ups, brick layouts, score multipliers, and ball tethering before launch so runs stay fair on a keyboard.
 - **Spectre.Console shell** – `BrickBreaker.UI` offers registration, login, best-score lookup, leaderboard browsing, Quick Play, and exit flows using a small state machine.
+- **Blazor web client** – `BrickBreaker.WebClient` reuses the `GameEngine` inside a `<canvas>` via WebAssembly so the browser build stays feature-complete with the desktop renderer.
 - **Supabase/PostgreSQL persistence** – When a connection string is available, credentials are hashed, scores are written through `BrickBreaker.Storage`, and the UI surfaces per-user best scores plus a Top-10 leaderboard. When offline, disabled stores keep the game playable and the console warns that persistence is unavailable.
 - **Automated tests** – `BrickBreaker.Tests` uses xUnit to validate authentication, password hashing, and leaderboard ordering via the shared abstractions so logic stays correct regardless of the backing store.
 
@@ -29,6 +30,7 @@ BrickBreaker/
 ├── BrickBreaker/                WinForms game (Form1, GameEngine, hosting helpers)
 │   ├── Hosting/                 IGame implementation for desktop play
 │   └── WinUI/                   WinForms form, drawing, input, assets
+├── BrickBreaker.WebClient/      Blazor WebAssembly canvas client for browsers
 ├── BrickBreaker.Core/           Domain models + services (Auth, Leaderboard, abstractions)
 ├── BrickBreaker.Storage/        Supabase/PostgreSQL stores + configuration helpers
 │   ├── StorageConfiguration.cs  Resolves Supabase connection strings
@@ -50,6 +52,9 @@ dotnet restore
 
 # Launch the WinForms game directly
 dotnet run --project BrickBreaker
+
+# Launch the Blazor WebAssembly client (canvas renderer)
+dotnet run --project BrickBreaker.WebClient
 
 # Run the Spectre.Console shell + WinForms gameplay loop (login, Quick Play, leaderboard)
 dotnet run --project BrickBreaker.UI
