@@ -1,3 +1,4 @@
+using BrickBreaker.Core.Clients;
 using BrickBreaker.ConsoleClient.Game.Models;                    // Import main game models (Ball, PowerUp, ScorePop, etc.)
 using BrickBreaker.ConsoleClient.Game.Infrastructure;         // Import game infrastructure interfaces (IGame, IKeyboard)
 using BrickBreaker.ConsoleClient.Game.Systems;                   // Import game system classes (LevelManager, CollisionHandler, PowerUpLogic)
@@ -9,7 +10,7 @@ using static BrickBreaker.ConsoleClient.Game.Models.Constants;   // Allow direct
 namespace BrickBreaker.ConsoleClient.Game                        // Main game namespace
 {
     // Main class that runs the BrickBreaker game logic
-    public sealed class BrickBreakerGame : IGame
+    public sealed class BrickBreakerGame : IGameHost
     {
         // System Handlers
         private readonly CollisionHandler _collisionHandler = new CollisionHandler(); // Handles collisions and ball movement

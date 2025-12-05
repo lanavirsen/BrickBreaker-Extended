@@ -1,4 +1,6 @@
-using BrickBreaker.WinFormsClient.Services;
+using BrickBreaker.Core.Clients;
+using BrickBreaker.Core.Models;
+using BrickBreaker.WinFormsClient.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,18 +11,18 @@ namespace BrickBreaker.WinFormsClient.WinUI;
 
 public partial class LauncherForm : Form
 {
-    private readonly BrickBreakerApiClient _apiClient;
-    private string? _currentPlayer;
-    private bool _quickPlayMode;
+    private readonly LauncherShell _shell;
 
     public LauncherForm()
     {
         InitializeComponent();
-        var defaultUrl = Environment.GetEnvironmentVariable("BRICKBREAKER_API_URL") ?? "http://localhost:5080";
+        var defaultUrl = ApiConfiguration.ResolveBaseAddress();
         txtApiUrl.Text = defaultUrl;
-        _apiClient = new BrickBreakerApiClient(defaultUrl);
+        var apiClient = new GameApiClient(defaultUrl);
+        _shell = new LauncherShell(apiClient);
         WireEventHandlers();
         ResetPlayer();
+        ApplyState();
     }
 
     protected override async void OnShown(EventArgs e)
@@ -32,7 +34,7 @@ public partial class LauncherForm : Form
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
         base.OnFormClosed(e);
-        _apiClient.Dispose();
+        _shell.Dispose();
     }
 
     private void WireEventHandlers()
@@ -51,8 +53,9 @@ public partial class LauncherForm : Form
         var value = txtApiUrl.Text.Trim();
         try
         {
-            _apiClient.SetBaseAddress(value);
-            SetStatus($"API base updated to {value}", success: true);
+            _shell.SetBaseAddress(value);
+            txtApiUrl.Text = _shell.BaseAddress;
+            ApplyState();
             await RefreshLeaderboardAsync();
         }
         catch (Exception ex)
@@ -70,18 +73,16 @@ public partial class LauncherForm : Form
         }
 
         ToggleAuthButtons(enabled: false);
-        SetStatus("Signing in...");
-        var result = await _apiClient.LoginAsync(credentials.Value.username, credentials.Value.password);
+        var result = await _shell.LoginAsync(credentials.Value.username, credentials.Value.password);
         ToggleAuthButtons(enabled: true);
 
         if (result.Success)
         {
-            UpdatePlayer(credentials.Value.username, quickPlay: false);
-            SetStatus("Logged in.", success: true);
+            ApplyState();
         }
         else
         {
-            ShowError("Login failed", result.ErrorMessage);
+            ShowError("Login failed", result.Error);
         }
     }
 
@@ -94,39 +95,29 @@ public partial class LauncherForm : Form
         }
 
         ToggleAuthButtons(enabled: false);
-        SetStatus("Registering account...");
-        var result = await _apiClient.RegisterAsync(credentials.Value.username, credentials.Value.password);
+        var result = await _shell.RegisterAsync(credentials.Value.username, credentials.Value.password);
         ToggleAuthButtons(enabled: true);
 
         if (result.Success)
         {
-            SetStatus("Registration successful. You can log in now.", success: true);
+            ApplyState();
         }
         else
         {
-            ShowError("Registration failed", result.ErrorMessage);
+            ShowError("Registration failed", result.Error);
         }
     }
 
     private void EnableQuickPlay()
     {
-        _quickPlayMode = true;
-        _currentPlayer = null;
-        btnStartGame.Enabled = true;
-        btnLogout.Enabled = false;
-        lblCurrentUser.Text = "Mode: Quick Play";
-        SetStatus("Quick Play ready. Scores are not submitted.", success: true);
+        _shell.EnableQuickPlay();
+        ApplyState();
     }
 
     private void ResetPlayer()
     {
-        _quickPlayMode = false;
-        _currentPlayer = null;
-        btnStartGame.Enabled = false;
-        btnLogout.Enabled = false;
-        lblCurrentUser.Text = "Player: (not logged in)";
-        lblLastScore.Text = "Last score: none";
-        SetStatus("Signed out.");
+        _shell.Logout();
+        ApplyState();
     }
 
     private async Task StartGameAsync()
@@ -135,30 +126,26 @@ public partial class LauncherForm : Form
         try
         {
             int finalScore = RunGame();
-            lblLastScore.Text = finalScore > 0 ? $"Last score: {finalScore}" : "Last score: none";
+            _shell.RecordGameFinished(finalScore);
+            ApplyState();
 
-            if (!_quickPlayMode && !string.IsNullOrWhiteSpace(_currentPlayer) && finalScore > 0)
+            if (_shell.CanSubmitScores && finalScore > 0)
             {
-                SetStatus("Submitting score...");
-                var result = await _apiClient.SubmitScoreAsync(_currentPlayer!, finalScore);
+                var result = await _shell.SubmitScoreAsync(finalScore);
+                ApplyState();
                 if (result.Success)
                 {
-                    SetStatus("Score submitted!", success: true);
                     await RefreshLeaderboardAsync();
                 }
                 else
                 {
-                    ShowError("Score submission failed", result.ErrorMessage);
+                    ShowError("Score submission failed", result.Error);
                 }
-            }
-            else if (_quickPlayMode)
-            {
-                SetStatus("Quick Play finished.");
             }
         }
         finally
         {
-            btnStartGame.Enabled = _quickPlayMode || !string.IsNullOrWhiteSpace(_currentPlayer);
+            ApplyState();
         }
     }
 
@@ -180,21 +167,21 @@ public partial class LauncherForm : Form
     private async Task RefreshLeaderboardAsync()
     {
         btnRefreshLeaderboard.Enabled = false;
-        var result = await _apiClient.GetLeaderboardAsync(10);
+        var result = await _shell.LoadLeaderboardAsync(10);
         btnRefreshLeaderboard.Enabled = true;
+        ApplyState();
 
-        if (result.Success && result.Value is IReadOnlyList<LeaderboardEntry> entries)
+        if (result.Success && result.Value is IReadOnlyList<ScoreEntry> entries)
         {
             RenderLeaderboard(entries);
-            SetStatus($"Leaderboard updated at {DateTime.Now:T}", success: true);
         }
         else
         {
-            ShowError("Failed to load leaderboard", result.ErrorMessage);
+            ShowError("Failed to load leaderboard", result.Error);
         }
     }
 
-    private void RenderLeaderboard(IReadOnlyList<LeaderboardEntry> entries)
+    private void RenderLeaderboard(IReadOnlyList<ScoreEntry> entries)
     {
         listLeaderboard.BeginUpdate();
         listLeaderboard.Items.Clear();
@@ -219,19 +206,12 @@ public partial class LauncherForm : Form
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
             MessageBox.Show(this, "Enter both username and password.", "BrickBreaker", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            _shell.UpdateStatus("Enter both username and password.");
+            ApplyState();
             return null;
         }
 
         return (username, password);
-    }
-
-    private void UpdatePlayer(string username, bool quickPlay)
-    {
-        _currentPlayer = username;
-        _quickPlayMode = quickPlay;
-        btnStartGame.Enabled = true;
-        btnLogout.Enabled = true;
-        lblCurrentUser.Text = $"Player: {username}";
     }
 
     private void ToggleAuthButtons(bool enabled)
@@ -241,16 +221,22 @@ public partial class LauncherForm : Form
         btnQuickPlay.Enabled = enabled;
     }
 
-    private void SetStatus(string message, bool success = false)
+    private void ApplyState()
     {
-        lblStatus.Text = message;
-        lblStatus.ForeColor = success ? Color.ForestGreen : SystemColors.GrayText;
+        var view = _shell.Snapshot();
+        lblCurrentUser.Text = view.PlayerLabel;
+        lblLastScore.Text = view.LastScoreLabel;
+        btnStartGame.Enabled = view.CanStartGame;
+        btnLogout.Enabled = view.CanLogout;
+        lblStatus.Text = view.StatusMessage;
+        lblStatus.ForeColor = view.StatusIsSuccess ? Color.ForestGreen : SystemColors.GrayText;
     }
 
     private void ShowError(string title, string? details)
     {
         var message = string.IsNullOrWhiteSpace(details) ? "An unknown error occurred." : details;
         MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
-        SetStatus(message);
+        _shell.UpdateStatus(message);
+        ApplyState();
     }
 }

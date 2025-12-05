@@ -1,3 +1,4 @@
+using BrickBreaker.Core.Clients;
 using BrickBreaker.Game;
 using BrickBreaker.WinFormsClient.WinUI;
 using System.Threading;
@@ -8,7 +9,7 @@ namespace BrickBreaker.WinFormsClient.Hosting;
 // Hosts the WinForms gameplay inside an <see cref="IGame"/> abstraction so other
 // application surfaces (console menus, tests, etc.) can launch the desktop game
 // without knowing UI details.
-public sealed class WinFormsBrickBreakerGame : IGame
+public sealed class WinFormsBrickBreakerGame : IGame, IGameHost
 {
     public int Run()
     {
