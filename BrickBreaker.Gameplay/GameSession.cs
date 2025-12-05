@@ -6,7 +6,7 @@ using BrickBreaker.Game;
 using BrickBreaker.Game.Entities;
 using BrickBreaker.Game.Utilities;
 
-namespace BrickBreaker.WinFormsClient.Gameplay;
+namespace BrickBreaker.Gameplay;
 
 public sealed class GameSession
 {
@@ -201,6 +201,8 @@ public sealed class GameSession
             _elapsedSeconds,
             _engine.Score,
             _engine.CurrentLevel,
+            _engine.HighScore,
             _engine.IsPaddleBlinking);
     }
+
 }

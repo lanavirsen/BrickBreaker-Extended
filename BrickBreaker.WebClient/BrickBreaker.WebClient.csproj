@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BrickBreaker.Game\BrickBreaker.Game.csproj" />
+    <ProjectReference Include="..\BrickBreaker.Gameplay\BrickBreaker.Gameplay.csproj" />
   </ItemGroup>
 
 </Project>

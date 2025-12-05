@@ -17,6 +17,7 @@ The gameplay runs inside a desktop window, while Spectre.Console menus handle lo
 
 - **WinForms renderer @ 60 FPS** – `Form1` maximizes to a borderless window, locks the frame rate with a Windows Forms timer, and uses custom fonts, rainbow borders, and score pop-ups.
 - **WinForms client shell** – `BrickBreaker.WinFormsClient` layers a login/register menu, Quick Play toggle, and leaderboard viewer on top of the renderer while talking to the ASP.NET API for auth + score submission.
+- **Shared gameplay loop** – `BrickBreaker.Gameplay` wraps `GameEngine` into a reusable session + render-state model that both the WinForms and Blazor clients consume.
 - **Engine features** – `GameEngine` drives multi-ball, paddle-extender power-ups, brick layouts, score multipliers, and ball tethering before launch so runs stay fair on a keyboard.
 - **Spectre.Console shell** – `BrickBreaker.UI` offers registration, login, best-score lookup, leaderboard browsing, Quick Play, and exit flows using a small state machine.
 - **Blazor web client** – `BrickBreaker.WebClient` reuses the `GameEngine` inside a `<canvas>` via WebAssembly so the browser build stays feature-complete with the desktop renderer.
@@ -28,6 +29,7 @@ The gameplay runs inside a desktop window, while Spectre.Console menus handle lo
 ```
 BrickBreaker/
 ├── BrickBreaker.sln             Solution root (net9.0)
+├── BrickBreaker.Gameplay/       Shared GameSession + render models (used by WinForms + Blazor)
 ├── BrickBreaker.WinFormsClient/ WinForms client (launcher + Form1 gameplay)
 │   ├── Hosting/                 IGame implementation for desktop play
 │   └── WinUI/                   WinForms forms, drawing, input, assets

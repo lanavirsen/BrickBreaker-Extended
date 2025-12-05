@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using BrickBreaker.Game.Entities;
 
-namespace BrickBreaker.WinFormsClient.Gameplay;
+namespace BrickBreaker.Gameplay;
 
 public sealed record GameRenderState(
     Rectangle PlayArea,
@@ -21,6 +21,7 @@ public sealed record GameRenderState(
     double ElapsedSeconds,
     int Score,
     int Level,
+    int HighScore,
     bool PaddleBlinking)
 {
     public static GameRenderState Empty { get; } = new(
@@ -39,6 +40,7 @@ public sealed record GameRenderState(
         0,
         0,
         1,
+        0,
         false);
 }
 
