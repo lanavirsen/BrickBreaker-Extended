@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.WebClient", "B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.Gameplay", "BrickBreaker.Gameplay\BrickBreaker.Gameplay.csproj", "{C6920F4B-4C5A-4ED4-99DC-9215DC79D7F5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrickBreaker.ConsoleClient", "BrickBreaker.ConsoleClient\BrickBreaker.ConsoleClient.csproj", "{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -139,6 +141,18 @@ Global
 		{C6920F4B-4C5A-4ED4-99DC-9215DC79D7F5}.Release|x64.Build.0 = Release|Any CPU
 		{C6920F4B-4C5A-4ED4-99DC-9215DC79D7F5}.Release|x86.ActiveCfg = Release|Any CPU
 		{C6920F4B-4C5A-4ED4-99DC-9215DC79D7F5}.Release|x86.Build.0 = Release|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Debug|x64.Build.0 = Debug|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Debug|x86.Build.0 = Debug|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Release|x64.ActiveCfg = Release|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Release|x64.Build.0 = Release|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Release|x86.ActiveCfg = Release|Any CPU
+		{B67B986B-C538-4630-9DCD-C2C5D3D1EE51}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
