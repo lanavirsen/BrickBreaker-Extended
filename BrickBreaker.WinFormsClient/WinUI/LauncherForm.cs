@@ -1,4 +1,6 @@
-using BrickBreaker.WinFormsClient.Services;
+using BrickBreaker.Core.Clients;
+using BrickBreaker.Core.Models;
+using BrickBreaker.WinFormsClient.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,16 +11,15 @@ namespace BrickBreaker.WinFormsClient.WinUI;
 
 public partial class LauncherForm : Form
 {
-    private readonly BrickBreakerApiClient _apiClient;
-    private string? _currentPlayer;
-    private bool _quickPlayMode;
+    private readonly LauncherShell _shell;
 
     public LauncherForm()
     {
         InitializeComponent();
-        var defaultUrl = Environment.GetEnvironmentVariable("BRICKBREAKER_API_URL") ?? "http://localhost:5080";
+        var defaultUrl = ApiConfiguration.ResolveBaseAddress();
         txtApiUrl.Text = defaultUrl;
-        _apiClient = new BrickBreakerApiClient(defaultUrl);
+        var apiClient = new GameApiClient(defaultUrl);
+        _shell = new LauncherShell(apiClient);
         WireEventHandlers();
         ResetPlayer();
     }
@@ -32,7 +33,7 @@ public partial class LauncherForm : Form
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
         base.OnFormClosed(e);
-        _apiClient.Dispose();
+        _shell.Dispose();
     }
 
     private void WireEventHandlers()
@@ -51,8 +52,9 @@ public partial class LauncherForm : Form
         var value = txtApiUrl.Text.Trim();
         try
         {
-            _apiClient.SetBaseAddress(value);
-            SetStatus($"API base updated to {value}", success: true);
+            _shell.SetBaseAddress(value);
+            txtApiUrl.Text = _shell.BaseAddress;
+            SetStatus($"API base updated to {_shell.BaseAddress}", success: true);
             await RefreshLeaderboardAsync();
         }
         catch (Exception ex)
@@ -71,7 +73,7 @@ public partial class LauncherForm : Form
 
         ToggleAuthButtons(enabled: false);
         SetStatus("Signing in...");
-        var result = await _apiClient.LoginAsync(credentials.Value.username, credentials.Value.password);
+        var result = await _shell.LoginAsync(credentials.Value.username, credentials.Value.password);
         ToggleAuthButtons(enabled: true);
 
         if (result.Success)
@@ -81,7 +83,7 @@ public partial class LauncherForm : Form
         }
         else
         {
-            ShowError("Login failed", result.ErrorMessage);
+            ShowError("Login failed", result.Error);
         }
     }
 
@@ -95,7 +97,7 @@ public partial class LauncherForm : Form
 
         ToggleAuthButtons(enabled: false);
         SetStatus("Registering account...");
-        var result = await _apiClient.RegisterAsync(credentials.Value.username, credentials.Value.password);
+        var result = await _shell.RegisterAsync(credentials.Value.username, credentials.Value.password);
         ToggleAuthButtons(enabled: true);
 
         if (result.Success)
@@ -104,14 +106,13 @@ public partial class LauncherForm : Form
         }
         else
         {
-            ShowError("Registration failed", result.ErrorMessage);
+            ShowError("Registration failed", result.Error);
         }
     }
 
     private void EnableQuickPlay()
     {
-        _quickPlayMode = true;
-        _currentPlayer = null;
+        _shell.EnableQuickPlay();
         btnStartGame.Enabled = true;
         btnLogout.Enabled = false;
         lblCurrentUser.Text = "Mode: Quick Play";
@@ -120,8 +121,7 @@ public partial class LauncherForm : Form
 
     private void ResetPlayer()
     {
-        _quickPlayMode = false;
-        _currentPlayer = null;
+        _shell.Logout();
         btnStartGame.Enabled = false;
         btnLogout.Enabled = false;
         lblCurrentUser.Text = "Player: (not logged in)";
@@ -137,10 +137,10 @@ public partial class LauncherForm : Form
             int finalScore = RunGame();
             lblLastScore.Text = finalScore > 0 ? $"Last score: {finalScore}" : "Last score: none";
 
-            if (!_quickPlayMode && !string.IsNullOrWhiteSpace(_currentPlayer) && finalScore > 0)
+            if (!_shell.QuickPlayMode && !string.IsNullOrWhiteSpace(_shell.CurrentPlayer) && finalScore > 0)
             {
                 SetStatus("Submitting score...");
-                var result = await _apiClient.SubmitScoreAsync(_currentPlayer!, finalScore);
+                var result = await _shell.SubmitScoreAsync(finalScore);
                 if (result.Success)
                 {
                     SetStatus("Score submitted!", success: true);
@@ -148,17 +148,17 @@ public partial class LauncherForm : Form
                 }
                 else
                 {
-                    ShowError("Score submission failed", result.ErrorMessage);
+                    ShowError("Score submission failed", result.Error);
                 }
             }
-            else if (_quickPlayMode)
+            else if (_shell.QuickPlayMode)
             {
                 SetStatus("Quick Play finished.");
             }
         }
         finally
         {
-            btnStartGame.Enabled = _quickPlayMode || !string.IsNullOrWhiteSpace(_currentPlayer);
+            btnStartGame.Enabled = _shell.QuickPlayMode || !string.IsNullOrWhiteSpace(_shell.CurrentPlayer);
         }
     }
 
@@ -180,21 +180,21 @@ public partial class LauncherForm : Form
     private async Task RefreshLeaderboardAsync()
     {
         btnRefreshLeaderboard.Enabled = false;
-        var result = await _apiClient.GetLeaderboardAsync(10);
+        var result = await _shell.LoadLeaderboardAsync(10);
         btnRefreshLeaderboard.Enabled = true;
 
-        if (result.Success && result.Value is IReadOnlyList<LeaderboardEntry> entries)
+        if (result.Success && result.Value is IReadOnlyList<ScoreEntry> entries)
         {
             RenderLeaderboard(entries);
             SetStatus($"Leaderboard updated at {DateTime.Now:T}", success: true);
         }
         else
         {
-            ShowError("Failed to load leaderboard", result.ErrorMessage);
+            ShowError("Failed to load leaderboard", result.Error);
         }
     }
 
-    private void RenderLeaderboard(IReadOnlyList<LeaderboardEntry> entries)
+    private void RenderLeaderboard(IReadOnlyList<ScoreEntry> entries)
     {
         listLeaderboard.BeginUpdate();
         listLeaderboard.Items.Clear();
@@ -227,11 +227,9 @@ public partial class LauncherForm : Form
 
     private void UpdatePlayer(string username, bool quickPlay)
     {
-        _currentPlayer = username;
-        _quickPlayMode = quickPlay;
         btnStartGame.Enabled = true;
-        btnLogout.Enabled = true;
-        lblCurrentUser.Text = $"Player: {username}";
+        btnLogout.Enabled = !quickPlay;
+        lblCurrentUser.Text = quickPlay ? "Mode: Quick Play" : $"Player: {username}";
     }
 
     private void ToggleAuthButtons(bool enabled)

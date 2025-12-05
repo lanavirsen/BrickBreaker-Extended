@@ -67,7 +67,7 @@ dotnet build BrickBreaker.sln
 dotnet test BrickBreaker.sln
 ```
 
-The WinForms client reads the backend URL from the `BRICKBREAKER_API_URL` environment variable (defaults to `http://localhost:5080`) and can also be changed at runtime inside the launcher UI.
+The WinForms and Spectre console clients read the backend URL from the `BRICKBREAKER_API_URL` environment variable (defaults to `http://127.0.0.1:5080`) and both allow overriding the value at runtime (launcher textbox or console prompt).
 
 The Blazor client lets you edit the API base URL from the landing page (or set the `ApiBaseUrl` configuration entry when bootstrapping the WASM host) and uses those endpoints for login, registration, and score submission.
 
