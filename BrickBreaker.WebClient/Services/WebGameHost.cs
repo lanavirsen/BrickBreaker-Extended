@@ -33,11 +33,16 @@ public sealed class WebGameHost : IAsyncDisposable
     private bool _lastBallReady = true;
 
     public event Action? StateChanged;
+    public event Action<int>? GameFinished;
 
     public WebGameHost(IJSRuntime jsRuntime)
     {
         _jsRuntime = jsRuntime;
-        _session.GameFinished += (_, _) => NotifyStateChanged();
+        _session.GameFinished += (_, score) =>
+        {
+            GameFinished?.Invoke(score);
+            NotifyStateChanged();
+        };
     }
 
     private GameRenderState State => _session.Snapshot;

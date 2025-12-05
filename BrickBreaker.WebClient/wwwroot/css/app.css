@@ -28,6 +28,71 @@ a, .btn-link {
     margin-bottom: 0.4rem;
 }
 
+.api-panel,
+.auth-grid,
+.leaderboard,
+.game-section {
+    margin-bottom: 1.5rem;
+    background: rgba(8, 10, 24, 0.65);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.api-input {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.api-input input,
+.auth-grid input {
+    flex: 1;
+    padding: 0.45rem;
+    border-radius: 6px;
+    border: 1px solid #252642;
+    background: rgba(4, 6, 18, 0.85);
+    color: #f5f7ff;
+}
+
+.api-input button,
+.auth-grid button {
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    border: none;
+    background: #6f5cff;
+    color: #fff;
+    cursor: pointer;
+}
+
+.status {
+    margin-top: 0.5rem;
+    color: #a5b4fc;
+}
+
+.auth-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.leaderboard table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard th,
+.leaderboard td {
+    padding: 0.4rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;

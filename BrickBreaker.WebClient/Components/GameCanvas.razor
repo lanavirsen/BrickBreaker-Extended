@@ -45,6 +45,8 @@
 </div>
 
 @code {
+    [Parameter] public EventCallback<int> OnGameFinished { get; set; }
+
     private ElementReference _canvasRef;
     private WebGameHost? _host;
 
@@ -52,6 +54,7 @@
     {
         _host = new WebGameHost(JS);
         _host.StateChanged += HandleStateChanged;
+        _host.GameFinished += HandleHostGameFinished;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -155,7 +158,16 @@
         if (_host is not null)
         {
             _host.StateChanged -= HandleStateChanged;
+            _host.GameFinished -= HandleHostGameFinished;
             await _host.DisposeAsync();
+        }
+    }
+
+    private async void HandleHostGameFinished(int score)
+    {
+        if (OnGameFinished.HasDelegate)
+        {
+            await InvokeAsync(() => OnGameFinished.InvokeAsync(score));
         }
     }
 }
