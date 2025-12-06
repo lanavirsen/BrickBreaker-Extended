@@ -75,6 +75,8 @@ The Blazor client lets you edit the API base URL from the landing page (or set t
 
 Both the WinForms and Spectre console clients surface authentication + leaderboard journeys through the ASP.NET API, which in turn uses Supabase/PostgreSQL. Configure the connection string once and every client benefits:
 
+> **API configuration template**: Copy `BrickBreaker.Api/appsettings.Template.json` to `appsettings.json` (and/or `appsettings.Development.json`) locally, then customize the values. The template is tracked in git, but concrete appsettings files remain ignored so secrets never leak into the repo.
+
 1. Update `BrickBreaker.Storage/Properties/appsettings.json` **or** set an environment variable named `Supabase` / `ConnectionString:Supabase`.
 2. Provide a standard Npgsql connection string, for example:
 
