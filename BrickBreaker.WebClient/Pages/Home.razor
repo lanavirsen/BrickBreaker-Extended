@@ -165,7 +165,7 @@ else
         _statusMessage = result.Success ? "Registration successful." : result.Error ?? "Registration failed.";
         if (result.Success)
         {
-            _loginUsername = _registerUsername;
+            _loginUsername = _registerUsername ?? string.Empty;
             _registerUsername = string.Empty;
             _registerPassword = string.Empty;
         }

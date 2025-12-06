@@ -28,13 +28,13 @@ public static class ApiConfiguration
             return preferred;
         }
 
-        var envValue = Environment.GetEnvironmentVariable(BaseAddressEnvironmentVariable);
+        var envValue = TryGetEnvironmentVariable(BaseAddressEnvironmentVariable);
         if (!string.IsNullOrWhiteSpace(envValue))
         {
             return envValue;
         }
 
-        var configOverride = settingsPath ?? Environment.GetEnvironmentVariable(SettingsFileEnvironmentVariable);
+        var configOverride = settingsPath ?? TryGetEnvironmentVariable(SettingsFileEnvironmentVariable);
         return LoadFromSettings(configOverride);
     }
 
@@ -56,6 +56,11 @@ public static class ApiConfiguration
 
     private static string? LoadFromSettings(string? overridePath)
     {
+        if (OperatingSystem.IsBrowser())
+        {
+            return null;
+        }
+
         foreach (var path in EnumerateCandidatePaths(overridePath))
         {
             try
@@ -88,6 +93,11 @@ public static class ApiConfiguration
 
     private static IEnumerable<string> EnumerateCandidatePaths(string? overridePath)
     {
+        if (OperatingSystem.IsBrowser())
+        {
+            yield break;
+        }
+
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         if (!string.IsNullOrWhiteSpace(overridePath))
@@ -113,6 +123,11 @@ public static class ApiConfiguration
 
     private static IEnumerable<string> EnumerateProbeDirectories()
     {
+        if (OperatingSystem.IsBrowser())
+        {
+            yield break;
+        }
+
         yield return AppContext.BaseDirectory;
         yield return Directory.GetCurrentDirectory();
 
@@ -121,6 +136,18 @@ public static class ApiConfiguration
         {
             directory = directory.Parent;
             yield return directory.FullName;
+        }
+    }
+
+    private static string? TryGetEnvironmentVariable(string variable)
+    {
+        try
+        {
+            return Environment.GetEnvironmentVariable(variable);
+        }
+        catch (PlatformNotSupportedException)
+        {
+            return null;
         }
     }
 }
