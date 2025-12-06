@@ -1,3 +1,4 @@
+using System.Linq;
 using BrickBreaker.Api;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Services;
@@ -7,13 +8,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+var allowedOrigins = builder.Configuration
+                            .GetSection("Cors:AllowedOrigins")
+                            .Get<string[]>()?
+                            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+                            .Select(origin => origin.Trim().TrimEnd('/'))
+                            .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (allowedOrigins is { Length: > 0 })
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
     });
 });
 
