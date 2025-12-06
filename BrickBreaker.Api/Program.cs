@@ -1,19 +1,40 @@
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using BrickBreaker.Api;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Services;
 using BrickBreaker.Storage;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+var allowedOrigins = builder.Configuration
+                            .GetSection("Cors:AllowedOrigins")
+                            .Get<string[]>()?
+                            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+                            .Select(origin => origin.Trim().TrimEnd('/'))
+                            .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (allowedOrigins is { Length: > 0 })
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
     });
 });
 
@@ -36,12 +57,45 @@ builder.Services.AddSingleton<ILeaderboardStore>(sp =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
+                 ?? throw new InvalidOperationException("JWT configuration missing.");
+if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
+{
+    throw new InvalidOperationException("JWT secret missing.");
+}
+
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret));
+builder.Services.AddSingleton(jwtOptions);
+builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtOptions.Issuer,
+        ValidateAudience = true,
+        ValidAudience = jwtOptions.Audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = signingKey,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromMinutes(1)
+    };
+});
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
@@ -52,10 +106,18 @@ app.MapPost("/register", async (RegisterRequest request, IAuthService auth) =>
     return success ? Results.Ok() : Results.BadRequest();
 });
 
-app.MapPost("/login", async (LoginRequest request, IAuthService auth) =>
+app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens) =>
 {
-    var success = await auth.LoginAsync(request.Username, request.Password);
-    return success ? Results.Ok() : Results.Unauthorized();
+    var normalizedUsername = (request.Username ?? string.Empty).Trim();
+    var password = request.Password ?? string.Empty;
+    var success = await auth.LoginAsync(normalizedUsername, password);
+    if (!success)
+    {
+        return Results.Unauthorized();
+    }
+
+    var token = tokens.GenerateToken(normalizedUsername);
+    return Results.Ok(new LoginResponse(normalizedUsername, token));
 });
 
 app.MapGet("/leaderboard/top", async (int count, ILeaderboardService leaderboard) =>
@@ -64,20 +126,46 @@ app.MapGet("/leaderboard/top", async (int count, ILeaderboardService leaderboard
     return Results.Ok(entries);
 });
 
-app.MapGet("/leaderboard/best/{username}", async (string username, ILeaderboardService leaderboard) =>
+app.MapGet("/leaderboard/best/{username}", async (string username, ClaimsPrincipal user, ILeaderboardService leaderboard) =>
 {
-    var best = await leaderboard.BestForAsync(username);
-    return best is null ? Results.NotFound() : Results.Ok(best);
-});
+    if (!IsAuthorizedUser(user, username))
+    {
+        return Results.Forbid();
+    }
 
-app.MapPost("/leaderboard/submit", async (SubmitScoreRequest request, ILeaderboardService leaderboard) =>
+    var canonical = user.Identity?.Name?.Trim() ?? username.Trim();
+    var best = await leaderboard.BestForAsync(canonical);
+    return best is null ? Results.NotFound() : Results.Ok(best);
+}).RequireAuthorization();
+
+app.MapPost("/leaderboard/submit", async (SubmitScoreRequest request, ClaimsPrincipal user, ILeaderboardService leaderboard) =>
 {
-    await leaderboard.SubmitAsync(request.Username, request.Score);
+    if (!IsAuthorizedUser(user, request.Username))
+    {
+        return Results.Forbid();
+    }
+
+    var canonical = user.Identity?.Name?.Trim() ?? request.Username.Trim();
+    await leaderboard.SubmitAsync(canonical, request.Score);
     return Results.Ok();
-});
+}).RequireAuthorization();
 
 app.Run();
 
+static bool IsAuthorizedUser(ClaimsPrincipal user, string targetUsername)
+{
+    if (string.IsNullOrWhiteSpace(targetUsername))
+    {
+        return false;
+    }
+
+    var normalizedTarget = targetUsername.Trim();
+    var principalName = user.Identity?.Name;
+    return !string.IsNullOrWhiteSpace(principalName) &&
+           string.Equals(principalName.Trim(), normalizedTarget, StringComparison.OrdinalIgnoreCase);
+}
+
 record RegisterRequest(string Username, string Password);
 record LoginRequest(string Username, string Password);
+record LoginResponse(string Username, string Token);
 record SubmitScoreRequest(string Username, int Score);

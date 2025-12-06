@@ -13,6 +13,7 @@ obj/
 
 # Ignore any configuration json files named appsettings.*
 **/appsettings*.json
+!**/appsettings.Template.json
 
 # OS noise
 .DS_Store

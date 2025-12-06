@@ -115,6 +115,10 @@ else
         try
         {
             Api.SetBaseAddress(_apiBase);
+            Api.ClearAuthentication();
+            _isLoggedIn = false;
+            _currentUser = string.Empty;
+            _bestEntry = null;
             _statusMessage = "API base updated.";
             await RefreshLeaderboardAsync();
         }
@@ -136,16 +140,19 @@ else
         var username = (_loginUsername ?? string.Empty).Trim();
         var password = _loginPassword ?? string.Empty;
         var result = await Api.LoginAsync(username, password);
-        if (result.Success)
+        if (result.Success && result.Value is not null)
         {
             _isLoggedIn = true;
-            _currentUser = username;
+            _currentUser = result.Value.Username;
             _loginPassword = string.Empty;
             await LoadBestAsync();
             _statusMessage = "Signed in.";
         }
         else
         {
+            Api.ClearAuthentication();
+            _isLoggedIn = false;
+            _currentUser = string.Empty;
             _statusMessage = result.Error ?? "Login failed.";
         }
         _isBusy = false;
@@ -177,6 +184,7 @@ else
         _isLoggedIn = false;
         _currentUser = string.Empty;
         _bestEntry = null;
+        Api.ClearAuthentication();
         _statusMessage = "Signed out.";
     }
 

@@ -65,7 +65,7 @@ public class LauncherShellTests
         var path = request.RequestUri!.AbsolutePath.Trim('/');
         return path switch
         {
-            "login" => Success(),
+            "login" => Json(new { username = "tester", token = "fake-token" }),
             "register" => Success(),
             "leaderboard/submit" => Success(),
             var p when p.StartsWith("leaderboard/top", StringComparison.OrdinalIgnoreCase)
