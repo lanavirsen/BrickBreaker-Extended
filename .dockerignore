@@ -1,0 +1,12 @@
+bin/
+obj/
+/.vs/
+/.vscode/
+/.idea/
+*.user
+*.suo
+**/appsettings*.json
+.git
+packages/
+docs/
+AI_README.md
