@@ -39,7 +39,7 @@ public class ConsoleShellTests
 
         var apiClient = new FakeApiClient
         {
-            LoginResult = ApiResult.Ok()
+            LoginResult = ApiResult<LoginSession>.Ok(new LoginSession("tester"))
         };
 
         var deps = new ConsoleShellDependencies
@@ -114,7 +114,7 @@ public class ConsoleShellTests
     private sealed class FakeApiClient : IGameApiClient
     {
         public string BaseAddress { get; private set; } = "http://localhost/";
-        public ApiResult LoginResult { get; set; } = ApiResult.Ok();
+        public ApiResult<LoginSession> LoginResult { get; set; } = ApiResult<LoginSession>.Ok(new LoginSession("tester"));
         public ApiResult RegisterResult { get; set; } = ApiResult.Ok();
         public ApiResult SubmitScoreResult { get; set; } = ApiResult.Ok();
         public ApiResult<IReadOnlyList<ScoreEntry>> LeaderboardResult { get; set; } = ApiResult<IReadOnlyList<ScoreEntry>>.Ok(Array.Empty<ScoreEntry>());
@@ -126,7 +126,7 @@ public class ConsoleShellTests
 
         public Task<ApiResult> RegisterAsync(string username, string password) => Task.FromResult(RegisterResult);
 
-        public Task<ApiResult> LoginAsync(string username, string password) => Task.FromResult(LoginResult);
+        public Task<ApiResult<LoginSession>> LoginAsync(string username, string password) => Task.FromResult(LoginResult);
 
         public Task<ApiResult> SubmitScoreAsync(string username, int score)
         {
@@ -138,6 +138,8 @@ public class ConsoleShellTests
         public Task<ApiResult<IReadOnlyList<ScoreEntry>>> GetLeaderboardAsync(int count) => Task.FromResult(LeaderboardResult);
 
         public Task<ApiResult<ScoreEntry?>> GetBestAsync(string username) => Task.FromResult(BestResult);
+
+        public void ClearAuthentication() { }
 
         public void Dispose() { }
     }

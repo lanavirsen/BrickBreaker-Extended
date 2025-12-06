@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -29,6 +30,21 @@ public sealed class ApiClient
         }
 
         _httpClient.BaseAddress = new Uri(baseAddress, UriKind.Absolute);
+        ClearAuthentication();
+    }
+
+    public void ClearAuthentication() => _httpClient.DefaultRequestHeaders.Authorization = null;
+
+    public void SetAccessToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            ClearAuthentication();
+        }
+        else
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
     }
 
     public async Task<ApiResult> RegisterAsync(string username, string password)
@@ -36,9 +52,29 @@ public sealed class ApiClient
         return await SendCredentialRequestAsync("register", username, password);
     }
 
-    public async Task<ApiResult> LoginAsync(string username, string password)
+    public async Task<ApiResult<LoginPayload>> LoginAsync(string username, string password)
     {
-        return await SendCredentialRequestAsync("login", username, password);
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("login", new CredentialRequest(username, password), _jsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiResult<LoginPayload>.Fail(await ExtractErrorAsync(response));
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
+            if (payload is null || string.IsNullOrWhiteSpace(payload.Token) || string.IsNullOrWhiteSpace(payload.Username))
+            {
+                return ApiResult<LoginPayload>.Fail("Login response missing token.");
+            }
+
+            SetAccessToken(payload.Token);
+            return ApiResult<LoginPayload>.Ok(new LoginPayload(payload.Username));
+        }
+        catch (Exception ex)
+        {
+            return ApiResult<LoginPayload>.Fail(ex.Message);
+        }
     }
 
     public async Task<ApiResult> SubmitScoreAsync(string username, int score)
@@ -122,6 +158,7 @@ public sealed class ApiClient
 
     private record CredentialRequest(string Username, string Password);
     private record SubmitScoreRequest(string Username, int Score);
+    private record LoginResponse(string Username, string Token);
 
     private static async Task<string> ExtractErrorAsync(HttpResponseMessage response)
     {
@@ -148,3 +185,4 @@ public readonly record struct ApiResult<T>(bool Success, string? Error, T? Value
 }
 
 public sealed record LeaderboardEntry(string Username, int Score, DateTimeOffset At);
+public sealed record LoginPayload(string Username);

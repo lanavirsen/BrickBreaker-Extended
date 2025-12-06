@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using BrickBreaker.Core.Models;
@@ -27,13 +28,45 @@ public sealed class GameApiClient : IGameApiClient
     {
         var normalized = ApiConfiguration.NormalizeBaseAddress(baseAddress);
         _httpClient.BaseAddress = new Uri(normalized, UriKind.Absolute);
+        ClearAuthentication();
+    }
+
+    public void ClearAuthentication()
+    {
+        _httpClient.DefaultRequestHeaders.Authorization = null;
     }
 
     public Task<ApiResult> RegisterAsync(string username, string password)
         => SendCredentialsAsync("register", username, password);
 
-    public Task<ApiResult> LoginAsync(string username, string password)
-        => SendCredentialsAsync("login", username, password);
+    public async Task<ApiResult<LoginSession>> LoginAsync(string username, string password)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(
+                "login",
+                new CredentialRequest(username, password),
+                _jsonOptions);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiResult<LoginSession>.Fail(await ExtractErrorAsync(response));
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
+            if (payload is null || string.IsNullOrWhiteSpace(payload.Token) || string.IsNullOrWhiteSpace(payload.Username))
+            {
+                return ApiResult<LoginSession>.Fail("Login response missing token.");
+            }
+
+            SetBearerToken(payload.Token);
+            return ApiResult<LoginSession>.Ok(new LoginSession(payload.Username));
+        }
+        catch (Exception ex)
+        {
+            return ApiResult<LoginSession>.Fail(ex.Message);
+        }
+    }
 
     public async Task<ApiResult> SubmitScoreAsync(string username, int score)
     {
@@ -123,6 +156,11 @@ public sealed class GameApiClient : IGameApiClient
         }
     }
 
+    private void SetBearerToken(string token)
+    {
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
     private static async Task<string> ExtractErrorAsync(HttpResponseMessage response)
     {
         var body = await response.Content.ReadAsStringAsync();
@@ -144,4 +182,7 @@ public sealed class GameApiClient : IGameApiClient
 
     private sealed record CredentialRequest(string Username, string Password);
     private sealed record SubmitScoreRequest(string Username, int Score);
+    private sealed record LoginResponse(string Username, string Token);
 }
+
+public sealed record LoginSession(string Username);

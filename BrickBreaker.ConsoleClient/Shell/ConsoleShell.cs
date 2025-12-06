@@ -67,6 +67,9 @@ public sealed class ConsoleShell : IDisposable
     {
         ClearInputBuffer();
         _currentMode = GameMode.QuickPlay;
+        _apiClient.ClearAuthentication();
+        _currentUser = null;
+        _isLoggedIn = false;
         return AppState.Playing;
     }
 
@@ -120,6 +123,7 @@ public sealed class ConsoleShell : IDisposable
     {
         _currentUser = null;
         _isLoggedIn = false;
+        _apiClient.ClearAuthentication();
         return AppState.LoginMenu;
     }
 
@@ -168,9 +172,9 @@ public sealed class ConsoleShell : IDisposable
         var (username, password) = _dialogs.PromptCredentials();
 
         var result = await _renderer.RunStatusAsync("Signing in...", () => _apiClient.LoginAsync(username, password));
-        if (result.Success)
+        if (result.Success && result.Value is not null)
         {
-            _currentUser = username;
+            _currentUser = result.Value.Username;
             _isLoggedIn = true;
             return true;
         }

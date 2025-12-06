@@ -42,6 +42,9 @@ public sealed class LauncherShell : IDisposable
     public void SetBaseAddress(string baseAddress)
     {
         _apiClient.SetBaseAddress(baseAddress);
+        _apiClient.ClearAuthentication();
+        _currentPlayer = null;
+        _quickPlayMode = false;
         UpdateStatus($"API base updated to {BaseAddress}", true);
     }
 
@@ -50,6 +53,7 @@ public sealed class LauncherShell : IDisposable
         _quickPlayMode = true;
         _currentPlayer = null;
         _lastScore = null;
+        _apiClient.ClearAuthentication();
         UpdateStatus("Quick Play ready. Scores are not submitted.", true);
         return Snapshot();
     }
@@ -59,6 +63,7 @@ public sealed class LauncherShell : IDisposable
         _quickPlayMode = false;
         _currentPlayer = null;
         _lastScore = null;
+        _apiClient.ClearAuthentication();
         UpdateStatus("Signed out.");
         return Snapshot();
     }
@@ -98,13 +103,13 @@ public sealed class LauncherShell : IDisposable
         return result;
     }
 
-    public async Task<ApiResult> LoginAsync(string username, string password)
+    public async Task<ApiResult<LoginSession>> LoginAsync(string username, string password)
     {
         UpdateStatus("Signing in...");
         var result = await _apiClient.LoginAsync(username, password);
-        if (result.Success)
+        if (result.Success && result.Value is not null)
         {
-            _currentPlayer = username;
+            _currentPlayer = result.Value.Username;
             _quickPlayMode = false;
             UpdateStatus("Logged in.", true);
         }
