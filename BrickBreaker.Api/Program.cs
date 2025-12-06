@@ -46,6 +46,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
 app.MapPost("/register", async (RegisterRequest request, IAuthService auth) =>
 {
     var success = await auth.RegisterAsync(request.Username, request.Password);
