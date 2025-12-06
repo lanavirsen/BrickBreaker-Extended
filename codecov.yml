@@ -25,6 +25,13 @@ ignore:
   # terminal state and ANSI cursor positions, so we accept visual/manual testing there.
   - "BrickBreaker.ConsoleClient/Game/**"
   - "BrickBreaker.ConsoleClient/Ui/**"
+  - "BrickBreaker.ConsoleClient/Shell/SpectreConsoleRenderer.cs"
   # Native interop/audio glue is similarly impractical to cover in CI.
   - "BrickBreaker.ConsoleClient/Game/Systems/ConsoleRenderer.cs"
   - "BrickBreaker.ConsoleClient/Game/BrickBreakerGame.cs"
+  # WinForms surface uses STA threads, designer-generated controls, and GDI+ rendering that
+  # require manual verification rather than xUnit coverage.
+  - "BrickBreaker.WinFormsClient/**"
+  # Web client relies on Blazor components plus JS interop loops that our CI runners cannot
+  # exercise without a dedicated browser automation harness.
+  - "BrickBreaker.WebClient/**"
