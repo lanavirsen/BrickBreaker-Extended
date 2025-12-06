@@ -46,6 +46,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
+app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.MapPost("/register", async (RegisterRequest request, IAuthService auth) =>
