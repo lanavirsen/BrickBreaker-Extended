@@ -1,12 +1,33 @@
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using BrickBreaker.Api;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Services;
 using BrickBreaker.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+
+const string AuthLimiterPolicy = "auth-strict";
+
+static string ResolveClientPartition(HttpContext context)
+{
+    if (!string.IsNullOrWhiteSpace(context.User?.Identity?.Name))
+    {
+        return $"user:{context.User.Identity!.Name!.Trim().ToLowerInvariant()}";
+    }
+
+    var ipAddress = context.Connection.RemoteIpAddress?.ToString();
+    if (!string.IsNullOrWhiteSpace(ipAddress))
+    {
+        return $"ip:{ipAddress}";
+    }
+
+    return "anonymous";
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +77,31 @@ builder.Services.AddSingleton<ILeaderboardStore>(sp =>
 });
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ResolveClientPartition(context),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
+
+    options.AddPolicy(AuthLimiterPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ResolveClientPartition(context),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
+});
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
                  ?? throw new InvalidOperationException("JWT configuration missing.");
@@ -94,6 +140,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -104,7 +151,7 @@ app.MapPost("/register", async (RegisterRequest request, IAuthService auth) =>
 {
     var success = await auth.RegisterAsync(request.Username, request.Password);
     return success ? Results.Ok() : Results.BadRequest();
-});
+}).RequireRateLimiting(AuthLimiterPolicy);
 
 app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens) =>
 {
@@ -118,7 +165,7 @@ app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenG
 
     var token = tokens.GenerateToken(normalizedUsername);
     return Results.Ok(new LoginResponse(normalizedUsername, token));
-});
+}).RequireRateLimiting(AuthLimiterPolicy);
 
 app.MapGet("/leaderboard/top", async (int count, ILeaderboardService leaderboard) =>
 {
