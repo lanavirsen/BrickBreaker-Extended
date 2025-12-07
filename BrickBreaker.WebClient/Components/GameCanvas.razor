@@ -13,11 +13,6 @@
             @onkeyup:preventDefault>
     </canvas>
 
-    <div class="hud">
-        <span>Score: @_host?.Score ?? 0</span>
-        <span>Level: @_host?.Level ?? 1</span>
-    </div>
-
     @if (_host is not null)
     {
         <div class="status">
