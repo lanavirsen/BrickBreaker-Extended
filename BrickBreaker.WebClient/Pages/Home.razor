@@ -1,6 +1,11 @@
 ﻿@page "/"
 @using System.Linq
+@using Microsoft.Extensions.Options
+@using Microsoft.JSInterop
 @inject BrickBreaker.WebClient.Services.ApiClient Api
+@inject IJSRuntime JS
+@inject IOptions<TurnstileClientOptions> Turnstile
+@implements IDisposable
 
 <PageTitle>BrickBreaker Web</PageTitle>
 
@@ -30,6 +35,10 @@
             <input @bind="_loginUsername" @bind:event="oninput" />
             <label>Password</label>
             <input type="password" @bind="_loginPassword" @bind:event="oninput" />
+            @if (_turnstileEnabled)
+            {
+                <div class="turnstile-slot" id="login-turnstile"></div>
+            }
             <button @onclick="LoginAsync" disabled="@_isBusy">Login</button>
         </div>
         <div class="card">
@@ -38,6 +47,10 @@
             <input @bind="_registerUsername" @bind:event="oninput" />
             <label>Password</label>
             <input type="password" @bind="_registerPassword" @bind:event="oninput" />
+            @if (_turnstileEnabled)
+            {
+                <div class="turnstile-slot" id="register-turnstile"></div>
+            }
             <button @onclick="RegisterAsync" disabled="@_isBusy">Create Account</button>
         </div>
     </section>
@@ -92,6 +105,9 @@ else
 </section>
 
 @code {
+    private const string LoginTurnstileElementId = "login-turnstile";
+    private const string RegisterTurnstileElementId = "register-turnstile";
+
     private string _apiBase = string.Empty;
     private string _statusMessage = string.Empty;
     private bool _isBusy;
@@ -101,13 +117,33 @@ else
     private string _loginPassword = string.Empty;
     private string _registerUsername = string.Empty;
     private string _registerPassword = string.Empty;
+    private bool _turnstileEnabled;
+    private string? _turnstileSiteKey;
+    private string? _loginTurnstileToken;
+    private string? _registerTurnstileToken;
+    private DotNetObjectReference<Home>? _turnstileRef;
     private List<LeaderboardEntry> _leaderboard = new();
     private LeaderboardEntry? _bestEntry;
 
     protected override async Task OnInitializedAsync()
     {
         _apiBase = Api.BaseAddress;
+        _turnstileEnabled = Turnstile.Value.IsConfigured;
+        _turnstileSiteKey = Turnstile.Value.SiteKey;
+        if (_turnstileEnabled)
+        {
+            _turnstileRef = DotNetObjectReference.Create(this);
+        }
         await RefreshLeaderboardAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _turnstileEnabled)
+        {
+            await RenderTurnstileAsync(LoginTurnstileElementId, "login");
+            await RenderTurnstileAsync(RegisterTurnstileElementId, "register");
+        }
     }
 
     private async Task ApplyApiBase()
@@ -121,6 +157,10 @@ else
             _bestEntry = null;
             _statusMessage = "API base updated.";
             await RefreshLeaderboardAsync();
+            if (_turnstileEnabled)
+            {
+                await ResetAllTurnstilesAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -139,7 +179,14 @@ else
         _statusMessage = string.Empty;
         var username = (_loginUsername ?? string.Empty).Trim();
         var password = _loginPassword ?? string.Empty;
-        var result = await Api.LoginAsync(username, password);
+        if (_turnstileEnabled && string.IsNullOrWhiteSpace(_loginTurnstileToken))
+        {
+            _statusMessage = "Complete the CAPTCHA to continue.";
+            _isBusy = false;
+            return;
+        }
+
+        var result = await Api.LoginAsync(username, password, _loginTurnstileToken);
         if (result.Success && result.Value is not null)
         {
             _isLoggedIn = true;
@@ -155,6 +202,11 @@ else
             _currentUser = string.Empty;
             _statusMessage = result.Error ?? "Login failed.";
         }
+        if (_turnstileEnabled)
+        {
+            _loginTurnstileToken = null;
+            await ResetTurnstileAsync(LoginTurnstileElementId);
+        }
         _isBusy = false;
     }
 
@@ -168,13 +220,25 @@ else
         _isBusy = true;
         _statusMessage = string.Empty;
         var username = (_registerUsername ?? string.Empty).Trim();
-        var result = await Api.RegisterAsync(username, _registerPassword ?? string.Empty);
+        if (_turnstileEnabled && string.IsNullOrWhiteSpace(_registerTurnstileToken))
+        {
+            _statusMessage = "Complete the CAPTCHA to continue.";
+            _isBusy = false;
+            return;
+        }
+
+        var result = await Api.RegisterAsync(username, _registerPassword ?? string.Empty, _registerTurnstileToken);
         _statusMessage = result.Success ? "Registration successful." : result.Error ?? "Registration failed.";
         if (result.Success)
         {
             _loginUsername = _registerUsername ?? string.Empty;
             _registerUsername = string.Empty;
             _registerPassword = string.Empty;
+        }
+        if (_turnstileEnabled)
+        {
+            _registerTurnstileToken = null;
+            await ResetTurnstileAsync(RegisterTurnstileElementId);
         }
         _isBusy = false;
     }
@@ -235,5 +299,67 @@ else
             await RefreshLeaderboardAsync();
             await LoadBestAsync();
         }
+    }
+
+    private async Task RenderTurnstileAsync(string elementId, string action)
+    {
+        if (!_turnstileEnabled || string.IsNullOrWhiteSpace(_turnstileSiteKey) || _turnstileRef is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync("turnstileInterop.render", elementId, _turnstileSiteKey, _turnstileRef, nameof(HandleTurnstileTokenAsync), action);
+        }
+        catch
+        {
+            // If the widget fails to render, keep the app functional without CAPTCHA.
+            _turnstileEnabled = false;
+        }
+    }
+
+    private async Task ResetTurnstileAsync(string elementId)
+    {
+        if (!_turnstileEnabled)
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("turnstileInterop.reset", elementId);
+    }
+
+    private async Task ResetAllTurnstilesAsync()
+    {
+        if (!_turnstileEnabled)
+        {
+            return;
+        }
+
+        _loginTurnstileToken = null;
+        _registerTurnstileToken = null;
+        await ResetTurnstileAsync(LoginTurnstileElementId);
+        await ResetTurnstileAsync(RegisterTurnstileElementId);
+    }
+
+    [JSInvokable]
+    public Task HandleTurnstileTokenAsync(string elementId, string? token)
+    {
+        var normalized = string.IsNullOrWhiteSpace(token) ? null : token;
+        if (elementId == LoginTurnstileElementId)
+        {
+            _loginTurnstileToken = normalized;
+        }
+        else if (elementId == RegisterTurnstileElementId)
+        {
+            _registerTurnstileToken = normalized;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _turnstileRef?.Dispose();
     }
 }

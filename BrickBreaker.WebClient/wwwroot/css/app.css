@@ -64,6 +64,11 @@ a, .btn-link {
     cursor: pointer;
 }
 
+.turnstile-slot {
+    margin-top: 0.5rem;
+    min-height: 70px;
+}
+
 .status {
     margin-top: 0.5rem;
     color: #a5b4fc;
