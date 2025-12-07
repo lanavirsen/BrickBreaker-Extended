@@ -47,16 +47,16 @@ public sealed class ApiClient
         }
     }
 
-    public async Task<ApiResult> RegisterAsync(string username, string password)
+    public async Task<ApiResult> RegisterAsync(string username, string password, string? turnstileToken = null)
     {
-        return await SendCredentialRequestAsync("register", username, password);
+        return await SendCredentialRequestAsync("register", username, password, turnstileToken);
     }
 
-    public async Task<ApiResult<LoginPayload>> LoginAsync(string username, string password)
+    public async Task<ApiResult<LoginPayload>> LoginAsync(string username, string password, string? turnstileToken = null)
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("login", new CredentialRequest(username, password), _jsonOptions);
+            var response = await _httpClient.PostAsJsonAsync("login", new CredentialRequest(username, password, turnstileToken), _jsonOptions);
             if (!response.IsSuccessStatusCode)
             {
                 return ApiResult<LoginPayload>.Fail(await ExtractErrorAsync(response));
@@ -138,11 +138,11 @@ public sealed class ApiClient
         }
     }
 
-    private async Task<ApiResult> SendCredentialRequestAsync(string path, string username, string password)
+    private async Task<ApiResult> SendCredentialRequestAsync(string path, string username, string password, string? turnstileToken)
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync(path, new CredentialRequest(username, password), _jsonOptions);
+            var response = await _httpClient.PostAsJsonAsync(path, new CredentialRequest(username, password, turnstileToken), _jsonOptions);
             if (response.IsSuccessStatusCode)
             {
                 return ApiResult.Ok();
@@ -156,7 +156,7 @@ public sealed class ApiClient
         }
     }
 
-    private record CredentialRequest(string Username, string Password);
+    private record CredentialRequest(string Username, string Password, string? TurnstileToken);
     private record SubmitScoreRequest(string Username, int Score);
     private record LoginResponse(string Username, string Token);
 
