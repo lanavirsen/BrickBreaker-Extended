@@ -75,6 +75,7 @@ builder.Services.AddSingleton<ILeaderboardStore>(sp =>
     var factory = sp.GetRequiredService<StorageConnectionFactory>();
     return new LeaderboardStore(factory.ConnectionString);
 });
+builder.Services.AddSingleton<IProfanityFilter, DotnetProfanityFilter>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddRateLimiter(options =>
