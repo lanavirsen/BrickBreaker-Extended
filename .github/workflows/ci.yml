@@ -60,10 +60,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha
-            type=ref,event=branch
-            type=ref,event=tag
-
+            
       - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
@@ -72,3 +71,23 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Container Apps
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az containerapp update \
+              --name brickbreaker-api \
+              --resource-group brickbreaker-rg \
+              --image ghcr.io/${{ github.repository_owner }}/brickbreaker-api:main \
+              --revision-suffix $(date +%s)
