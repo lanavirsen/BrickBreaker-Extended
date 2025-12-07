@@ -2,6 +2,7 @@
 @using System.Linq
 @using Microsoft.Extensions.Options
 @using Microsoft.JSInterop
+@using BrickBreaker.WebClient.Components
 @inject BrickBreaker.WebClient.Services.ApiClient Api
 @inject IJSRuntime JS
 @inject IOptions<TurnstileClientOptions> Turnstile
@@ -14,90 +15,136 @@
     <p>Use ←/→ or A/D to move, ↑/W to launch, and P to pause. Space restarts after a game over.</p>
 </section>
 
-@if (!_isLoggedIn)
-{
-    <section class="auth-grid">
-        <div class="card">
-            <h3>Login</h3>
-            <label>Username</label>
-            <input @bind="_loginUsername" @bind:event="oninput" />
-            <label>Password</label>
-            <input type="password" @bind="_loginPassword" @bind:event="oninput" />
-            @if (_turnstileEnabled)
-            {
-                <div class="turnstile-slot" id="login-turnstile"></div>
-            }
-            <button @onclick="LoginAsync" disabled="@_isBusy">Login</button>
-        </div>
-        <div class="card">
-            <h3>Register</h3>
-            <label>Username</label>
-            <input @bind="_registerUsername" @bind:event="oninput" />
-            <label>Password</label>
-            <input type="password" @bind="_registerPassword" @bind:event="oninput" />
-            @if (_turnstileEnabled)
-            {
-                <div class="turnstile-slot" id="register-turnstile"></div>
-            }
-            <button @onclick="RegisterAsync" disabled="@_isBusy">Create Account</button>
-        </div>
-    </section>
+<main class="bb-shell">
+    <section class="bb-layout">
+        <section class="bb-main">
+            <div class="panel panel--game">
+                <header class="panel__header">
+                    <h2>Arcade</h2>
+                    <span class="panel__hint">@GameStatusHint</span>
+                </header>
 
-    @if (!string.IsNullOrWhiteSpace(_statusMessage))
-    {
-        <div class="status-banner">
-            @_statusMessage
-        </div>
-    }
-}
-else
-{
-    <section class="auth-grid">
-        <div class="card">
-            <h3>Player</h3>
-            <p>Signed in as <strong>@_currentUser</strong></p>
-            <p>Best score: @(_bestEntry?.Score.ToString() ?? "—")</p>
-            <button @onclick="Logout" disabled="@_isBusy">Logout</button>
-        </div>
-    </section>
-}
+                <GameCanvas OnGameFinished="HandleGameFinished"
+                            OnStateChanged="UpdateGameState" />
 
-<section class="leaderboard">
-    <h3>Leaderboard</h3>
-    @if (_leaderboard.Count == 0)
-    {
-        <p>No scores yet.</p>
-    }
-    else
-    {
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>Score</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (var i = 0; i < _leaderboard.Count; i++)
+                <footer class="panel__footer panel__footer--status">
+                    <div>Score: @_currentScore</div>
+                    <div>Level: @_currentLevel</div>
+                    <div>Lives: @_currentLives</div>
+                </footer>
+            </div>
+        </section>
+
+        <aside class="bb-sidebar">
+            <section class="panel panel--account">
+                <header class="panel__header">
+                    <h2>@(_isLoggedIn ? "Player" : "Account")</h2>
+                    <span class="panel__hint">@(_isLoggedIn ? "Manage your profile and logout" : "Sign in to track runs")</span>
+                </header>
+
+                @if (!_isLoggedIn)
                 {
-                    var entry = _leaderboard[i];
-                    <tr>
-                        <td>@(i + 1)</td>
-                        <td>@entry.Username</td>
-                        <td>@entry.Score</td>
-                        <td>@entry.At.ToLocalTime().ToString("g")</td>
-                    </tr>
+                    <div class="auth-grid">
+                        <div class="card auth-card @( _showLoginPanel ? "expanded" : string.Empty)">
+                            <button type="button"
+                                    class="card-toggle"
+                                    aria-expanded="@_showLoginPanel"
+                                    @onclick="() => TogglePanel(AuthPanel.Login)">
+                                <span>Login</span>
+                                <span class="chevron @( _showLoginPanel ? "open" : string.Empty)"></span>
+                            </button>
+                            <div class="auth-panel @( _showLoginPanel ? "show" : "hide")"
+                                 aria-hidden="@(!_showLoginPanel)">
+                                <label>Username</label>
+                                <input @bind="_loginUsername" @bind:event="oninput" autocomplete="username" />
+                                <label>Password</label>
+                                <input type="password" @bind="_loginPassword" @bind:event="oninput" autocomplete="current-password" />
+                                @if (_turnstileEnabled)
+                                {
+                                    <div class="turnstile-slot" id="login-turnstile"></div>
+                                }
+                                <button class="primary-action" @onclick="LoginAsync" disabled="@_isBusy">Login</button>
+                            </div>
+                        </div>
+                        <div class="card auth-card @( _showRegisterPanel ? "expanded" : string.Empty)">
+                            <button type="button"
+                                    class="card-toggle"
+                                    aria-expanded="@_showRegisterPanel"
+                                    @onclick="() => TogglePanel(AuthPanel.Register)">
+                                <span>Create Account</span>
+                                <span class="chevron @( _showRegisterPanel ? "open" : string.Empty)"></span>
+                            </button>
+                            <div class="auth-panel @( _showRegisterPanel ? "show" : "hide")"
+                                 aria-hidden="@(!_showRegisterPanel)">
+                                <label>Username</label>
+                                <input @bind="_registerUsername" @bind:event="oninput" autocomplete="username" />
+                                <label>Password</label>
+                                <input type="password" @bind="_registerPassword" @bind:event="oninput" autocomplete="new-password" />
+                                @if (_turnstileEnabled)
+                                {
+                                    <div class="turnstile-slot" id="register-turnstile"></div>
+                                }
+                                <button class="primary-action" @onclick="RegisterAsync" disabled="@_isBusy">Create Account</button>
+                            </div>
+                        </div>
+                    </div>
                 }
-            </tbody>
-        </table>
-    }
-</section>
+                else
+                {
+                    <div class="card profile-card">
+                        <h3>Signed in as</h3>
+                        <p class="profile-card__user">@_currentUser</p>
+                        <p>Best score: @(_bestEntry?.Score.ToString() ?? "—")</p>
+                        <button class="primary-action" @onclick="Logout" disabled="@_isBusy">Logout</button>
+                    </div>
+                }
 
-<section class="game-section">
-    <GameCanvas OnGameFinished="HandleGameFinished" />
-</section>
+                @if (!string.IsNullOrWhiteSpace(_statusMessage))
+                {
+                    <div class="status-banner">
+                        @_statusMessage
+                    </div>
+                }
+            </section>
+
+            <section class="panel">
+                <header class="panel__header">
+                    <h2>Leaderboard</h2>
+                </header>
+
+                @if (_leaderboard.Count == 0)
+                {
+                    <p class="muted">No scores yet. Be the first.</p>
+                }
+                else
+                {
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Player</th>
+                                <th>Score</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < _leaderboard.Count; i++)
+                            {
+                                var entry = _leaderboard[i];
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td>@entry.Username</td>
+                                    <td>@entry.Score</td>
+                                    <td>@entry.At.ToLocalTime().ToString("yyyy-MM-dd, HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+        </aside>
+    </section>
+</main>
 
 @code {
     private const string LoginTurnstileElementId = "login-turnstile";
@@ -115,9 +162,22 @@ else
     private string? _turnstileSiteKey;
     private string? _loginTurnstileToken;
     private string? _registerTurnstileToken;
+    private bool _showLoginPanel = true;
+    private bool _showRegisterPanel;
+    private int _currentScore;
+    private int _currentLevel = 1;
+    private int _currentLives = 1;
+    private bool _gamePaused;
+    private bool _gameOver;
+    private bool _ballReady = true;
     private DotNetObjectReference<Home>? _turnstileRef;
     private List<LeaderboardEntry> _leaderboard = new();
     private LeaderboardEntry? _bestEntry;
+    private enum AuthPanel
+    {
+        Login,
+        Register
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -212,6 +272,46 @@ else
             await ResetTurnstileAsync(RegisterTurnstileElementId);
         }
         _isBusy = false;
+    }
+
+    private string GameStatusHint => _gameOver
+        ? "Game over – press Space to retry"
+        : _gamePaused
+            ? "Paused"
+            : _ballReady
+                ? "Press ↑ or W to launch"
+                : "Destroy every brick!";
+
+    private void TogglePanel(AuthPanel panel)
+    {
+        switch (panel)
+        {
+            case AuthPanel.Login:
+                _showLoginPanel = !_showLoginPanel;
+                if (_showLoginPanel)
+                {
+                    _showRegisterPanel = false;
+                }
+                break;
+            case AuthPanel.Register:
+                _showRegisterPanel = !_showRegisterPanel;
+                if (_showRegisterPanel)
+                {
+                    _showLoginPanel = false;
+                }
+                break;
+        }
+    }
+
+    private Task UpdateGameState(GameStatusSnapshot snapshot)
+    {
+        _currentScore = snapshot.Score;
+        _currentLevel = snapshot.Level;
+        _currentLives = snapshot.ActiveBalls;
+        _gamePaused = snapshot.IsPaused;
+        _gameOver = snapshot.IsGameOver;
+        _ballReady = snapshot.BallReady;
+        return Task.CompletedTask;
     }
 
     private void Logout()

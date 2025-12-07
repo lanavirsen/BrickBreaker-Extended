@@ -46,6 +46,7 @@
 
 @code {
     [Parameter] public EventCallback<int> OnGameFinished { get; set; }
+    [Parameter] public EventCallback<GameStatusSnapshot> OnStateChanged { get; set; }
 
     private ElementReference _canvasRef;
     private WebGameHost? _host;
@@ -68,7 +69,16 @@
 
     private async void HandleStateChanged()
     {
-        await InvokeAsync(StateHasChanged);
+        await InvokeAsync(async () =>
+        {
+            if (_host is not null && OnStateChanged.HasDelegate)
+            {
+                var snapshot = new GameStatusSnapshot(_host.Score, _host.Level, _host.ActiveBalls, _host.IsPaused, _host.IsGameOver, _host.BallReady);
+                await OnStateChanged.InvokeAsync(snapshot);
+            }
+
+            StateHasChanged();
+        });
     }
 
     private Task HandleKeyDown(KeyboardEventArgs args)
