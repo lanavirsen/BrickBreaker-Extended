@@ -28,7 +28,6 @@ a, .btn-link {
     margin-bottom: 0.4rem;
 }
 
-.api-panel,
 .auth-grid,
 .leaderboard,
 .game-section {
@@ -38,13 +37,6 @@ a, .btn-link {
     padding: 1rem;
 }
 
-.api-input {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.api-input input,
 .auth-grid input {
     flex: 1;
     padding: 0.45rem;
@@ -54,7 +46,6 @@ a, .btn-link {
     color: #f5f7ff;
 }
 
-.api-input button,
 .auth-grid button {
     padding: 0.45rem 0.9rem;
     border-radius: 6px;
@@ -69,11 +60,6 @@ a, .btn-link {
     min-height: 70px;
 }
 
-.status {
-    margin-top: 0.5rem;
-    color: #a5b4fc;
-}
-
 .auth-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -83,7 +69,28 @@ a, .btn-link {
 .card {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.6rem;
+    background: rgba(18, 20, 38, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+}
+
+.card h3 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.status-banner {
+    margin: 0 auto 1.5rem;
+    max-width: 520px;
+    background: rgba(111, 92, 255, 0.15);
+    border: 1px solid rgba(111, 92, 255, 0.35);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    color: #dcd8ff;
 }
 
 .leaderboard table {

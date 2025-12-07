@@ -14,18 +14,6 @@
     <p>Use ←/→ or A/D to move, ↑/W to launch, and P to pause. Space restarts after a game over.</p>
 </section>
 
-<section class="api-panel">
-    <label>API base URL</label>
-    <div class="api-input">
-        <input @bind="_apiBase" @bind:event="oninput" placeholder="https://localhost:5080" />
-        <button @onclick="ApplyApiBase" disabled="@_isBusy">Apply</button>
-    </div>
-    @if (!string.IsNullOrWhiteSpace(_statusMessage))
-    {
-        <p class="status">@_statusMessage</p>
-    }
-</section>
-
 @if (!_isLoggedIn)
 {
     <section class="auth-grid">
@@ -54,6 +42,13 @@
             <button @onclick="RegisterAsync" disabled="@_isBusy">Create Account</button>
         </div>
     </section>
+
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <div class="status-banner">
+            @_statusMessage
+        </div>
+    }
 }
 else
 {
@@ -108,7 +103,6 @@ else
     private const string LoginTurnstileElementId = "login-turnstile";
     private const string RegisterTurnstileElementId = "register-turnstile";
 
-    private string _apiBase = string.Empty;
     private string _statusMessage = string.Empty;
     private bool _isBusy;
     private bool _isLoggedIn;
@@ -127,7 +121,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _apiBase = Api.BaseAddress;
         _turnstileEnabled = Turnstile.Value.IsConfigured;
         _turnstileSiteKey = Turnstile.Value.SiteKey;
         if (_turnstileEnabled)
@@ -143,28 +136,6 @@ else
         {
             await RenderTurnstileAsync(LoginTurnstileElementId, "login");
             await RenderTurnstileAsync(RegisterTurnstileElementId, "register");
-        }
-    }
-
-    private async Task ApplyApiBase()
-    {
-        try
-        {
-            Api.SetBaseAddress(_apiBase);
-            Api.ClearAuthentication();
-            _isLoggedIn = false;
-            _currentUser = string.Empty;
-            _bestEntry = null;
-            _statusMessage = "API base updated.";
-            await RefreshLeaderboardAsync();
-            if (_turnstileEnabled)
-            {
-                await ResetAllTurnstilesAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            _statusMessage = $"Failed to update base URL: {ex.Message}";
         }
     }
 
