@@ -49,6 +49,7 @@ public sealed class WebGameHost : IAsyncDisposable
 
     public int Score => State.Score;
     public int Level => State.Level;
+    public int ActiveBalls => State.Balls.Count;
     public bool IsPaused => State.IsPaused;
     public bool IsGameOver => State.IsGameOver;
     public bool BallReady => State.BallReady;
