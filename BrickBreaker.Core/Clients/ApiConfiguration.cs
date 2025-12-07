@@ -10,7 +10,7 @@ namespace BrickBreaker.Core.Clients;
 /// </summary>
 public static class ApiConfiguration
 {
-    public const string DefaultBaseAddress = "http://127.0.0.1:5080/";
+    public const string DefaultBaseAddress = "https://brickbreaker-api.delightfulsky-8a169c96.swedencentral.azurecontainerapps.io/";
     public const string BaseAddressEnvironmentVariable = "BRICKBREAKER_API_URL";
     public const string SettingsFileEnvironmentVariable = "BRICKBREAKER_CLIENT_CONFIG";
     public const string DefaultSettingsFileName = "clientsettings.json";
