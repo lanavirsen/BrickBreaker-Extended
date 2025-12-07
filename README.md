@@ -67,9 +67,9 @@ dotnet build BrickBreaker.sln
 dotnet test BrickBreaker.sln
 ```
 
-The WinForms and Spectre console clients read the backend URL from the `BRICKBREAKER_API_URL` environment variable (defaults to `http://127.0.0.1:5080`) and both allow overriding the value at runtime (launcher textbox or console prompt). You can also provide a `clientsettings.json` file next to the executable (or anywhere referenced by `BRICKBREAKER_CLIENT_CONFIG`) with `{ "ApiBaseUrl": "https://your-host" }`, or pass the desired URL as the first argument to `BrickBreaker.ConsoleClient`.
+The WinForms and Spectre console clients read the backend URL from the `BRICKBREAKER_API_URL` environment variable (defaults to the hosted Azure Container Apps instance at `https://brickbreaker-api.delightfulsky-8a169c96.swedencentral.azurecontainerapps.io`) and both allow overriding the value at runtime (launcher textbox or console prompt). You can also provide a `clientsettings.json` file next to the executable (or anywhere referenced by `BRICKBREAKER_CLIENT_CONFIG`) with `{ "ApiBaseUrl": "https://your-host" }`, or pass the desired URL as the first argument to `BrickBreaker.ConsoleClient`. Set the environment variable (or edit the launcher field) to point at `http://127.0.0.1:5080` when testing a local API build.
 
-The Blazor client lets you edit the API base URL from the landing page (or set the `ApiBaseUrl` configuration entry when bootstrapping the WASM host) and uses those endpoints for login, registration, and score submission.
+The Blazor client lets you edit the API base URL from the landing page (or set the `ApiBaseUrl` configuration entry when bootstrapping the WASM host, which now defaults to the same Azure endpoint) and uses those endpoints for login, registration, and score submission.
 
 ### Configure Supabase/PostgreSQL
 
