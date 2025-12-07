@@ -11,7 +11,7 @@ public sealed class AuthTests
     {
         var store = new FakeUserStore();
         store.Seed(new User("Alice", "secret"));
-        var sut = new AuthService(store);
+        var sut = CreateAuthService(store);
 
         var exists = await sut.UsernameExistsAsync("  Alice  ");
 
@@ -25,7 +25,7 @@ public sealed class AuthTests
         // Username is already seeded, so Register should reject the duplicate.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Bob", "pw"));
-        var sut = new AuthService(store);
+        var sut = CreateAuthService(store);
 
         var result = await sut.RegisterAsync("Bob", "newpw");
 
@@ -37,7 +37,7 @@ public sealed class AuthTests
     public async Task Register_Fails_WhenUsernameMissing()
     {
         // Whitespace usernames are invalid.
-        var sut = new AuthService(new FakeUserStore());
+        var sut = CreateAuthService();
 
         var result = await sut.RegisterAsync("   ", "pw");
 
@@ -48,7 +48,7 @@ public sealed class AuthTests
     public async Task Register_Fails_WhenPasswordMissing()
     {
         // Password cannot be empty, so the call should fail.
-        var sut = new AuthService(new FakeUserStore());
+        var sut = CreateAuthService();
 
         var result = await sut.RegisterAsync("Alice", "");
 
@@ -60,7 +60,7 @@ public sealed class AuthTests
     {
         // Valid username/password should succeed and be stored without extra whitespace.
         var store = new FakeUserStore();
-        var sut = new AuthService(store);
+        var sut = CreateAuthService(store);
 
         var result = await sut.RegisterAsync("  Alice  ", "  pw  ");
 
@@ -74,7 +74,7 @@ public sealed class AuthTests
     public async Task Login_ReturnsFalse_WhenUserMissing()
     {
         // If the backing store does not contain the user, login should fail.
-        var sut = new AuthService(new FakeUserStore());
+        var sut = CreateAuthService();
 
         var loggedIn = await sut.LoginAsync("unknown", "pw");
 
@@ -87,7 +87,7 @@ public sealed class AuthTests
         // Valid username but wrong password should fail to log in.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
-        var sut = new AuthService(store);
+        var sut = CreateAuthService(store);
 
         var loggedIn = await sut.LoginAsync("Alice", "wrong");
 
@@ -100,7 +100,7 @@ public sealed class AuthTests
         // Exact match of username/password should succeed.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
-        var sut = new AuthService(store);
+        var sut = CreateAuthService(store);
 
         var loggedIn = await sut.LoginAsync("Alice", "pw");
 
@@ -113,16 +113,35 @@ public sealed class AuthTests
         // Ensure the repository is called with a trimmed username.
         var store = new FakeUserStore();
         store.Seed(CreateHashedUser("Alice", "pw"));
-        var sut = new AuthService(store);
+        var sut = CreateAuthService(store);
 
         _ = await sut.LoginAsync("  Alice  ", "pw");
 
         Assert.Equal("Alice", store.LastGetUsername);
     }
 
+    [Fact]
+    public async Task Register_Fails_WhenProfanityDetected()
+    {
+        var store = new FakeUserStore();
+        var filter = new FakeProfanityFilter { ShouldFlag = true };
+        var sut = CreateAuthService(store, filter);
+
+        var result = await sut.RegisterAsync("OffensiveName", "pw");
+
+        Assert.False(result);
+        Assert.Empty(store.AddedUsers);
+        Assert.Equal("OffensiveName", filter.LastChecked);
+    }
+
     private static User CreateHashedUser(string username, string password)
     {
         var hashed = PasswordHasher.HashPassword(password);
         return new User(username, hashed);
+    }
+
+    private static AuthService CreateAuthService(FakeUserStore? store = null, FakeProfanityFilter? filter = null)
+    {
+        return new AuthService(store ?? new FakeUserStore(), filter ?? new FakeProfanityFilter());
     }
 }

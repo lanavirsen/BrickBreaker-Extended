@@ -9,10 +9,12 @@ using System.Threading.Tasks;
 public sealed class AuthService : IAuthService
 {
     private readonly IUserStore _users;
+    private readonly IProfanityFilter _profanity;
 
-    public AuthService(IUserStore users)
+    public AuthService(IUserStore users, IProfanityFilter profanityFilter)
     {
         _users = users ?? throw new ArgumentNullException(nameof(users));
+        _profanity = profanityFilter ?? throw new ArgumentNullException(nameof(profanityFilter));
     }
 
     public async Task<bool> UsernameExistsAsync(string username)
@@ -24,7 +26,12 @@ public sealed class AuthService : IAuthService
     public async Task<bool> RegisterAsync(string username, string password)
     {
         username = (username ?? string.Empty).Trim();
-        if (await _users.ExistsAsync(username).ConfigureAwait(false) || username.Length == 0)
+        if (username.Length == 0 || _profanity.ContainsProfanity(username))
+        {
+            return false;
+        }
+
+        if (await _users.ExistsAsync(username).ConfigureAwait(false))
         {
             return false;
         }

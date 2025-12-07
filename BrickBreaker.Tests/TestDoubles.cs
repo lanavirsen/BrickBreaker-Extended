@@ -89,3 +89,15 @@ internal sealed class FakeLeaderboardStore : ILeaderboardStore
         return Task.FromResult(clone);
     }
 }
+
+internal sealed class FakeProfanityFilter : IProfanityFilter
+{
+    public bool ShouldFlag { get; set; }
+    public string? LastChecked { get; private set; }
+
+    public bool ContainsProfanity(string? text)
+    {
+        LastChecked = text;
+        return ShouldFlag;
+    }
+}
