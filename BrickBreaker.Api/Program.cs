@@ -33,6 +33,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.Configure<TurnstileOptions>(builder.Configuration.GetSection("Turnstile"));
+builder.Services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>();
 var allowedOrigins = builder.Configuration
                             .GetSection("Cors:AllowedOrigins")
                             .Get<string[]>()?
@@ -148,14 +150,26 @@ app.UseAuthorization();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
-app.MapPost("/register", async (RegisterRequest request, IAuthService auth) =>
+app.MapPost("/register", async (RegisterRequest request, IAuthService auth, ITurnstileVerifier turnstile, HttpContext httpContext) =>
 {
+    var captchaFailure = await EnforceTurnstileAsync(request.TurnstileToken, turnstile, httpContext);
+    if (captchaFailure is not null)
+    {
+        return captchaFailure;
+    }
+
     var success = await auth.RegisterAsync(request.Username, request.Password);
     return success ? Results.Ok() : Results.BadRequest();
 }).RequireRateLimiting(AuthLimiterPolicy);
 
-app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens) =>
+app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens, ITurnstileVerifier turnstile, HttpContext httpContext) =>
 {
+    var captchaFailure = await EnforceTurnstileAsync(request.TurnstileToken, turnstile, httpContext);
+    if (captchaFailure is not null)
+    {
+        return captchaFailure;
+    }
+
     var normalizedUsername = (request.Username ?? string.Empty).Trim();
     var password = request.Password ?? string.Empty;
     var success = await auth.LoginAsync(normalizedUsername, password);
@@ -200,6 +214,13 @@ app.MapPost("/leaderboard/submit", async (SubmitScoreRequest request, ClaimsPrin
 
 app.Run();
 
+static async Task<IResult?> EnforceTurnstileAsync(string? token, ITurnstileVerifier verifier, HttpContext context)
+{
+    var remoteIp = context.Connection.RemoteIpAddress?.ToString();
+    var isHuman = await verifier.VerifyAsync(token, remoteIp, context.RequestAborted);
+    return isHuman ? null : Results.BadRequest(new { error = "captcha_failed" });
+}
+
 static bool IsAuthorizedUser(ClaimsPrincipal user, string targetUsername)
 {
     if (string.IsNullOrWhiteSpace(targetUsername))
@@ -213,7 +234,7 @@ static bool IsAuthorizedUser(ClaimsPrincipal user, string targetUsername)
            string.Equals(principalName.Trim(), normalizedTarget, StringComparison.OrdinalIgnoreCase);
 }
 
-record RegisterRequest(string Username, string Password);
-record LoginRequest(string Username, string Password);
+record RegisterRequest(string Username, string Password, string? TurnstileToken = null);
+record LoginRequest(string Username, string Password, string? TurnstileToken = null);
 record LoginResponse(string Username, string Token);
 record SubmitScoreRequest(string Username, int Score);
