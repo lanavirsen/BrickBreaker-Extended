@@ -12,6 +12,7 @@ var preferredBase = builder.Configuration["ApiBaseUrl"];
 var apiBase = ApiConfiguration.ResolveBaseAddress(preferredBase);
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBase, UriKind.Absolute) });
 builder.Services.AddScoped<ApiClient>();
-builder.Services.Configure<TurnstileClientOptions>(builder.Configuration.GetSection("Turnstile"));
+var turnstileSection = builder.Configuration.GetSection("Turnstile");
+builder.Services.Configure<TurnstileClientOptions>(options => turnstileSection.Bind(options));
 
 await builder.Build().RunAsync();
