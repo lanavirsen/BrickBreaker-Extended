@@ -35,25 +35,50 @@ namespace BrickBreaker.Storage
         //method that reads the connecction string and turns it into var ConnectionString
         public string? GetConnectionString()
         {
-            var candidate = ReadFromEnvironment();
+            var candidate = ReadFromEnvironment(includeLocalConfig: true);
+            return string.IsNullOrWhiteSpace(candidate) ? null : candidate;
+        }
+
+        public static string? ReadFromEnvironment(bool includeLocalConfig = false)
+        {
+            var candidate = Environment.GetEnvironmentVariable("SUPABASE_CONNECTION")
+                           ?? Environment.GetEnvironmentVariable("SUPABASE_URL")
+                           ?? Environment.GetEnvironmentVariable("SUPABASE_CONNECTION_STRING");
+
             if (!string.IsNullOrWhiteSpace(candidate))
             {
                 return candidate;
             }
 
-            candidate = _config.GetConnectionString("Supabase")
-                       ?? _config["Supabase"]
-                       ?? _config["ConnectionString:Supabase"]
-                       ?? _config["SupabaseConnection"];
+            if (includeLocalConfig || IsDevelopment())
+            {
+                var localConfig = BuildLocalConfiguration();
+                var localCandidate = localConfig.GetConnectionString("Supabase")
+                                     ?? localConfig["Supabase"]
+                                     ?? localConfig["ConnectionString:Supabase"]
+                                     ?? localConfig["SupabaseConnection"];
+                if (!string.IsNullOrWhiteSpace(localCandidate))
+                {
+                    return localCandidate;
+                }
+            }
 
-            return string.IsNullOrWhiteSpace(candidate) ? null : candidate;
+            return null;
         }
 
-        public static string? ReadFromEnvironment()
+        private static IConfiguration BuildLocalConfiguration()
         {
-            return Environment.GetEnvironmentVariable("SUPABASE_CONNECTION")
-                   ?? Environment.GetEnvironmentVariable("SUPABASE_URL")
-                   ?? Environment.GetEnvironmentVariable("SUPABASE_CONNECTION_STRING");
+            var root = LocateSolutionRoot() ?? Directory.GetCurrentDirectory();
+            return new ConfigurationBuilder()
+                .SetBasePath(root)
+                .AddJsonFile(Path.Combine("BrickBreaker.Storage", "Properties", "appsettings.json"), optional: true, reloadOnChange: true)
+                .Build();
+        }
+
+        private static bool IsDevelopment()
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            return string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string? LocateSolutionRoot() //tries to find the root of the project by looking for .sln file and whoch folder it resides in

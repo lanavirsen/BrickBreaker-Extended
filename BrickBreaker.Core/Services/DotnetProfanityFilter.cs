@@ -1,3 +1,4 @@
+using System;
 using BrickBreaker.Core.Abstractions;
 using DotnetBadWordDetector;
 
@@ -8,12 +9,7 @@ namespace BrickBreaker.Core.Services;
 /// </summary>
 public sealed class DotnetProfanityFilter : IProfanityFilter
 {
-    private readonly ProfanityDetector _detector;
-
-    public DotnetProfanityFilter()
-    {
-        _detector = new ProfanityDetector();
-    }
+    private readonly Lazy<ProfanityDetector> _detector = new(() => new ProfanityDetector());
 
     public bool ContainsProfanity(string? text)
     {
@@ -22,6 +18,6 @@ public sealed class DotnetProfanityFilter : IProfanityFilter
             return false;
         }
 
-        return _detector.IsProfane(text);
+        return _detector.Value.IsProfane(text);
     }
 }

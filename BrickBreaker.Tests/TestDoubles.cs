@@ -88,6 +88,36 @@ internal sealed class FakeLeaderboardStore : ILeaderboardStore
             .ToList();
         return Task.FromResult(clone);
     }
+
+    public Task<List<ScoreEntry>> ReadTopAsync(int count, CancellationToken cancellationToken = default)
+    {
+        var top = EntriesToReturn
+            .OrderByDescending(e => e.Score)
+            .ThenBy(e => e.At)
+            .ThenBy(e => e.Username, StringComparer.OrdinalIgnoreCase)
+            .Take(Math.Max(count, 0))
+            .Select(e => new ScoreEntry(e.Username, e.Score, e.At))
+            .ToList();
+        return Task.FromResult(top);
+    }
+
+    public Task<ScoreEntry?> ReadBestForAsync(string username, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return Task.FromResult<ScoreEntry?>(null);
+        }
+
+        var best = EntriesToReturn
+            .Where(e => !string.IsNullOrWhiteSpace(e.Username) &&
+                        e.Username.Equals(username.Trim(), StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(e => e.Score)
+            .ThenBy(e => e.At)
+            .ThenBy(e => e.Username, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        return Task.FromResult(best is null ? null : new ScoreEntry(best.Username, best.Score, best.At));
+    }
 }
 
 internal sealed class FakeProfanityFilter : IProfanityFilter
