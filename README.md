@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/lanavirsen/BrickBreaker-Extended/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended/branch/main/graph/badge.svg)](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended)
 
-BrickBreaker is now a Blazor WebAssembly remake of the classic paddle-and-bricks arcade game, deployed as a responsive web app that streams the .NET gameplay loop into a `<canvas>`. The browser client handles login, registration, CAPTCHA, score submission, and leaderboard views while sharing the same `GameEngine` used by the desktop builds. Console and WinForms shells remain in the repo to demonstrate how multiple UI layers can plug into the shared gameplay/session architecture without forking core logic.
+BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arcade game, deployed as a responsive web app that streams the .NET gameplay loop into a `<canvas>`. The browser client handles login, registration, CAPTCHA, score submission, and leaderboard views while sharing the same `GameEngine` used by the desktop builds. Console and WinForms shells remain in the repo to demonstrate how multiple UI layers can plug into the shared gameplay/session architecture without forking core logic.
 
 ## Gameplay screenshot
 
@@ -62,7 +62,7 @@ dotnet build BrickBreaker.sln
 dotnet test BrickBreaker.sln
 ```
 
-The web client exposes an API URL textbox on the landing page so you can switch between the hosted API (`https://brickbreaker-api.delightfulsky-8a169c96.swedencentral.azurecontainerapps.io` by default) and a local build (`https://localhost:5080` or `http://127.0.0.1:5080`). WinForms and Spectre.Console read the backend URL from the `BRICKBREAKER_API_URL` environment variable (or `clientsettings.json`/command-line overrides) so all UI layers can point at the same API without recompiling.
+The web client exposes an API URL textbox on the landing page so you can switch between the hosted API and a local build. WinForms and Spectre.Console read the backend URL from the `BRICKBREAKER_API_URL` environment variable (or `clientsettings.json`/command-line overrides) so all UI layers can point at the same API without recompiling.
 
 ### Configure Supabase/PostgreSQL
 
