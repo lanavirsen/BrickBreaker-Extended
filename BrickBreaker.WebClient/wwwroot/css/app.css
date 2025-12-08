@@ -241,8 +241,13 @@ code {
 
 .bb-shell {
     margin: 0.75rem auto 1.5rem;
+    width: 80vw;
     max-width: 1440px;
+    height: 80vh;
+    max-height: 80vh;
     padding: 0 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
 }
 
 @media (max-height: 900px) {
@@ -263,11 +268,14 @@ code {
     display: flex;
     gap: 1.5rem;
     align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 @media (max-width: 960px) {
     .bb-layout {
         flex-direction: column;
+        min-height: auto;
     }
 
     .bb-sidebar {
@@ -276,23 +284,22 @@ code {
     }
 }
 
-.bb-main {
-    flex: 1 1 auto;
-    min-width: 0;
+.bb-main,
+.bb-sidebar {
     min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
 }
 
+.bb-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .bb-sidebar {
-    flex: 0 0 auto;
-    width: 360px;
-    max-width: 360px;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    flex: 0 0 380px;
+    max-width: 380px;
 }
 
 .panel {
@@ -305,17 +312,24 @@ code {
 
 /* Make the sidebar column let the leaderboard grow and scroll */
 .panel--leaderboard {
-    flex: 1;
+    flex: 1 1 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
 }
 
 .leaderboard-body {
-    flex: 1;
+    flex: 1 1 0;
     min-height: 0;
-    max-height: 260px;
     overflow-y: auto;
+}
+
+.panel--game {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
 }
 
 /* Custom scrollbar for leaderboard */
@@ -335,10 +349,6 @@ code {
 
 .leaderboard-body::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, #a48dff, #8a75ff);
-}
-
-.panel--game {
-    padding: 1rem;
 }
 
 .panel__header {
