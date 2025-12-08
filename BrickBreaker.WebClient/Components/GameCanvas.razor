@@ -3,33 +3,17 @@
 @inject IJSRuntime JS
 
 <div class="game-shell">
-    <canvas class="game-canvas"
-            @ref="_canvasRef"
-            tabindex="0"
-            @onkeydown="HandleKeyDown"
-            @onkeyup="HandleKeyUp"
-            @onblur="HandleBlur"
-            @onkeydown:preventDefault
-            @onkeyup:preventDefault>
-    </canvas>
-
-    @if (_host is not null)
-    {
-        <div class="status">
-            @if (_host.IsGameOver)
-            {
-                <span>Game over! Press Space or Restart.</span>
-            }
-            else if (_host.IsPaused)
-            {
-                <span>Paused</span>
-            }
-            else if (_host.BallReady)
-            {
-                <span>Press ↑ / W to launch the ball.</span>
-            }
-        </div>
-    }
+    <div class="game-surface">
+        <canvas class="game-canvas"
+                @ref="_canvasRef"
+                tabindex="0"
+                @onkeydown="HandleKeyDown"
+                @onkeyup="HandleKeyUp"
+                @onblur="HandleBlur"
+                @onkeydown:preventDefault
+                @onkeyup:preventDefault>
+        </canvas>
+    </div>
 
     <div class="controls">
         <button @onclick="TogglePause" disabled="@(_host is null)">

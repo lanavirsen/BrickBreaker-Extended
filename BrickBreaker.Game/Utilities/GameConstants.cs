@@ -12,9 +12,9 @@ namespace BrickBreaker.Game.Utilities
         public const int InitialBrickCols = 10;
         public const int BrickWidth = 60;
         public const int BrickHeight = 25;
-        public const int BrickXSpacing = 70;
+        public const int BrickXSpacing = 80;
         public const int BrickYSpacing = 30;
-        public const int PaddleAreaHeight = 400;
+        public const int PaddleAreaHeight = 381;
 
         // Physics
         public const double BasePaddleSpeed = 13;
