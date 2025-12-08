@@ -141,7 +141,7 @@ function drawOverlay(playArea, overlay) {
     ctx.fillText("Game Over", centerX, centerY - 10);
     ctx.fillStyle = "#f5f7ff";
     ctx.font = "14px 'Consolas', monospace";
-    ctx.fillText("Press Space to try again", centerX, centerY + 12);
+    ctx.fillText("Press Enter to try again", centerX, centerY + 12);
   } else if (overlay.isPaused) {
     ctx.fillStyle = "rgba(12, 16, 31, 0.85)";
     ctx.fillRect(playArea.x, playArea.y, playArea.width, playArea.height);

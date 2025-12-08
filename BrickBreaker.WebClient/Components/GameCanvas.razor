@@ -1,5 +1,7 @@
 @implements IAsyncDisposable
 @using BrickBreaker.WebClient.Services
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
 @inject IJSRuntime JS
 
 <div class="game-shell">
@@ -7,20 +9,10 @@
         <canvas class="game-canvas"
                 @ref="_canvasRef"
                 tabindex="0"
-                @onkeydown="HandleKeyDown"
-                @onkeyup="HandleKeyUp"
-                @onblur="HandleBlur"
-                @onkeydown:preventDefault
-                @onkeyup:preventDefault>
+                @onblur="HandleBlur">
         </canvas>
     </div>
 
-    <div class="controls">
-        <button @onclick="TogglePause" disabled="@(_host is null)">
-            @((_host?.IsPaused ?? false) ? "Resume" : "Pause")
-        </button>
-        <button @onclick="Restart" disabled="@(_host is null)">Restart</button>
-    </div>
 </div>
 
 @code {
@@ -29,6 +21,9 @@
 
     private ElementReference _canvasRef;
     private WebGameHost? _host;
+    private IJSObjectReference? _inputModule;
+    private DotNetObjectReference<GameCanvas>? _dotNetRef;
+    private bool _inputHandlersAttached;
 
     protected override void OnInitialized()
     {
@@ -39,11 +34,29 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _host is not null)
+        if (firstRender)
         {
-            await _host.InitializeAsync(_canvasRef);
-            await _canvasRef.FocusAsync();
+            if (_host is not null)
+            {
+                await _host.InitializeAsync(_canvasRef);
+                await _canvasRef.FocusAsync();
+            }
+
+            await AttachInputHandlersAsync();
         }
+    }
+
+    private async Task AttachInputHandlersAsync()
+    {
+        if (_inputHandlersAttached)
+        {
+            return;
+        }
+
+        _inputModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/gameInput.js");
+        _dotNetRef ??= DotNetObjectReference.Create(this);
+        await _inputModule.InvokeVoidAsync("attachInputHandlers", _dotNetRef);
+        _inputHandlersAttached = true;
     }
 
     private async void HandleStateChanged()
@@ -85,18 +98,14 @@
                 _host.TryLaunchBall();
                 break;
             case " ":
+                _host.TogglePause();
+                break;
+            case "Enter":
+            case "NumpadEnter":
                 if (_host.IsGameOver)
                 {
                     _host.Restart();
                 }
-                else
-                {
-                    _host.TryLaunchBall();
-                }
-                break;
-            case "p":
-            case "P":
-                _host.TogglePause();
                 break;
         }
 
@@ -150,6 +159,19 @@
             _host.GameFinished -= HandleHostGameFinished;
             await _host.DisposeAsync();
         }
+
+        if (_inputModule is not null)
+        {
+            if (_inputHandlersAttached)
+            {
+                await _inputModule.InvokeVoidAsync("detachInputHandlers");
+                _inputHandlersAttached = false;
+            }
+
+            await _inputModule.DisposeAsync();
+        }
+
+        _dotNetRef?.Dispose();
     }
 
     private async void HandleHostGameFinished(int score)
@@ -159,4 +181,12 @@
             await InvokeAsync(() => OnGameFinished.InvokeAsync(score));
         }
     }
+
+    [JSInvokable]
+    public Task HandleGlobalKeyDown(string key)
+        => HandleKeyDown(new KeyboardEventArgs { Key = key });
+
+    [JSInvokable]
+    public Task HandleGlobalKeyUp(string key)
+        => HandleKeyUp(new KeyboardEventArgs { Key = key });
 }
