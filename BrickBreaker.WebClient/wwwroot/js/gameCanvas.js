@@ -1,13 +1,21 @@
 let canvasEl;
 let ctx;
+let baseWidth = 0;
+let baseHeight = 0;
+let resizeObserver;
+let resizeFallback;
 
 export function init(canvas, width, height) {
   canvasEl = canvas;
   ctx = canvas.getContext("2d");
+  baseWidth = width;
+  baseHeight = height;
   canvasEl.width = width;
   canvasEl.height = height;
   ctx.textBaseline = "middle";
   ctx.font = "14px 'Consolas', monospace";
+
+  setupResizeObserver();
 }
 
 export function render(state) {
@@ -145,4 +153,65 @@ function drawOverlay(playArea, overlay) {
   }
 
   ctx.restore();
+}
+
+function setupResizeObserver() {
+  cleanupResizeObserver();
+  if (!canvasEl) {
+    return;
+  }
+
+  const container = canvasEl.parentElement;
+  if (!container) {
+    return;
+  }
+
+  const applyFromContainer = () => {
+    const rect = container.getBoundingClientRect();
+    updateCanvasCssSize(rect.width, rect.height);
+  };
+
+  if (typeof ResizeObserver === "function") {
+    resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        updateCanvasCssSize(width, height);
+      }
+    });
+    resizeObserver.observe(container);
+    applyFromContainer();
+  } else {
+    resizeFallback = () => applyFromContainer();
+    window.addEventListener("resize", resizeFallback);
+    applyFromContainer();
+  }
+}
+
+function updateCanvasCssSize(width, height) {
+  if (!canvasEl || !width || !height || !baseWidth || !baseHeight) {
+    return;
+  }
+  const scale = Math.min(width / baseWidth, height / baseHeight);
+  const targetWidth = baseWidth * scale;
+  const targetHeight = baseHeight * scale;
+  canvasEl.style.width = `${targetWidth}px`;
+  canvasEl.style.height = `${targetHeight}px`;
+}
+
+function cleanupResizeObserver() {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = undefined;
+  }
+
+  if (resizeFallback) {
+    window.removeEventListener("resize", resizeFallback);
+    resizeFallback = undefined;
+  }
+}
+
+export function dispose() {
+  cleanupResizeObserver();
+  canvasEl = undefined;
+  ctx = undefined;
 }

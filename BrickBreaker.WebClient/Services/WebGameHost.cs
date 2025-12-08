@@ -192,6 +192,14 @@ public sealed class WebGameHost : IAsyncDisposable
         _loopCts?.Cancel();
         if (_canvasModule is not null)
         {
+            try
+            {
+                await _canvasModule.InvokeVoidAsync("dispose");
+            }
+            catch
+            {
+                // ignore cleanup failures during disposal
+            }
             await _canvasModule.DisposeAsync();
         }
     }
