@@ -182,6 +182,7 @@
     private string? _turnstileSiteKey;
     private string? _loginTurnstileToken;
     private string? _registerTurnstileToken;
+    private bool _turnstileRenderPending;
     private bool _showLoginPanel = true;
     private bool _showRegisterPanel;
     private int _currentScore;
@@ -208,14 +209,16 @@
         if (_turnstileEnabled)
         {
             _turnstileRef = DotNetObjectReference.Create(this);
+            _turnstileRenderPending = true;
         }
         await RefreshLeaderboardAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _turnstileEnabled)
+        if (_turnstileEnabled && _turnstileRenderPending)
         {
+            _turnstileRenderPending = false;
             await RenderTurnstileAsync(LoginTurnstileElementId, "login");
             await RenderTurnstileAsync(RegisterTurnstileElementId, "register");
         }
@@ -345,6 +348,12 @@
         _isLoggedIn = false;
         _currentUser = string.Empty;
         _bestEntry = null;
+        _loginTurnstileToken = null;
+        _registerTurnstileToken = null;
+        if (_turnstileEnabled)
+        {
+            _turnstileRenderPending = true;
+        }
         Api.ClearAuthentication();
         _statusMessage = "Signed out.";
     }
