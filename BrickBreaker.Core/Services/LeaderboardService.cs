@@ -43,14 +43,8 @@ public sealed class LeaderboardService : ILeaderboardService
             return [];
         }
 
-        var entries = await _store.ReadAllAsync().ConfigureAwait(false);
-        return entries
-            .Where(s => !string.IsNullOrWhiteSpace(s.Username) && s.Score >= 0)
-            .OrderByDescending(s => s.Score)
-            .ThenBy(s => s.At)
-            .ThenBy(s => s.Username, StringComparer.OrdinalIgnoreCase)
-            .Take(count)
-            .ToList();
+        var entries = await _store.ReadTopAsync(count).ConfigureAwait(false);
+        return entries.Where(s => !string.IsNullOrWhiteSpace(s.Username) && s.Score >= 0).ToList();
     }
 
     public async Task<ScoreEntry?> BestForAsync(string username)
@@ -60,13 +54,6 @@ public sealed class LeaderboardService : ILeaderboardService
             return null;
         }
 
-        var entries = await _store.ReadAllAsync().ConfigureAwait(false);
-        return entries
-            .Where(s => !string.IsNullOrWhiteSpace(s.Username) &&
-                        s.Username.Equals(username.Trim(), StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(s => s.Score)
-            .ThenBy(s => s.At)
-            .ThenBy(s => s.Username, StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault();
+        return await _store.ReadBestForAsync(username.Trim()).ConfigureAwait(false);
     }
 }

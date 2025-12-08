@@ -17,4 +17,10 @@ public sealed class DisabledLeaderboardStore : ILeaderboardStore
 
     public Task<List<ScoreEntry>> ReadAllAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(new List<ScoreEntry>());
+
+    public Task<List<ScoreEntry>> ReadTopAsync(int count, CancellationToken cancellationToken = default)
+        => Task.FromResult(new List<ScoreEntry>());
+
+    public Task<ScoreEntry?> ReadBestForAsync(string username, CancellationToken cancellationToken = default)
+        => Task.FromResult<ScoreEntry?>(null);
 }

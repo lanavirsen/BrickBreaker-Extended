@@ -56,27 +56,92 @@ public sealed class LeaderboardStore : ILeaderboardStore
     FROM {TableName};
     """;
 
+        return await ExecuteQueryAsync(sql, cancellationToken: cancellationToken);
+    }
+
+    public async Task<List<ScoreEntry>> ReadTopAsync(int count, CancellationToken cancellationToken = default)
+    {
+        if (count <= 0)
+        {
+            return [];
+        }
+
+        const string sql = $"""
+        SELECT username, score, at
+        FROM {TableName}
+        ORDER BY score DESC, at ASC, username ASC
+        LIMIT @limit;
+        """;
+
         await using var connection = new NpgsqlConnection(_connectionString);
-        using var command = new NpgsqlCommand(sql, connection);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("limit", count);
 
         await connection.OpenAsync(cancellationToken);
+        return await ReadEntriesAsync(command, cancellationToken);
+    }
 
+    public async Task<ScoreEntry?> ReadBestForAsync(string username, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return null;
+        }
+
+        const string sql = $"""
+        SELECT username, score, at
+        FROM {TableName}
+        WHERE LOWER(username) = LOWER(@username)
+        ORDER BY score DESC, at ASC, username ASC
+        LIMIT 1;
+        """;
+
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("username", username.Trim());
+
+        await connection.OpenAsync(cancellationToken);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (await reader.ReadAsync(cancellationToken))
+        {
+            return MapEntry(reader);
+        }
+
+        return null;
+    }
+
+    private async Task<List<ScoreEntry>> ExecuteQueryAsync(string sql, Action<NpgsqlCommand>? configure = null, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await using var command = new NpgsqlCommand(sql, connection);
+        configure?.Invoke(command);
+
+        await connection.OpenAsync(cancellationToken);
+        return await ReadEntriesAsync(command, cancellationToken);
+    }
+
+    private static async Task<List<ScoreEntry>> ReadEntriesAsync(NpgsqlCommand command, CancellationToken cancellationToken)
+    {
         var entries = new List<ScoreEntry>();
 
-
-        //reads data from the tables, using reader to iterate rows and GetOrdinal to find the right column/row, then the value gets read wíth GetString or GetInt32
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            var username = reader.GetString(reader.GetOrdinal("username"));
-            var score = reader.GetInt32(reader.GetOrdinal("score"));
-
-            var atOrdinal = reader.GetOrdinal("at");
-            var atValue = reader.GetFieldValue<DateTime>(atOrdinal);
-            var at = DateTime.SpecifyKind(atValue, DateTimeKind.Utc);
-
-            entries.Add(new ScoreEntry(username, score, new DateTimeOffset(at)));
+            entries.Add(MapEntry(reader));
         }
+
         return entries;
+    }
+
+    private static ScoreEntry MapEntry(NpgsqlDataReader reader)
+    {
+        var username = reader.GetString(reader.GetOrdinal("username"));
+        var score = reader.GetInt32(reader.GetOrdinal("score"));
+
+        var atOrdinal = reader.GetOrdinal("at");
+        var atValue = reader.GetFieldValue<DateTime>(atOrdinal);
+        var at = DateTime.SpecifyKind(atValue, DateTimeKind.Utc);
+
+        return new ScoreEntry(username, score, new DateTimeOffset(at));
     }
 }

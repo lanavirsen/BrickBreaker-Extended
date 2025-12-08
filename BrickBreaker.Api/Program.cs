@@ -31,8 +31,11 @@ static string ResolveClientPartition(HttpContext context)
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+}
 builder.Services.Configure<TurnstileOptions>(builder.Configuration.GetSection("Turnstile"));
 builder.Services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>();
 var allowedOrigins = builder.Configuration
@@ -63,7 +66,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton(sp =>
 {
-    var connectionString = StorageConfiguration.ReadFromEnvironment()
+    var connectionString = StorageConfiguration.ReadFromEnvironment(builder.Environment.IsDevelopment())
                            ?? throw new InvalidOperationException("Supabase connection string missing.");
     return new StorageConnectionFactory(connectionString);
 });
@@ -139,8 +142,11 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseCors();
 app.UseRateLimiter();
