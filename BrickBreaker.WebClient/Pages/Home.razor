@@ -60,8 +60,10 @@
                                 <span>Login</span>
                                 <span class="chevron @( _showLoginPanel ? "open" : string.Empty)"></span>
                             </button>
-                            <div class="auth-panel @( _showLoginPanel ? "show" : "hide")"
-                                 aria-hidden="@(!_showLoginPanel)">
+                            <form class="auth-panel @( _showLoginPanel ? "show" : "hide")"
+                                  aria-hidden="@(!_showLoginPanel)"
+                                  @onsubmit="HandleLoginSubmit"
+                                  @onsubmit:preventDefault="true">
                                 <label>Username</label>
                                 <input @bind="_loginUsername" @bind:event="oninput" autocomplete="username" />
                                 <label>Password</label>
@@ -70,8 +72,8 @@
                                 {
                                     <div class="turnstile-slot" id="login-turnstile"></div>
                                 }
-                                <button class="primary-action" @onclick="LoginAsync" disabled="@_isBusy">Login</button>
-                            </div>
+                                <button type="submit" class="primary-action" disabled="@_isBusy">Login</button>
+                            </form>
                         </div>
                         <div class="card auth-card @( _showRegisterPanel ? "expanded" : string.Empty)">
                             <button type="button"
@@ -81,8 +83,10 @@
                                 <span>Create Account</span>
                                 <span class="chevron @( _showRegisterPanel ? "open" : string.Empty)"></span>
                             </button>
-                            <div class="auth-panel @( _showRegisterPanel ? "show" : "hide")"
-                                 aria-hidden="@(!_showRegisterPanel)">
+                            <form class="auth-panel @( _showRegisterPanel ? "show" : "hide")"
+                                  aria-hidden="@(!_showRegisterPanel)"
+                                  @onsubmit="HandleRegisterSubmit"
+                                  @onsubmit:preventDefault="true">
                                 <label>Username</label>
                                 <input @bind="_registerUsername" @bind:event="oninput" autocomplete="username" />
                                 <label>Password</label>
@@ -91,8 +95,8 @@
                                 {
                                     <div class="turnstile-slot" id="register-turnstile"></div>
                                 }
-                                <button class="primary-action" @onclick="RegisterAsync" disabled="@_isBusy">Create Account</button>
-                            </div>
+                                <button type="submit" class="primary-action" disabled="@_isBusy">Create Account</button>
+                            </form>
                         </div>
                     </div>
                 }
@@ -101,7 +105,7 @@
                     <div class="card profile-card">
                         <h3>Signed in as</h3>
                         <p class="profile-card__user">@_currentUser</p>
-                        <p>Best score: @(_bestEntry?.Score.ToString() ?? "—")</p>
+                        <p class="profile-card__stat">Best score: @(_bestEntry?.Score.ToString() ?? "—")</p>
                         <button class="primary-action" @onclick="Logout" disabled="@_isBusy">Logout</button>
                     </div>
                 }
@@ -178,6 +182,7 @@
     private string? _turnstileSiteKey;
     private string? _loginTurnstileToken;
     private string? _registerTurnstileToken;
+    private bool _turnstileRenderPending;
     private bool _showLoginPanel = true;
     private bool _showRegisterPanel;
     private int _currentScore;
@@ -204,18 +209,22 @@
         if (_turnstileEnabled)
         {
             _turnstileRef = DotNetObjectReference.Create(this);
+            _turnstileRenderPending = true;
         }
         await RefreshLeaderboardAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _turnstileEnabled)
+        if (_turnstileEnabled && _turnstileRenderPending)
         {
+            _turnstileRenderPending = false;
             await RenderTurnstileAsync(LoginTurnstileElementId, "login");
             await RenderTurnstileAsync(RegisterTurnstileElementId, "register");
         }
     }
+
+    private Task HandleLoginSubmit() => LoginAsync();
 
     private async Task LoginAsync()
     {
@@ -259,6 +268,8 @@
         _isBusy = false;
     }
 
+    private Task HandleRegisterSubmit() => RegisterAsync();
+
     private async Task RegisterAsync()
     {
         if (_isBusy)
@@ -269,6 +280,21 @@
         _isBusy = true;
         _statusMessage = string.Empty;
         var username = (_registerUsername ?? string.Empty).Trim();
+        var password = _registerPassword ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            _statusMessage = "Enter a username to create an account.";
+            _isBusy = false;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            _statusMessage = "Enter a password to create an account.";
+            _isBusy = false;
+            return;
+        }
+
         if (_turnstileEnabled && string.IsNullOrWhiteSpace(_registerTurnstileToken))
         {
             _statusMessage = "Complete the CAPTCHA to continue.";
@@ -276,7 +302,7 @@
             return;
         }
 
-        var result = await Api.RegisterAsync(username, _registerPassword ?? string.Empty, _registerTurnstileToken);
+        var result = await Api.RegisterAsync(username, password, _registerTurnstileToken);
         _statusMessage = result.Success ? "Registration successful." : result.Error ?? "Registration failed.";
         if (result.Success)
         {
@@ -337,6 +363,12 @@
         _isLoggedIn = false;
         _currentUser = string.Empty;
         _bestEntry = null;
+        _loginTurnstileToken = null;
+        _registerTurnstileToken = null;
+        if (_turnstileEnabled)
+        {
+            _turnstileRenderPending = true;
+        }
         Api.ClearAuthentication();
         _statusMessage = "Signed out.";
     }

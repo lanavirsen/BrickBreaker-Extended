@@ -2,6 +2,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
+using System.Text.Json.Serialization;
 using BrickBreaker.Api;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Services;
@@ -164,8 +165,25 @@ app.MapPost("/register", async (RegisterRequest request, IAuthService auth, ITur
         return captchaFailure;
     }
 
-    var success = await auth.RegisterAsync(request.Username, request.Password);
-    return success ? Results.Ok() : Results.BadRequest();
+    var username = (request.Username ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(username))
+    {
+        return ValidationError("username_required", "Choose a username to continue.");
+    }
+
+    var password = request.Password ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(password))
+    {
+        return ValidationError("password_required", "Enter a password to create an account.");
+    }
+
+    if (await auth.UsernameExistsAsync(username))
+    {
+        return ValidationError("username_taken", "That username is already taken. Try another one.");
+    }
+
+    var success = await auth.RegisterAsync(username, password);
+    return success ? Results.Ok() : ValidationError("registration_failed", "Registration was rejected. Try another username.");
 }).RequireRateLimiting(AuthLimiterPolicy);
 
 app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens, ITurnstileVerifier turnstile, HttpContext httpContext) =>
@@ -224,8 +242,11 @@ static async Task<IResult?> EnforceTurnstileAsync(string? token, ITurnstileVerif
 {
     var remoteIp = context.Connection.RemoteIpAddress?.ToString();
     var isHuman = await verifier.VerifyAsync(token, remoteIp, context.RequestAborted);
-    return isHuman ? null : Results.BadRequest(new { error = "captcha_failed" });
+    return isHuman ? null : ValidationError("captcha_failed", "Complete the CAPTCHA to continue.");
 }
+
+static IResult ValidationError(string code, string message) =>
+    Results.Json(new ApiError(code, message), statusCode: StatusCodes.Status400BadRequest);
 
 static bool IsAuthorizedUser(ClaimsPrincipal user, string targetUsername)
 {
@@ -244,3 +265,4 @@ record RegisterRequest(string Username, string Password, string? TurnstileToken 
 record LoginRequest(string Username, string Password, string? TurnstileToken = null);
 record LoginResponse(string Username, string Token);
 record SubmitScoreRequest(string Username, int Score);
+record ApiError([property: JsonPropertyName("error")] string Error, [property: JsonPropertyName("message")] string Message);

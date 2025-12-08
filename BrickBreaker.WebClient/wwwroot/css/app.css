@@ -446,6 +446,13 @@ code {
     font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: 0.04em;
+    color: #f5f7ff;
+}
+
+.profile-card__stat {
+    margin-top: 0.35rem;
+    color: rgba(245, 247, 255, 0.85);
+    font-size: 0.95rem;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
