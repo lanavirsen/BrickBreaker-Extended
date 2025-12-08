@@ -72,6 +72,9 @@ internal sealed class FakeLeaderboardStore : ILeaderboardStore
     // List of score entries to return for read/readall operations (simulating stored data).
     public List<ScoreEntry> EntriesToReturn { get; set; } = new();
 
+    public int? LastTopCount { get; private set; }
+    public string? LastBestForUsername { get; private set; }
+
     // Adds a score entry to the internal list.
     public Task AddAsync(ScoreEntry entry, CancellationToken cancellationToken = default)
     {
@@ -91,6 +94,7 @@ internal sealed class FakeLeaderboardStore : ILeaderboardStore
 
     public Task<List<ScoreEntry>> ReadTopAsync(int count, CancellationToken cancellationToken = default)
     {
+        LastTopCount = count;
         var top = EntriesToReturn
             .OrderByDescending(e => e.Score)
             .ThenBy(e => e.At)
@@ -103,6 +107,7 @@ internal sealed class FakeLeaderboardStore : ILeaderboardStore
 
     public Task<ScoreEntry?> ReadBestForAsync(string username, CancellationToken cancellationToken = default)
     {
+        LastBestForUsername = username;
         if (string.IsNullOrWhiteSpace(username))
         {
             return Task.FromResult<ScoreEntry?>(null);

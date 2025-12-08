@@ -74,6 +74,26 @@ public sealed class LeaderboardTests
     }
 
     [Fact]
+    public async Task Top_RequestsSpecifiedCountFromStore()
+    {
+        var store = new FakeLeaderboardStore
+        {
+            EntriesToReturn = new List<ScoreEntry>
+            {
+                new("Alice", 200, DateTimeOffset.UtcNow),
+                new("Bob", 150, DateTimeOffset.UtcNow),
+                new("Charlie", 100, DateTimeOffset.UtcNow)
+            }
+        };
+        var sut = new LeaderboardService(store);
+
+        var top = await sut.TopAsync(2);
+
+        Assert.Equal(2, store.LastTopCount);
+        Assert.Equal(2, top.Count);
+    }
+
+    [Fact]
     public async Task BestFor_ReturnsBestScoreIgnoringCase()
     {
         // Case-insensitive comparisons should find the overall best score.
@@ -94,6 +114,23 @@ public sealed class LeaderboardTests
         Assert.NotNull(best);
         Assert.Equal(150, best!.Score);
         Assert.Equal(DateTimeOffset.Parse("2024-01-01T12:00:00+00:00"), best.At);
+    }
+
+    [Fact]
+    public async Task BestFor_TrimsInputAndDelegatesToStore()
+    {
+        var store = new FakeLeaderboardStore
+        {
+            EntriesToReturn = new List<ScoreEntry>
+            {
+                new("Alice", 10, DateTimeOffset.UtcNow)
+            }
+        };
+        var sut = new LeaderboardService(store);
+
+        _ = await sut.BestForAsync("  Alice  ");
+
+        Assert.Equal("Alice", store.LastBestForUsername);
     }
 
     [Fact]
