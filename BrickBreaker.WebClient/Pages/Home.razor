@@ -60,8 +60,10 @@
                                 <span>Login</span>
                                 <span class="chevron @( _showLoginPanel ? "open" : string.Empty)"></span>
                             </button>
-                            <div class="auth-panel @( _showLoginPanel ? "show" : "hide")"
-                                 aria-hidden="@(!_showLoginPanel)">
+                            <form class="auth-panel @( _showLoginPanel ? "show" : "hide")"
+                                  aria-hidden="@(!_showLoginPanel)"
+                                  @onsubmit="HandleLoginSubmit"
+                                  @onsubmit:preventDefault="true">
                                 <label>Username</label>
                                 <input @bind="_loginUsername" @bind:event="oninput" autocomplete="username" />
                                 <label>Password</label>
@@ -70,8 +72,8 @@
                                 {
                                     <div class="turnstile-slot" id="login-turnstile"></div>
                                 }
-                                <button class="primary-action" @onclick="LoginAsync" disabled="@_isBusy">Login</button>
-                            </div>
+                                <button type="submit" class="primary-action" disabled="@_isBusy">Login</button>
+                            </form>
                         </div>
                         <div class="card auth-card @( _showRegisterPanel ? "expanded" : string.Empty)">
                             <button type="button"
@@ -81,8 +83,10 @@
                                 <span>Create Account</span>
                                 <span class="chevron @( _showRegisterPanel ? "open" : string.Empty)"></span>
                             </button>
-                            <div class="auth-panel @( _showRegisterPanel ? "show" : "hide")"
-                                 aria-hidden="@(!_showRegisterPanel)">
+                            <form class="auth-panel @( _showRegisterPanel ? "show" : "hide")"
+                                  aria-hidden="@(!_showRegisterPanel)"
+                                  @onsubmit="HandleRegisterSubmit"
+                                  @onsubmit:preventDefault="true">
                                 <label>Username</label>
                                 <input @bind="_registerUsername" @bind:event="oninput" autocomplete="username" />
                                 <label>Password</label>
@@ -91,8 +95,8 @@
                                 {
                                     <div class="turnstile-slot" id="register-turnstile"></div>
                                 }
-                                <button class="primary-action" @onclick="RegisterAsync" disabled="@_isBusy">Create Account</button>
-                            </div>
+                                <button type="submit" class="primary-action" disabled="@_isBusy">Create Account</button>
+                            </form>
                         </div>
                     </div>
                 }
@@ -217,6 +221,8 @@
         }
     }
 
+    private Task HandleLoginSubmit() => LoginAsync();
+
     private async Task LoginAsync()
     {
         if (_isBusy)
@@ -258,6 +264,8 @@
         }
         _isBusy = false;
     }
+
+    private Task HandleRegisterSubmit() => RegisterAsync();
 
     private async Task RegisterAsync()
     {
