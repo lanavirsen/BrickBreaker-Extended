@@ -18,7 +18,7 @@ public sealed class DotnetProfanityFilterTests
     {
         var filter = new DotnetProfanityFilter();
 
-        Assert.True(filter.ContainsProfanity("what the hell"));
+        Assert.True(filter.ContainsProfanity("what the fuck"));
         Assert.False(filter.ContainsProfanity("hello world"));
     }
 }
