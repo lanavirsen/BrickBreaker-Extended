@@ -280,6 +280,21 @@
         _isBusy = true;
         _statusMessage = string.Empty;
         var username = (_registerUsername ?? string.Empty).Trim();
+        var password = _registerPassword ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            _statusMessage = "Enter a username to create an account.";
+            _isBusy = false;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            _statusMessage = "Enter a password to create an account.";
+            _isBusy = false;
+            return;
+        }
+
         if (_turnstileEnabled && string.IsNullOrWhiteSpace(_registerTurnstileToken))
         {
             _statusMessage = "Complete the CAPTCHA to continue.";
@@ -287,7 +302,7 @@
             return;
         }
 
-        var result = await Api.RegisterAsync(username, _registerPassword ?? string.Empty, _registerTurnstileToken);
+        var result = await Api.RegisterAsync(username, password, _registerTurnstileToken);
         _statusMessage = result.Success ? "Registration successful." : result.Error ?? "Registration failed.";
         if (result.Success)
         {

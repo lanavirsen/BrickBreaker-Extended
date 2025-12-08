@@ -159,16 +159,41 @@ public sealed class ApiClient
     private record CredentialRequest(string Username, string Password, string? TurnstileToken);
     private record SubmitScoreRequest(string Username, int Score);
     private record LoginResponse(string Username, string Token);
+    private sealed record ApiErrorResponse(string? Error, string? Message);
 
     private static async Task<string> ExtractErrorAsync(HttpResponseMessage response)
     {
-        var body = await response.Content.ReadAsStringAsync();
+        var body = (await response.Content.ReadAsStringAsync()).Trim();
         if (!string.IsNullOrWhiteSpace(body))
         {
-            return body.Trim();
+            var parsed = TryParseError(body);
+            return string.IsNullOrWhiteSpace(parsed) ? body : parsed!;
         }
 
         return $"API call failed with status {(int)response.StatusCode} ({response.ReasonPhrase}).";
+    }
+
+    private static string? TryParseError(string body)
+    {
+        try
+        {
+            var error = JsonSerializer.Deserialize<ApiErrorResponse>(body, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+            if (!string.IsNullOrWhiteSpace(error?.Message))
+            {
+                return error.Message;
+            }
+
+            if (!string.IsNullOrWhiteSpace(error?.Error))
+            {
+                return error.Error;
+            }
+        }
+        catch
+        {
+            // Ignore parse failures and fall back to raw body text.
+        }
+
+        return null;
     }
 }
 
