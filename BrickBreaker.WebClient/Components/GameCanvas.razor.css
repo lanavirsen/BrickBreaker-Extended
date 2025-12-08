@@ -40,24 +40,3 @@
   font-size: 0.95rem;
   text-align: center;
 }
-
-.controls {
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.controls button {
-  background: #6226ff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.4rem 0.95rem;
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.controls button[disabled] {
-  opacity: 0.4;
-  cursor: default;
-}
