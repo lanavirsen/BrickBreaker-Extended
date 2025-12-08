@@ -56,18 +56,28 @@ public sealed class AuthTests
     }
 
     [Fact]
+    public async Task Register_Fails_WhenPasswordTooShort()
+    {
+        var sut = CreateAuthService();
+
+        var result = await sut.RegisterAsync("Alice", "1234");
+
+        Assert.False(result);
+    }
+
+    [Fact]
     public async Task Register_Succeeds_AndPersistsTrimmedUser()
     {
         // Valid username/password should succeed and be stored without extra whitespace.
         var store = new FakeUserStore();
         var sut = CreateAuthService(store);
 
-        var result = await sut.RegisterAsync("  Alice  ", "  pw  ");
+        var result = await sut.RegisterAsync("  Alice  ", "  strongpw  ");
 
         Assert.True(result);
         var savedUser = Assert.Single(store.AddedUsers);
         Assert.Equal("Alice", savedUser.Username);
-        Assert.True(PasswordHasher.Verify(savedUser.Password, "pw"));
+        Assert.True(PasswordHasher.Verify(savedUser.Password, "strongpw"));
     }
 
     [Fact]
