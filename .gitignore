@@ -14,6 +14,7 @@ obj/
 # Ignore any configuration json files named appsettings.*
 **/appsettings*.json
 !**/appsettings.Template.json
+!BrickBreaker.WebClient/wwwroot/appsettings.json
 
 # OS noise
 .DS_Store
