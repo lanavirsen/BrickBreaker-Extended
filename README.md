@@ -4,6 +4,8 @@
 
 ![CI](https://github.com/lanavirsen/BrickBreaker-Extended/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended/branch/main/graph/badge.svg)](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended)
 
+Play it live: https://brickbreaker-extended.netlify.app
+
 BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arcade game, deployed as a responsive web app that streams the .NET gameplay loop into a `<canvas>`. The browser client handles login, registration, CAPTCHA, score submission, and leaderboard views while sharing the same `GameEngine` used by the desktop builds. Console and WinForms shells remain in the repo to demonstrate how multiple UI layers can plug into the shared gameplay/session architecture without forking core logic.
 
 ## Gameplay screenshot
