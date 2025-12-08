@@ -9,7 +9,7 @@ BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arc
 ## Gameplay screenshot
 
 <p align="center">
-  <img src="docs/images/gameplay.png">
+  <img src="docs/images/web-gameplay.png">
 </p>
 
 ## Highlights
