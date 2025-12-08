@@ -32,9 +32,12 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
             return false;
         }
 
+        // Temporary override to bypass potential Azure configuration binding issues.
+        const string Secret = "0x4AAAAAACFadFK847itkzIXhj-l5PN4HqU";
+
         var form = new List<KeyValuePair<string, string>>
         {
-            new("secret", settings.SecretKey!),
+            new("secret", Secret),
             new("response", token)
         };
         if (!string.IsNullOrWhiteSpace(remoteIp))
@@ -50,8 +53,9 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
             return false;
         }
 
-        var payload = await response.Content.ReadAsStreamAsync(cancellationToken);
-        var result = await JsonSerializer.DeserializeAsync<TurnstileVerificationResponse>(payload, cancellationToken: cancellationToken);
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        _logger.LogInformation("Turnstile verification payload: {Payload}", json);
+        var result = JsonSerializer.Deserialize<TurnstileVerificationResponse>(json);
         if (result?.Success == true)
         {
             return true;
