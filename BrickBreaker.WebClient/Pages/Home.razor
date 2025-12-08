@@ -39,7 +39,7 @@
             <section class="panel panel--account">
                 <header class="panel__header">
                     <h2>@(_isLoggedIn ? "Player" : "Account")</h2>
-                    <span class="panel__hint">@(_isLoggedIn ? "Manage your profile and logout" : "Sign in to track runs")</span>
+                    <span class="panel__hint">@(_isLoggedIn ? string.Empty : "Sign in to track runs")</span>
                 </header>
                 @if (_isAccountLoading)
                 {
@@ -237,6 +237,20 @@
         _statusMessage = string.Empty;
         var username = (_loginUsername ?? string.Empty).Trim();
         var password = _loginPassword ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            _statusMessage = "Enter your username to sign in.";
+            _isBusy = false;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            _statusMessage = "Enter your password to sign in.";
+            _isBusy = false;
+            return;
+        }
+
         if (_turnstileEnabled && string.IsNullOrWhiteSpace(_loginTurnstileToken))
         {
             _statusMessage = "Complete the CAPTCHA to continue.";
@@ -291,6 +305,13 @@
         if (string.IsNullOrWhiteSpace(password))
         {
             _statusMessage = "Enter a password to create an account.";
+            _isBusy = false;
+            return;
+        }
+
+        if (password.Length < 5)
+        {
+            _statusMessage = "Passwords must be at least 5 characters long.";
             _isBusy = false;
             return;
         }

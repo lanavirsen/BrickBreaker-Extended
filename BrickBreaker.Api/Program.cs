@@ -177,6 +177,11 @@ app.MapPost("/register", async (RegisterRequest request, IAuthService auth, ITur
         return ValidationError("password_required", "Enter a password to create an account.");
     }
 
+    if (password.Trim().Length < 5)
+    {
+        return ValidationError("password_too_short", "Passwords must be at least 5 characters long.");
+    }
+
     if (await auth.UsernameExistsAsync(username))
     {
         return ValidationError("username_taken", "That username is already taken. Try another one.");

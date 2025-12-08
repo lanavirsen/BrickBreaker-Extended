@@ -37,7 +37,7 @@ public sealed class AuthService : IAuthService
         }
 
         password = (password ?? string.Empty).Trim();
-        if (password.Length == 0)
+        if (password.Length < 5)
         {
             return false;
         }
