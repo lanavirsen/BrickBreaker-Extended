@@ -41,6 +41,13 @@
                     <h2>@(_isLoggedIn ? "Player" : "Account")</h2>
                     <span class="panel__hint">@(_isLoggedIn ? "Manage your profile and logout" : "Sign in to track runs")</span>
                 </header>
+                @if (_isAccountLoading)
+                {
+                    <div class="panel__loading">
+                        <div class="loading-spinner" role="status" aria-live="polite"></div>
+                        <p>Warming up the API...</p>
+                    </div>
+                }
 
                 @if (!_isLoggedIn)
                 {
@@ -111,6 +118,13 @@
                 <header class="panel__header">
                     <h2>Leaderboard</h2>
                 </header>
+                @if (_isLeaderboardLoading)
+                {
+                    <div class="panel__loading">
+                        <div class="loading-spinner" role="status" aria-live="polite"></div>
+                        <p>Fetching latest scores...</p>
+                    </div>
+                }
 
                 <div class="leaderboard-body">
                     @if (_leaderboard.Count == 0)
@@ -175,6 +189,8 @@
     private DotNetObjectReference<Home>? _turnstileRef;
     private List<LeaderboardEntry> _leaderboard = new();
     private LeaderboardEntry? _bestEntry;
+    private bool _isAccountLoading = true;
+    private bool _isLeaderboardLoading = true;
     private enum AuthPanel
     {
         Login,
@@ -331,6 +347,8 @@
         if (result.Success && result.Value is not null)
         {
             _leaderboard = result.Value.ToList();
+            _isLeaderboardLoading = false;
+            _isAccountLoading = false;
         }
         else
         {
