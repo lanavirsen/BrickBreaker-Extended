@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -32,12 +33,9 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
             return false;
         }
 
-        // Temporary override to bypass potential Azure configuration binding issues.
-        const string Secret = "0x4AAAAAACFadFK847itkzIXhj-l5PN4HqU";
-
         var form = new List<KeyValuePair<string, string>>
         {
-            new("secret", Secret),
+            new("secret", settings.SecretKey!),
             new("response", token)
         };
         if (!string.IsNullOrWhiteSpace(remoteIp))
@@ -55,7 +53,10 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
 
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
         _logger.LogInformation("Turnstile verification payload: {Payload}", json);
-        var result = JsonSerializer.Deserialize<TurnstileVerificationResponse>(json);
+        var result = JsonSerializer.Deserialize<TurnstileVerificationResponse>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
         if (result?.Success == true)
         {
             return true;
@@ -66,5 +67,7 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
         return false;
     }
 
-    private sealed record TurnstileVerificationResponse(bool Success, string[] ErrorCodes);
+    private sealed record TurnstileVerificationResponse(
+        bool Success,
+        [property: JsonPropertyName("error-codes")] string[] ErrorCodes);
 }
