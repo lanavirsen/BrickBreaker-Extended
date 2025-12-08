@@ -101,7 +101,7 @@
                     <div class="card profile-card">
                         <h3>Signed in as</h3>
                         <p class="profile-card__user">@_currentUser</p>
-                        <p>Best score: @(_bestEntry?.Score.ToString() ?? "—")</p>
+                        <p class="profile-card__stat">Best score: @(_bestEntry?.Score.ToString() ?? "—")</p>
                         <button class="primary-action" @onclick="Logout" disabled="@_isBusy">Logout</button>
                     </div>
                 }
