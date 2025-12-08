@@ -24,6 +24,7 @@ a, .btn-link {
 }
 
 .intro {
+    margin-top: 2rem;
     text-align: center;
     margin-bottom: 1rem;
 }
@@ -250,7 +251,7 @@ code {
     width: 80vw;
     height: 80vh;
     max-height: 80vh;
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 1.5rem 0.5rem;
     display: flex;
     flex-direction: column;
 }
@@ -308,7 +309,7 @@ code {
 }
 
 .panel {
-    background: rgba(8, 10, 24, 0.8);
+    background: rgba(14, 16, 34, 0.9);
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 1.25rem;
@@ -385,12 +386,12 @@ code {
 }
 
 .leaderboard-body::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #8b74ff, #6f5cff);
+    background: rgba(140, 110, 255, 0.45);
     border-radius: 6px;
 }
 
 .leaderboard-body::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #a48dff, #8a75ff);
+    background: rgba(160, 140, 255, 0.55);
 }
 
 .panel__header {
