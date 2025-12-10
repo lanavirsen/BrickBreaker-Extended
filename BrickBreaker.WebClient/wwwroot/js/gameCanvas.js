@@ -104,7 +104,9 @@ function drawBalls(balls) {
 
 function drawPaddle(paddle, overlay) {
   ctx.save();
-  ctx.fillStyle = overlay.ballReady ? "#2ec4ff" : "#3b9dff";
+  const baseColor = "#2ec4ff"; // keep a consistent teal regardless of launch state
+  // Show a reddish flash while the extender power-up winds down
+  ctx.fillStyle = overlay.paddleBlinking ? "#ff5c7a" : baseColor;
   ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
   ctx.strokeStyle = "#081427";
   ctx.strokeRect(paddle.x, paddle.y, paddle.width, paddle.height);

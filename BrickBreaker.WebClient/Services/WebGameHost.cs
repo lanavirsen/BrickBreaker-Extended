@@ -161,7 +161,17 @@ public sealed class WebGameHost : IAsyncDisposable
             bricks = state.Bricks.Select(b => new { x = b.X, y = b.Y, width = b.Width, height = b.Height, color = ToColor(b.Color) }).ToArray(),
             powerUps = state.PowerUps.Select(p => new { x = p.X, y = p.Y, width = p.Width, height = p.Height, kind = p.Type.ToString() }).ToArray(),
             scorePopups = state.ScorePopups.Select(p => new { x = p.X, y = p.Y, text = p.Text, opacity = p.Opacity, isMultiplier = p.IsMultiplier }).ToArray(),
-            overlay = new { score = state.Score, highScore = state.HighScore, level = state.Level, borderHue = state.BorderHue, isPaused = state.IsPaused, isGameOver = state.IsGameOver, ballReady = state.BallReady }
+            overlay = new
+            {
+                score = state.Score,
+                highScore = state.HighScore,
+                level = state.Level,
+                borderHue = state.BorderHue,
+                isPaused = state.IsPaused,
+                isGameOver = state.IsGameOver,
+                ballReady = state.BallReady,
+                paddleBlinking = state.PaddleBlinking // tells JS renderer to flash the paddle as extender expires
+            }
         };
 
         await _canvasModule.InvokeVoidAsync("render", payload);
