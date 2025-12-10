@@ -340,6 +340,36 @@ code {
     flex-direction: column;
 }
 
+.panel--account {
+    padding: 1rem;
+    gap: 0.75rem;
+}
+
+.panel--account .panel__header {
+    margin-bottom: 0.5rem;
+}
+
+.panel--account .auth-grid {
+    gap: 0.75rem;
+}
+
+.panel--account .card-toggle {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.9rem;
+}
+
+.panel--account .auth-panel {
+    padding: 0 0.85rem;
+}
+
+.panel--account .auth-panel.show {
+    padding: 0.75rem 0.85rem 1rem;
+}
+
+.panel--account .auth-panel input {
+    padding: 0.35rem;
+}
+
 .panel__loading {
     position: absolute;
     inset: 0;
