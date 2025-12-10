@@ -21,6 +21,7 @@ public sealed class GameSession
     private bool _isGameOver;
     private double _elapsedSeconds;
     private float _borderHue;
+    private double _lastPaddleWidth; // Track changes so extender grows/shrinks symmetrically
 
     public event EventHandler<int>? GameFinished;
 
@@ -64,6 +65,7 @@ public sealed class GameSession
         _paddleX += dx;
         _paddleY += dy;
         _playArea = newArea;
+        ClampPaddleWithinBounds();
         RefreshSnapshot();
     }
 
@@ -87,6 +89,7 @@ public sealed class GameSession
         {
             _elapsedSeconds += deltaTime;
             _engine.Update(deltaTime, _playArea, _paddleX, _paddleY);
+            SyncPaddleWidth(); // recenters paddle when extender grows/shrinks it
         }
 
         RefreshSnapshot();
@@ -132,6 +135,7 @@ public sealed class GameSession
         _ballReady = true;
         _isPaused = false;
         _isGameOver = false;
+        _lastPaddleWidth = _engine.CurrentPaddleWidth;
     }
 
     private void UpdatePaddleMovement()
@@ -145,6 +149,8 @@ public sealed class GameSession
         {
             _paddleX += GameConstants.BasePaddleSpeed;
         }
+
+        ClampPaddleWithinBounds();
     }
 
     private void UpdateBorder(double deltaTime)
@@ -164,6 +170,40 @@ public sealed class GameSession
         ball.Y = _paddleY - 40;
         ball.VX = 0;
         ball.VY = 0;
+    }
+
+    private void SyncPaddleWidth()
+    {
+        var currentWidth = _engine.CurrentPaddleWidth;
+        if (Math.Abs(currentWidth - _lastPaddleWidth) < double.Epsilon)
+        {
+            return;
+        }
+
+        // Shift position by half the delta so width changes radiate from the center
+        _paddleX -= (currentWidth - _lastPaddleWidth) / 2.0;
+        _lastPaddleWidth = currentWidth;
+        ClampPaddleWithinBounds();
+    }
+
+    // Ensure paddle stays centered when width changes and never leaves the play area
+    private void ClampPaddleWithinBounds()
+    {
+        if (_playArea == Rectangle.Empty)
+        {
+            return;
+        }
+
+        if (_paddleX < _playArea.Left)
+        {
+            _paddleX = _playArea.Left;
+        }
+
+        var maxX = _playArea.Right - _engine.CurrentPaddleWidth;
+        if (_paddleX > maxX)
+        {
+            _paddleX = maxX;
+        }
     }
 
     private void RefreshSnapshot()
