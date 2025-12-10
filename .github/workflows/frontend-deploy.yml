@@ -1,0 +1,68 @@
+name: Frontend Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  detect_changes:
+    # Skip Netlify deploys unless frontend-relevant files changed
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'BrickBreaker.WebClient/**'
+              - 'BrickBreaker.sln'
+              - '.github/workflows/frontend-deploy.yml'
+
+  deploy:
+    needs: detect_changes
+    # Always allow manual runs, otherwise only deploy when frontend files changed
+    if: github.event_name == 'workflow_dispatch' || needs.detect_changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Publish WebClient
+        run: dotnet publish BrickBreaker.WebClient/BrickBreaker.WebClient.csproj --configuration Release -o published
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Deploy to Netlify
+        run: |
+          if [ -z "$NETLIFY_SITE_ID" ] || [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "NETLIFY_SITE_ID and NETLIFY_AUTH_TOKEN secrets must be provided."
+            exit 1
+          fi
+          netlify deploy \
+            --dir=published/wwwroot \
+            --prod \
+            --site "$NETLIFY_SITE_ID" \
+            --auth "$NETLIFY_AUTH_TOKEN"
