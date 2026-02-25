@@ -78,12 +78,11 @@ dotnet run --project BrickBreaker.WinFormsClient
 dotnet run --project BrickBreaker.ConsoleClient
 ```
 
-### Build and test
+### Build
 
 ```bash
 dotnet restore
 dotnet build BrickBreaker.sln
-dotnet test BrickBreaker.sln
 ```
 
 ## Tests
