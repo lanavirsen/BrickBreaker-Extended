@@ -28,18 +28,20 @@ BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arc
 ```
 BrickBreaker/
 ├── BrickBreaker.sln             Solution root (net9.0)
-├── BrickBreaker.Gameplay/       Shared GameSession + render models (used by WinForms + Blazor)
-├── BrickBreaker.ConsoleClient/  Spectre.Console client with terminal renderer + Supabase auth
-├── BrickBreaker.WinFormsClient/ WinForms client (launcher + Form1 gameplay)
-│   ├── Hosting/                 IGame implementation for desktop play
-│   └── WinUI/                   WinForms forms, drawing, input, assets
-├── BrickBreaker.WebClient/      Blazor WebAssembly canvas client for browsers
+├── BrickBreaker.Game/           Pure gameplay engine - physics, ball/paddle/brick logic, entities
+├── BrickBreaker.Gameplay/       Shared GameSession + render models (used by all clients)
 ├── BrickBreaker.Core/           Domain models + services (Auth, Leaderboard, abstractions)
 ├── BrickBreaker.Storage/        Supabase/PostgreSQL stores + configuration helpers
 │   ├── StorageConfiguration.cs  Resolves Supabase connection strings
 │   ├── UserStore.cs             Npgsql-backed implementation
 │   ├── LeaderboardStore.cs      Npgsql-backed implementation
 │   └── Disabled*.cs             Null-object stores for offline play
+├── BrickBreaker.Api/            ASP.NET Minimal API - auth, leaderboard, CAPTCHA endpoints
+├── BrickBreaker.ConsoleClient/  Spectre.Console client with terminal renderer + Supabase auth
+├── BrickBreaker.WinFormsClient/ WinForms client (launcher + Form1 gameplay)
+│   ├── Hosting/                 IGame implementation for desktop play
+│   └── WinUI/                   WinForms forms, drawing, input, assets
+├── BrickBreaker.WebClient/      Blazor WebAssembly canvas client for browsers
 ├── BrickBreaker.Tests/          xUnit tests for Auth + Leaderboard logic
 └── README.md
 ```
