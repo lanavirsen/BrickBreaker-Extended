@@ -50,18 +50,38 @@ BrickBreaker/
 
 Prerequisites: .NET 9 SDK and (optionally) access to the Supabase/PostgreSQL instance referenced below.
 
-```bash
-# Restore all projects
-dotnet restore
+### For full functionality (auth + leaderboard)
 
-# Launch the Blazor WebAssembly client (canvas renderer)
+1. **Configure the API:**
+   ```bash
+   # Copy the template and configure JWT secret + Supabase connection string
+   cp BrickBreaker.Api/appsettings.Template.json BrickBreaker.Api/appsettings.json
+   ```
+
+2. **Run the API and WebClient:**
+   ```bash
+   # Terminal 1: Run the API backend
+   dotnet run --project BrickBreaker.Api
+
+   # Terminal 2: Run the Blazor WebAssembly client
+   dotnet run --project BrickBreaker.WebClient
+   ```
+
+### For offline/guest play
+
+```bash
+# Just run the WebClient (auth/leaderboard features disabled)
 dotnet run --project BrickBreaker.WebClient
 
-# Optional desktop shells
+# Or try the desktop clients
 dotnet run --project BrickBreaker.WinFormsClient
 dotnet run --project BrickBreaker.ConsoleClient
+```
 
-# Optional: build everything or run the unit tests
+### Build and test
+
+```bash
+dotnet restore
 dotnet build BrickBreaker.sln
 dotnet test BrickBreaker.sln
 ```
