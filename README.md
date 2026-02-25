@@ -1,4 +1,4 @@
-> Continuation of the original group project. Frozen version: [BrickBreaker-Group](https://github.com/lanavirsen/BrickBreaker-Extended)
+> Continuation of the original group project. Frozen version: [BrickBreaker-Group](https://github.com/lanavirsen/BrickBreaker-Group)
 
 # BrickBreaker – Extended Edition
 
