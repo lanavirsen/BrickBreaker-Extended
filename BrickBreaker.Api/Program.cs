@@ -165,30 +165,32 @@ app.MapPost("/register", async (RegisterRequest request, IAuthService auth, ITur
         return captchaFailure;
     }
 
-    var username = (request.Username ?? string.Empty).Trim();
-    if (string.IsNullOrWhiteSpace(username))
+    // HTTP layer: basic input validation only
+    if (string.IsNullOrWhiteSpace(request.Username))
     {
         return ValidationError("username_required", "Choose a username to continue.");
     }
 
-    var password = request.Password ?? string.Empty;
-    if (string.IsNullOrWhiteSpace(password))
+    if (string.IsNullOrWhiteSpace(request.Password))
     {
         return ValidationError("password_required", "Enter a password to create an account.");
     }
 
-    if (password.Trim().Length < 5)
+    // Service layer handles all business rules (password length, username exists, profanity)
+    var result = await auth.RegisterAsync(request.Username, request.Password);
+    if (!result.Success)
     {
-        return ValidationError("password_too_short", "Passwords must be at least 5 characters long.");
+        return result.ErrorCode switch
+        {
+            "username_required" => ValidationError("username_required", "Choose a username to continue."),
+            "username_profane" => ValidationError("username_profane", "That username is not allowed. Try another one."),
+            "username_taken" => ValidationError("username_taken", "That username is already taken. Try another one."),
+            "password_too_short" => ValidationError("password_too_short", "Passwords must be at least 5 characters long."),
+            _ => ValidationError("registration_failed", "Registration failed. Please try again.")
+        };
     }
 
-    if (await auth.UsernameExistsAsync(username))
-    {
-        return ValidationError("username_taken", "That username is already taken. Try another one.");
-    }
-
-    var success = await auth.RegisterAsync(username, password);
-    return success ? Results.Ok() : ValidationError("registration_failed", "Registration was rejected. Try another username.");
+    return Results.Ok();
 }).RequireRateLimiting(AuthLimiterPolicy);
 
 app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens, ITurnstileVerifier turnstile, HttpContext httpContext) =>

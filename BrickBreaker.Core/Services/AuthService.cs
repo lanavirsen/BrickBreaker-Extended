@@ -23,28 +23,33 @@ public sealed class AuthService : IAuthService
         return await _users.ExistsAsync(username).ConfigureAwait(false);
     }
 
-    public async Task<bool> RegisterAsync(string username, string password)
+    public async Task<RegisterResult> RegisterAsync(string username, string password)
     {
         username = (username ?? string.Empty).Trim();
-        if (username.Length == 0 || _profanity.ContainsProfanity(username))
+        if (username.Length == 0)
         {
-            return false;
+            return RegisterResult.Fail("username_required");
+        }
+
+        if (_profanity.ContainsProfanity(username))
+        {
+            return RegisterResult.Fail("username_profane");
         }
 
         if (await _users.ExistsAsync(username).ConfigureAwait(false))
         {
-            return false;
+            return RegisterResult.Fail("username_taken");
         }
 
         password = (password ?? string.Empty).Trim();
         if (password.Length < 5)
         {
-            return false;
+            return RegisterResult.Fail("password_too_short");
         }
 
         var hashedPassword = PasswordHasher.HashPassword(password);
         await _users.AddAsync(new User(username, hashedPassword)).ConfigureAwait(false);
-        return true;
+        return RegisterResult.Ok();
     }
 
     public async Task<bool> LoginAsync(string username, string password)
