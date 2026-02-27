@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using BrickBreaker.Game.Entities;
 using BrickBreaker.Game.Utilities;
@@ -326,16 +327,16 @@ namespace BrickBreaker.Game
 
         public void StartLevel(int level, Rectangle playArea)
         {
-        // Track the actual level reached for the UI while clamping gameplay difficulty to the predefined 1-5 layouts.
-        CurrentLevel = level;
-        var layoutLevel = Math.Clamp(level, 1, 5);
+            // Track the actual level reached for the UI while clamping gameplay difficulty to the predefined 1-5 layouts.
+            CurrentLevel = level;
+            var layoutLevel = Math.Clamp(level, 1, 5);
 
-        // Reset score if restarting the whole game
-        if (layoutLevel == 1)
-        {
-            Score = 0;
-            ScoreChanged?.Invoke(this, Score);
-        }
+            // Reset score if restarting the whole game
+            if (layoutLevel == 1)
+            {
+                Score = 0;
+                ScoreChanged?.Invoke(this, Score);
+            }
 
             // Clear all entities from previous level
             Bricks.Clear();
@@ -343,14 +344,14 @@ namespace BrickBreaker.Game
             PowerUps.Clear();
             ScorePopups.Clear();
 
-    // Reset paddle state
-    CurrentPaddleWidth = originalPaddleWidth;
-    paddleExtenderTicksLeft = 0;
-    IsPaddleBlinking = false; // Ensure the paddle color resets between levels.
+            // Reset paddle state
+            CurrentPaddleWidth = originalPaddleWidth;
+            paddleExtenderTicksLeft = 0;
+            IsPaddleBlinking = false; // Ensure the paddle color resets between levels.
 
-    // Determine brick count based on level
+            // Determine brick count based on level
             // "switch expression" (C# 8.0+)
-        int bricksToSpawn = layoutLevel switch { 1 => 15, 2 => 25, 3 => 35, 4 => 45, 5 => 55, _ => 15 };
+            int bricksToSpawn = layoutLevel switch { 1 => 15, 2 => 25, 3 => 35, 4 => 45, 5 => 55, _ => 15 };
 
             SpawnBricks(bricksToSpawn, playArea, layoutLevel);
             ResetBall(playArea);
@@ -359,14 +360,14 @@ namespace BrickBreaker.Game
             LevelLoaded?.Invoke(this, EventArgs.Empty);
         }
 
-    private void SpawnBricks(int count, Rectangle playArea, int layoutLevel)
-    {
-        // 1. Create a list of all possible grid coordinates (slots)
-        var slots = new List<Point>();
-        var minRow = layoutLevel <= 3 ? 1 : 0;
-        for (int r = minRow; r < GameConstants.InitialBrickRows; r++)
-            for (int c = 0; c < GameConstants.InitialBrickCols; c++)
-                slots.Add(new Point(c, r)); // Store grid coordinates (0,0), (0,1), etc.
+        private void SpawnBricks(int count, Rectangle playArea, int layoutLevel)
+        {
+            // 1. Create a list of all possible grid coordinates (slots)
+            var slots = new List<Point>();
+            var minRow = layoutLevel <= 3 ? 1 : 0;
+            for (int r = minRow; r < GameConstants.InitialBrickRows; r++)
+                for (int c = 0; c < GameConstants.InitialBrickCols; c++)
+                    slots.Add(new Point(c, r)); // Store grid coordinates (0,0), (0,1), etc.
 
             // Calculate offset to start drawing
             int startX = playArea.Left + GameConstants.PlayAreaMargin;
@@ -380,17 +381,18 @@ namespace BrickBreaker.Game
                 Point slot = slots[idx];
 
                 // Add the brick
-                Bricks.Add(new Brick
+                var brick = new Brick
                 {
                     // Calculate pixel position based on grid slot * spacing
                     X = startX + slot.X * GameConstants.BrickXSpacing,
                     Y = startY + slot.Y * GameConstants.BrickYSpacing,
                     Width = GameConstants.BrickWidth,
                     Height = GameConstants.BrickHeight,
-                    IsVisible = true,
-                    // Random RGB Color
-                    BrickColor = Color.FromArgb(rand.Next(50, 255), rand.Next(50, 255), rand.Next(50, 255))
-                });
+                    IsVisible = true
+                };
+
+                brick.BrickColor = ResolveBrickColor(slot.Y);
+                Bricks.Add(brick);
 
                 // Remove the used slot so we don't place two bricks on top of each other
                 slots.RemoveAt(idx);
@@ -416,6 +418,57 @@ namespace BrickBreaker.Game
                 vx: 0, vy: 0, // IMPORTANT: Spawns with 0 velocity (won't move yet)
                 radius: GameConstants.BallRadius
             ));
+        }
+
+        private Color ResolveBrickColor(int row)
+        {
+            var baseHue = (row % GameConstants.InitialBrickRows) * (360 / GameConstants.InitialBrickRows);
+            var hue = (baseHue + rand.Next(-10, 11)) % 360;
+            if (hue < 0)
+            {
+                hue += 360;
+            }
+
+            return ColorFromHsv(hue, 0.65 + rand.NextDouble() * 0.15, 0.7 + rand.NextDouble() * 0.2);
+        }
+
+        private static Color ColorFromHsv(double hue, double saturation, double value)
+        {
+            var c = value * saturation;
+            var x = c * (1 - Math.Abs((hue / 60 % 2) - 1));
+            var m = value - c;
+
+            double rPrime = 0, gPrime = 0, bPrime = 0;
+
+            if (hue < 60)
+            {
+                rPrime = c; gPrime = x; bPrime = 0;
+            }
+            else if (hue < 120)
+            {
+                rPrime = x; gPrime = c; bPrime = 0;
+            }
+            else if (hue < 180)
+            {
+                rPrime = 0; gPrime = c; bPrime = x;
+            }
+            else if (hue < 240)
+            {
+                rPrime = 0; gPrime = x; bPrime = c;
+            }
+            else if (hue < 300)
+            {
+                rPrime = x; gPrime = 0; bPrime = c;
+            }
+            else
+            {
+                rPrime = c; gPrime = 0; bPrime = x;
+            }
+
+            var r = (int)Math.Round((rPrime + m) * 255);
+            var g = (int)Math.Round((gPrime + m) * 255);
+            var b = (int)Math.Round((bPrime + m) * 255);
+            return Color.FromArgb(r, g, b);
         }
     }
 }
