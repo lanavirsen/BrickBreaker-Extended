@@ -4,9 +4,7 @@ using DotnetBadWordDetector;
 
 namespace BrickBreaker.Core.Services;
 
-/// <summary>
-/// Wraps the DotnetBadWordDetector to provide profanity evaluation.
-/// </summary>
+// Wraps the DotnetBadWordDetector to provide profanity evaluation.
 public sealed class DotnetProfanityFilter : IProfanityFilter
 {
     private readonly Lazy<ProfanityDetector> _detector = new(() => new ProfanityDetector());
