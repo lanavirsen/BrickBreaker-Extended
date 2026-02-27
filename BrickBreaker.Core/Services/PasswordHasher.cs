@@ -5,6 +5,7 @@ namespace BrickBreaker.Core.Services;
 // Provides PBKDF2-based hashing helpers used by the storage layer to persist credentials.
 public static class PasswordHasher
 {
+    // PBKDF2 parameters tuned for a balance between security and responsiveness.
     private const int SaltSize = 16;
     private const int KeySize = 32;
     public const int DefaultIterations = 100_000;
@@ -19,6 +20,8 @@ public static class PasswordHasher
         }
 
         var salt = RandomNumberGenerator.GetBytes(SaltSize);
+
+        // Derive the key using PBKDF2; DefaultIterations can be bumped as hardware improves.
         var key = Pbkdf2(password, salt, DefaultIterations, KeySize);
         var saltText = Convert.ToBase64String(salt);
         var keyText = Convert.ToBase64String(key);
@@ -46,6 +49,7 @@ public static class PasswordHasher
         }
     }
 
+    // Parses a stored hash into algorithm/iteration/salt/key components.
     public static bool TryParse(string hashedPassword, out HashComponents components)
     {
         components = default;
@@ -69,6 +73,7 @@ public static class PasswordHasher
         return true;
     }
 
+    // Serializes the PBKDF2 components into the $-delimited format stored in the database.
     public static string Compose(HashComponents components)
     {
         return $"{components.Algorithm}${components.Iterations}${components.Salt}${components.Hash}";
@@ -82,6 +87,7 @@ public static class PasswordHasher
                                Iterations > 0;
     }
 
+    // Central PBKDF2 helper to ensure all hash/verify operations share identical parameters.
     private static byte[] Pbkdf2(string password, byte[] salt, int iterations, int outputBytes)
     {
         using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
