@@ -29,7 +29,8 @@ public sealed class AuthTests
 
         var result = await sut.RegisterAsync("Bob", "newpw");
 
-        Assert.False(result);
+        Assert.False(result.Success);
+        Assert.Equal("username_taken", result.ErrorCode);
         Assert.Empty(store.AddedUsers);
     }
 
@@ -41,7 +42,8 @@ public sealed class AuthTests
 
         var result = await sut.RegisterAsync("   ", "pw");
 
-        Assert.False(result);
+        Assert.False(result.Success);
+        Assert.Equal("username_required", result.ErrorCode);
     }
 
     [Fact]
@@ -52,7 +54,8 @@ public sealed class AuthTests
 
         var result = await sut.RegisterAsync("Alice", "");
 
-        Assert.False(result);
+        Assert.False(result.Success);
+        Assert.Equal("password_too_short", result.ErrorCode);
     }
 
     [Fact]
@@ -62,7 +65,8 @@ public sealed class AuthTests
 
         var result = await sut.RegisterAsync("Alice", "1234");
 
-        Assert.False(result);
+        Assert.False(result.Success);
+        Assert.Equal("password_too_short", result.ErrorCode);
     }
 
     [Fact]
@@ -74,7 +78,8 @@ public sealed class AuthTests
 
         var result = await sut.RegisterAsync("  Alice  ", "  strongpw  ");
 
-        Assert.True(result);
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorCode);
         var savedUser = Assert.Single(store.AddedUsers);
         Assert.Equal("Alice", savedUser.Username);
         Assert.True(PasswordHasher.Verify(savedUser.Password, "strongpw"));
@@ -139,7 +144,8 @@ public sealed class AuthTests
 
         var result = await sut.RegisterAsync("OffensiveName", "pw");
 
-        Assert.False(result);
+        Assert.False(result.Success);
+        Assert.Equal("username_profane", result.ErrorCode);
         Assert.Empty(store.AddedUsers);
         Assert.Equal("OffensiveName", filter.LastChecked);
     }
