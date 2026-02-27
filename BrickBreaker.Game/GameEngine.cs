@@ -336,11 +336,12 @@ namespace BrickBreaker.Game
             PowerUps.Clear();
             ScorePopups.Clear();
 
-            // Reset paddle state
-            CurrentPaddleWidth = originalPaddleWidth;
-            paddleExtenderTicksLeft = 0;
+    // Reset paddle state
+    CurrentPaddleWidth = originalPaddleWidth;
+    paddleExtenderTicksLeft = 0;
+    IsPaddleBlinking = false; // Ensure the paddle color resets between levels.
 
-            // Determine brick count based on level
+    // Determine brick count based on level
             // "switch expression" (C# 8.0+)
             int bricksToSpawn = CurrentLevel switch { 1 => 15, 2 => 25, 3 => 35, 4 => 45, 5 => 55, _ => 15 };
 
