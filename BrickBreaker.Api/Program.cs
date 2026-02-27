@@ -37,8 +37,23 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 }
-builder.Services.Configure<TurnstileOptions>(builder.Configuration.GetSection("Turnstile"));
-builder.Services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>();
+var turnstileSection = builder.Configuration.GetSection("Turnstile");
+builder.Services.Configure<TurnstileOptions>(turnstileSection);
+var turnstileSettings = turnstileSection.Get<TurnstileOptions>() ?? new TurnstileOptions();
+if (turnstileSettings.IsConfigured)
+{
+    // Production-style validation that calls Cloudflare.
+    builder.Services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>();
+}
+else if (builder.Environment.IsDevelopment())
+{
+    // Local development prefers velocity over security, so opt into a no-op verifier instead.
+    builder.Services.AddSingleton<ITurnstileVerifier, DisabledTurnstileVerifier>();
+}
+else
+{
+    throw new InvalidOperationException("Cloudflare Turnstile must be configured in non-development environments.");
+}
 var allowedOrigins = builder.Configuration
                             .GetSection("Cors:AllowedOrigins")
                             .Get<string[]>()?
@@ -55,13 +70,11 @@ builder.Services.AddCors(options =>
             policy.WithOrigins(allowedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod();
+            return;
         }
-        else
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        }
+
+        throw new InvalidOperationException(
+            "CORS allowed origins are not configured. Set 'Cors:AllowedOrigins' before launching the API.");
     });
 });
 

@@ -25,7 +25,7 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
         var settings = _options.CurrentValue;
         if (!settings.IsConfigured)
         {
-            return true;
+            throw new InvalidOperationException("Cloudflare Turnstile is not configured. Enable it or disable CAPTCHA enforcement explicitly.");
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -52,7 +52,7 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
         }
 
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
-        _logger.LogInformation("Turnstile verification payload: {Payload}", json);
+        _logger.LogDebug("Turnstile verification payload: {Payload}", json);
         var result = JsonSerializer.Deserialize<TurnstileVerificationResponse>(json, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
