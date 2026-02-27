@@ -30,7 +30,14 @@ namespace BrickBreaker.Game
 
         // Calculates ball speed dynamically. 
         // Base speed is 9.0, adds 1.5 speed for every level passed.
-        public double CurrentBallSpeed => 9.0 + (CurrentLevel - 1) * 1.5;
+        public double CurrentBallSpeed
+        {
+            get
+            {
+                var clampedLevel = Math.Clamp(CurrentLevel, 1, 5);
+                return 9.0 + (clampedLevel - 1) * 1.5;
+            }
+        }
 
         // ==========================================
         // --- Paddle State & Effects ---
@@ -320,15 +327,16 @@ namespace BrickBreaker.Game
 
         public void StartLevel(int level, Rectangle playArea)
         {
-            // Loop levels 1-5
-            CurrentLevel = level > 5 ? 1 : level;
+        // Track the actual level reached for the UI while clamping gameplay difficulty to the predefined 1-5 layouts.
+        CurrentLevel = level;
+        var layoutLevel = Math.Clamp(level, 1, 5);
 
-            // Reset score if restarting the whole game
-            if (CurrentLevel == 1)
-            {
-                Score = 0;
-                ScoreChanged?.Invoke(this, Score);
-            }
+        // Reset score if restarting the whole game
+        if (layoutLevel == 1)
+        {
+            Score = 0;
+            ScoreChanged?.Invoke(this, Score);
+        }
 
             // Clear all entities from previous level
             Bricks.Clear();
@@ -343,20 +351,20 @@ namespace BrickBreaker.Game
 
     // Determine brick count based on level
             // "switch expression" (C# 8.0+)
-            int bricksToSpawn = CurrentLevel switch { 1 => 15, 2 => 25, 3 => 35, 4 => 45, 5 => 55, _ => 15 };
+        int bricksToSpawn = layoutLevel switch { 1 => 15, 2 => 25, 3 => 35, 4 => 45, 5 => 55, _ => 15 };
 
-            SpawnBricks(bricksToSpawn, playArea);
+            SpawnBricks(bricksToSpawn, playArea, layoutLevel);
             ResetBall(playArea);
 
             // Notify Form that setup is done
             LevelLoaded?.Invoke(this, EventArgs.Empty);
         }
 
-    private void SpawnBricks(int count, Rectangle playArea)
+    private void SpawnBricks(int count, Rectangle playArea, int layoutLevel)
     {
         // 1. Create a list of all possible grid coordinates (slots)
         var slots = new List<Point>();
-        var minRow = CurrentLevel <= 3 ? 1 : 0;
+        var minRow = layoutLevel <= 3 ? 1 : 0;
         for (int r = minRow; r < GameConstants.InitialBrickRows; r++)
             for (int c = 0; c < GameConstants.InitialBrickCols; c++)
                 slots.Add(new Point(c, r)); // Store grid coordinates (0,0), (0,1), etc.
