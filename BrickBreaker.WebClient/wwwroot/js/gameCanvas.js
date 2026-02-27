@@ -90,14 +90,11 @@ function drawPowerUps(powerUps) {
 
 function drawBalls(balls) {
   ctx.save();
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.fillStyle = "#ff4d6d";
+  ctx.fillStyle = "#6fe0ff";
   balls.forEach(ball => {
     ctx.beginPath();
     ctx.arc(ball.x + ball.radius, ball.y + ball.radius, ball.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
   });
   ctx.restore();
 }

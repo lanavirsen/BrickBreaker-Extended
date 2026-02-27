@@ -12,8 +12,9 @@ namespace BrickBreaker.Game.Utilities
         public const int InitialBrickCols = 10;
         public const int BrickWidth = 60;
         public const int BrickHeight = 25;
-        public const int BrickXSpacing = 80;
-        public const int BrickYSpacing = 30;
+        // Keep only a thin gap between bricks so the wall looks tighter on both web and desktop clients.
+        public const int BrickXSpacing = BrickWidth + 2;
+        public const int BrickYSpacing = BrickHeight + 2;
         public const int PaddleAreaHeight = 381;
 
         // Physics
