@@ -52,7 +52,7 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
         }
 
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
-        _logger.LogInformation("Turnstile verification payload: {Payload}", json);
+        _logger.LogDebug("Turnstile verification payload: {Payload}", json);
         var result = JsonSerializer.Deserialize<TurnstileVerificationResponse>(json, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
