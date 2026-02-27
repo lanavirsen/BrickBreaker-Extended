@@ -28,14 +28,13 @@ namespace BrickBreaker.Game
         public int CurrentLevel { get; private set; } = 1;
         public int HighScore { get; private set; }
 
-        // Calculates ball speed dynamically. 
-        // Base speed is 9.0, adds 1.5 speed for every level passed.
+        // Calculates ball speed dynamically using a sub-linear curve so it keeps growing without spikes.
         public double CurrentBallSpeed
         {
             get
             {
-                var clampedLevel = Math.Clamp(CurrentLevel, 1, 5);
-                return 9.0 + (clampedLevel - 1) * 1.5;
+                var normalizedLevel = Math.Max(1, CurrentLevel);
+                return 7.5 + Math.Sqrt(normalizedLevel - 1);
             }
         }
 
