@@ -25,7 +25,7 @@ public sealed class TurnstileVerifier : ITurnstileVerifier
         var settings = _options.CurrentValue;
         if (!settings.IsConfigured)
         {
-            return true;
+            throw new InvalidOperationException("Cloudflare Turnstile is not configured. Enable it or disable CAPTCHA enforcement explicitly.");
         }
 
         if (string.IsNullOrWhiteSpace(token))
