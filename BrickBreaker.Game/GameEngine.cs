@@ -352,13 +352,14 @@ namespace BrickBreaker.Game
             LevelLoaded?.Invoke(this, EventArgs.Empty);
         }
 
-        private void SpawnBricks(int count, Rectangle playArea)
-        {
-            // 1. Create a list of all possible grid coordinates (slots)
-            var slots = new List<Point>();
-            for (int r = 0; r < GameConstants.InitialBrickRows; r++)
-                for (int c = 0; c < GameConstants.InitialBrickCols; c++)
-                    slots.Add(new Point(c, r)); // Store grid coordinates (0,0), (0,1), etc.
+    private void SpawnBricks(int count, Rectangle playArea)
+    {
+        // 1. Create a list of all possible grid coordinates (slots)
+        var slots = new List<Point>();
+        var minRow = CurrentLevel <= 3 ? 1 : 0;
+        for (int r = minRow; r < GameConstants.InitialBrickRows; r++)
+            for (int c = 0; c < GameConstants.InitialBrickCols; c++)
+                slots.Add(new Point(c, r)); // Store grid coordinates (0,0), (0,1), etc.
 
             // Calculate offset to start drawing
             int startX = playArea.Left + GameConstants.PlayAreaMargin;
