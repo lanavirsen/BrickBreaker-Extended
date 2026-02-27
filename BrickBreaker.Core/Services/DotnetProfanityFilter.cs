@@ -1,4 +1,3 @@
-using System;
 using BrickBreaker.Core.Abstractions;
 using DotnetBadWordDetector;
 

@@ -3,8 +3,6 @@ using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Core.Services;
 
-using System.Threading.Tasks;
-
 // Application-layer service that encapsulates user registration and login workflows.
 public sealed class AuthService : IAuthService
 {
