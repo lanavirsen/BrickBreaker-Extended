@@ -55,13 +55,11 @@ builder.Services.AddCors(options =>
             policy.WithOrigins(allowedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod();
+            return;
         }
-        else
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        }
+
+        throw new InvalidOperationException(
+            "CORS allowed origins are not configured. Set 'Cors:AllowedOrigins' before launching the API.");
     });
 });
 
