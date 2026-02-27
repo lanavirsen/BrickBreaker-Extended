@@ -195,7 +195,7 @@ app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenG
     var success = await auth.LoginAsync(normalizedUsername, password);
     if (!success)
     {
-        return Results.Unauthorized();
+        return ValidationError("invalid_credentials", "Invalid username or password.");
     }
 
     var token = tokens.GenerateToken(normalizedUsername);
