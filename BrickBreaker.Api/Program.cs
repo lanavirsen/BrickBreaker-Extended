@@ -165,18 +165,7 @@ app.MapPost("/register", async (RegisterRequest request, IAuthService auth, ITur
         return captchaFailure;
     }
 
-    // HTTP layer: basic input validation only
-    if (string.IsNullOrWhiteSpace(request.Username))
-    {
-        return ValidationError("username_required", "Choose a username to continue.");
-    }
-
-    if (string.IsNullOrWhiteSpace(request.Password))
-    {
-        return ValidationError("password_required", "Enter a password to create an account.");
-    }
-
-    // Service layer handles all business rules (password length, username exists, profanity)
+    // Service layer handles all validation and business rules (required fields, profanity, password strength)
     var result = await auth.RegisterAsync(request.Username, request.Password);
     if (!result.Success)
     {
