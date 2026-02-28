@@ -10,24 +10,30 @@ public sealed class GameApiClient : IGameApiClient
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly string? _turnstileToken;
+    private string _baseAddress;
 
-    public GameApiClient(string? baseAddress = null, HttpClient? httpClient = null)
+    public GameApiClient(string? baseAddress = null, HttpClient? httpClient = null, string? turnstileBypassToken = null)
     {
         _httpClient = httpClient ?? new HttpClient();
         _ownsHttpClient = httpClient is null;
+        _turnstileToken = turnstileBypassToken;
 
         if (!string.IsNullOrWhiteSpace(baseAddress))
         {
-            SetBaseAddress(baseAddress);
+            _baseAddress = ApiConfiguration.NormalizeBaseAddress(baseAddress);
+        }
+        else
+        {
+            _baseAddress = _httpClient.BaseAddress?.ToString() ?? string.Empty;
         }
     }
 
-    public string BaseAddress => _httpClient.BaseAddress?.ToString() ?? string.Empty;
+    public string BaseAddress => _baseAddress;
 
     public void SetBaseAddress(string baseAddress)
     {
-        var normalized = ApiConfiguration.NormalizeBaseAddress(baseAddress);
-        _httpClient.BaseAddress = new Uri(normalized, UriKind.Absolute);
+        _baseAddress = ApiConfiguration.NormalizeBaseAddress(baseAddress);
         ClearAuthentication();
     }
 
@@ -44,8 +50,8 @@ public sealed class GameApiClient : IGameApiClient
         try
         {
             var response = await _httpClient.PostAsJsonAsync(
-                "login",
-                new CredentialRequest(username, password),
+                _baseAddress + "login",
+                new CredentialRequest(username, password, _turnstileToken),
                 _jsonOptions);
 
             if (!response.IsSuccessStatusCode)
@@ -73,7 +79,7 @@ public sealed class GameApiClient : IGameApiClient
         try
         {
             var response = await _httpClient.PostAsJsonAsync(
-                "leaderboard/submit",
+                _baseAddress + "leaderboard/submit",
                 new SubmitScoreRequest(username, score),
                 _jsonOptions);
 
@@ -94,7 +100,7 @@ public sealed class GameApiClient : IGameApiClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"leaderboard/top?count={count}");
+            var response = await _httpClient.GetAsync($"{_baseAddress}leaderboard/top?count={count}");
             if (!response.IsSuccessStatusCode)
             {
                 return ApiResult<IReadOnlyList<ScoreEntry>>.Fail(await ExtractErrorAsync(response));
@@ -114,7 +120,7 @@ public sealed class GameApiClient : IGameApiClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"leaderboard/best/{Uri.EscapeDataString(username)}");
+            var response = await _httpClient.GetAsync($"{_baseAddress}leaderboard/best/{Uri.EscapeDataString(username)}");
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 return ApiResult<ScoreEntry?>.Ok(null);
@@ -139,8 +145,8 @@ public sealed class GameApiClient : IGameApiClient
         try
         {
             var response = await _httpClient.PostAsJsonAsync(
-                path,
-                new CredentialRequest(username, password),
+                _baseAddress + path,
+                new CredentialRequest(username, password, _turnstileToken),
                 _jsonOptions);
 
             if (response.IsSuccessStatusCode)
@@ -180,7 +186,7 @@ public sealed class GameApiClient : IGameApiClient
         }
     }
 
-    private sealed record CredentialRequest(string Username, string Password);
+    private sealed record CredentialRequest(string Username, string Password, string? TurnstileToken);
     private sealed record SubmitScoreRequest(string Username, int Score);
     private sealed record LoginResponse(string Username, string Token);
 }

@@ -12,6 +12,7 @@ public static class ApiConfiguration
 {
     public const string DefaultBaseAddress = "https://brickbreaker-api.delightfulsky-8a169c96.swedencentral.azurecontainerapps.io/";
     public const string BaseAddressEnvironmentVariable = "BRICKBREAKER_API_URL";
+    public const string BypassTokenEnvironmentVariable = "BRICKBREAKER_BYPASS_TOKEN";
     public const string SettingsFileEnvironmentVariable = "BRICKBREAKER_CLIENT_CONFIG";
     public const string DefaultSettingsFileName = "clientsettings.json";
 
@@ -19,6 +20,22 @@ public static class ApiConfiguration
     {
         var candidate = ChooseCandidate(preferred, settingsPath);
         return NormalizeBaseAddress(candidate ?? DefaultBaseAddress);
+    }
+
+    /// <summary>
+    /// Resolves the Turnstile bypass token for desktop clients that cannot show a CAPTCHA widget.
+    /// Resolution order: env var BRICKBREAKER_BYPASS_TOKEN → clientsettings.json TurnstileBypassToken → null.
+    /// Returns null when no token is configured, which means no bypass is attempted.
+    /// </summary>
+    public static string? ResolveBypassToken(string? settingsPath = null)
+    {
+        var envValue = TryGetEnvironmentVariable(BypassTokenEnvironmentVariable);
+        if (!string.IsNullOrWhiteSpace(envValue))
+        {
+            return envValue;
+        }
+
+        return LoadStringFromSettings("TurnstileBypassToken", settingsPath);
     }
 
     private static string? ChooseCandidate(string? preferred, string? settingsPath)
@@ -55,6 +72,9 @@ public static class ApiConfiguration
     }
 
     private static string? LoadFromSettings(string? overridePath)
+        => LoadStringFromSettings("ApiBaseUrl", overridePath);
+
+    private static string? LoadStringFromSettings(string propertyName, string? overridePath)
     {
         if (OperatingSystem.IsBrowser())
         {
@@ -73,9 +93,9 @@ public static class ApiConfiguration
                 using var stream = File.OpenRead(path);
                 using var document = JsonDocument.Parse(stream);
 
-                if (document.RootElement.TryGetProperty("ApiBaseUrl", out var urlProperty))
+                if (document.RootElement.TryGetProperty(propertyName, out var property))
                 {
-                    var value = urlProperty.GetString();
+                    var value = property.GetString();
                     if (!string.IsNullOrWhiteSpace(value))
                     {
                         return value;

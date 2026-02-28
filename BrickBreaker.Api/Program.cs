@@ -40,6 +40,10 @@ if (builder.Environment.IsDevelopment())
 var turnstileSection = builder.Configuration.GetSection("Turnstile");
 builder.Services.Configure<TurnstileOptions>(turnstileSection);
 var turnstileSettings = turnstileSection.Get<TurnstileOptions>() ?? new TurnstileOptions();
+// Desktop clients (WinForms, Console) cannot show a CAPTCHA widget. They send a
+// configured bypass token instead. The token is a server-side secret set via
+// Turnstile:BypassToken in appsettings / environment variable Turnstile__BypassToken.
+var turnstileBypassToken = turnstileSettings.BypassToken;
 if (turnstileSettings.IsConfigured)
 {
     // Production-style validation that calls Cloudflare.
@@ -167,52 +171,34 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.MapPost("/register", async (RegisterRequest request, IAuthService auth, ITurnstileVerifier turnstile, HttpContext httpContext) =>
 {
-    var captchaFailure = await EnforceTurnstileAsync(request.TurnstileToken, turnstile, httpContext);
-    if (captchaFailure is not null)
+    if (!IsTurnstileBypassed(request.TurnstileToken, turnstileBypassToken))
     {
-        return captchaFailure;
-    }
-
-    // Service layer handles all validation and business rules (required fields, profanity, password strength)
-    var result = await auth.RegisterAsync(request.Username, request.Password);
-    if (!result.Success)
-    {
-        return result.ErrorCode switch
+        var captchaFailure = await EnforceTurnstileAsync(request.TurnstileToken, turnstile, httpContext);
+        if (captchaFailure is not null)
         {
-            "username_required" => ValidationError("username_required", "Choose a username to continue."),
-            "username_profane" => ValidationError("username_profane", "That username is not allowed. Try another one."),
-            "username_taken" => ValidationError("username_taken", "That username is already taken. Try another one."),
-            "password_too_short" => ValidationError("password_too_short", "Passwords must be at least 5 characters long."),
-            _ => ValidationError("registration_failed", "Registration failed. Please try again.")
-        };
+            return captchaFailure;
+        }
     }
 
-    return Results.Ok();
+    return await HandleRegistrationAsync(request, auth);
 }).RequireRateLimiting(AuthLimiterPolicy);
 
 app.MapPost("/login", async (LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens, ITurnstileVerifier turnstile, HttpContext httpContext) =>
 {
-    var captchaFailure = await EnforceTurnstileAsync(request.TurnstileToken, turnstile, httpContext);
-    if (captchaFailure is not null)
+    if (!IsTurnstileBypassed(request.TurnstileToken, turnstileBypassToken))
     {
-        return captchaFailure;
+        var captchaFailure = await EnforceTurnstileAsync(request.TurnstileToken, turnstile, httpContext);
+        if (captchaFailure is not null)
+        {
+            return captchaFailure;
+        }
     }
 
-    var normalizedUsername = (request.Username ?? string.Empty).Trim();
-    var password = request.Password ?? string.Empty;
-    var success = await auth.LoginAsync(normalizedUsername, password);
-    if (!success)
-    {
-        return ValidationError("invalid_credentials", "Invalid username or password.");
-    }
-
-    var token = tokens.GenerateToken(normalizedUsername);
-    return Results.Ok(new LoginResponse(normalizedUsername, token));
+    return await HandleLoginAsync(request, auth, tokens);
 }).RequireRateLimiting(AuthLimiterPolicy);
 
 app.MapGet("/leaderboard/top", async (int count, ILeaderboardService leaderboard) =>
@@ -252,6 +238,42 @@ static async Task<IResult?> EnforceTurnstileAsync(string? token, ITurnstileVerif
     var remoteIp = context.Connection.RemoteIpAddress?.ToString();
     var isHuman = await verifier.VerifyAsync(token, remoteIp, context.RequestAborted);
     return isHuman ? null : ValidationError("captcha_failed", "Complete the CAPTCHA to continue.");
+}
+
+static bool IsTurnstileBypassed(string? token, string? configuredBypassToken) =>
+    !string.IsNullOrWhiteSpace(configuredBypassToken) &&
+    string.Equals(token, configuredBypassToken, StringComparison.Ordinal);
+
+static async Task<IResult> HandleRegistrationAsync(RegisterRequest request, IAuthService auth)
+{
+    var result = await auth.RegisterAsync(request.Username, request.Password);
+    if (!result.Success)
+    {
+        return result.ErrorCode switch
+        {
+            "username_required" => ValidationError("username_required", "Choose a username to continue."),
+            "username_profane" => ValidationError("username_profane", "That username is not allowed. Try another one."),
+            "username_taken" => ValidationError("username_taken", "That username is already taken. Try another one."),
+            "password_too_short" => ValidationError("password_too_short", "Passwords must be at least 5 characters long."),
+            _ => ValidationError("registration_failed", "Registration failed. Please try again.")
+        };
+    }
+
+    return Results.Ok();
+}
+
+static async Task<IResult> HandleLoginAsync(LoginRequest request, IAuthService auth, IJwtTokenGenerator tokens)
+{
+    var normalizedUsername = (request.Username ?? string.Empty).Trim();
+    var password = request.Password ?? string.Empty;
+    var success = await auth.LoginAsync(normalizedUsername, password);
+    if (!success)
+    {
+        return ValidationError("invalid_credentials", "Invalid username or password.");
+    }
+
+    var token = tokens.GenerateToken(normalizedUsername);
+    return Results.Ok(new LoginResponse(normalizedUsername, token));
 }
 
 static IResult ValidationError(string code, string message) =>
