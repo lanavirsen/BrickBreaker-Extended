@@ -115,7 +115,7 @@ namespace BrickBreaker.ConsoleClient.Game                        // Main game na
         // Initializes or resets the game state variables and level
         void Init()
         {
-            // LevelManager handles its own init
+            _levelManager.LoadLevel(0);                      // Always restart from level 1
             paddleX = (W - PaddleW) / 2;                     // Center the paddle
             paddleY = H - 2;                                 // Set paddle to near the bottom
             _paddleWidth = PaddleW;                          // Reset paddle width to default
