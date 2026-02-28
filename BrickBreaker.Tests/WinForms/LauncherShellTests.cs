@@ -71,12 +71,12 @@ public class LauncherShellTests
         var path = request.RequestUri!.AbsolutePath.Trim('/');
         return path switch
         {
-            "login"            => Json(new { username = "tester", token = "fake-token" }),
-            "register"         => Success(),
+            "login" => Json(new { username = "tester", token = "fake-token" }),
+            "register" => Success(),
             "leaderboard/submit" => Success(),
             var p when p.StartsWith("leaderboard/top", StringComparison.OrdinalIgnoreCase)
-                               => Json(new[] { new ScoreEntry("alice", 50, DateTimeOffset.UtcNow) }),
-            _                  => Success()
+                => Json(new[] { new ScoreEntry("alice", 50, DateTimeOffset.UtcNow) }),
+            _ => Success()
         };
     }
 
