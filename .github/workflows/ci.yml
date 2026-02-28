@@ -45,6 +45,7 @@ jobs:
         id: api_changes
         uses: dorny/paths-filter@v3
         with:
+          base: ${{ github.event.before }}
           filters: |
             api:
               - 'BrickBreaker.Api/**'
