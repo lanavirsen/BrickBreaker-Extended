@@ -1,18 +1,20 @@
-using System.Collections.Generic;
+
 using BrickBreaker.Core.Models;
 
 namespace BrickBreaker.Core.Clients;
 
-/// <summary>
-/// Encapsulates the WinForms launcher state and API interactions so the UI layer stays thin.
-/// </summary>
+// Encapsulates launcher state and API interactions so the UI layer stays thin.
+// All mutable state lives here; the form only reads snapshots and calls methods.
 public sealed class LauncherShell : IDisposable
 {
     private readonly GameApiClient _apiClient;
 
+    // Session state — reset on logout or API base change.
     private string? _currentPlayer;
-    private bool _quickPlayMode;
-    private int? _lastScore;
+    private bool _quickPlayMode = true;
+    private int? _bestScore;
+
+    // Status bar text shown at the bottom of the leaderboard section.
     private string _statusMessage = "Ready.";
     private bool _statusSuccess;
 
@@ -22,47 +24,36 @@ public sealed class LauncherShell : IDisposable
     }
 
     public string BaseAddress => _apiClient.BaseAddress;
-    public bool QuickPlayMode => _quickPlayMode;
     public bool CanSubmitScores => !_quickPlayMode && !string.IsNullOrWhiteSpace(_currentPlayer);
-    public string? CurrentPlayer => _currentPlayer;
 
+    // Produces an immutable snapshot of the current state for the UI to render.
     public LauncherViewState Snapshot() => new(
-        PlayerLabel: _quickPlayMode
-            ? "Mode: Quick Play"
-            : string.IsNullOrWhiteSpace(_currentPlayer)
-                ? "Player: (not logged in)"
-                : $"Player: {_currentPlayer}",
-        LastScoreLabel: _lastScore is { } s and > 0 ? $"Last score: {s}" : "Last score: none",
+        PlayerLabel: string.IsNullOrWhiteSpace(_currentPlayer)
+            ? "Player: -"
+            : $"Player: {_currentPlayer}",
+        BestScoreLabel: _bestScore is { } s and > 0 ? $"Best score: {s}" : "Best score: -",
         CanStartGame: _quickPlayMode || !string.IsNullOrWhiteSpace(_currentPlayer),
         CanLogout: !_quickPlayMode && !string.IsNullOrWhiteSpace(_currentPlayer),
         IsQuickPlay: _quickPlayMode,
         StatusMessage: _statusMessage,
         StatusIsSuccess: _statusSuccess);
 
+    // Switches the API target and resets session state — requires re-login.
     public void SetBaseAddress(string baseAddress)
     {
         _apiClient.SetBaseAddress(baseAddress);
         _apiClient.ClearAuthentication();
         _currentPlayer = null;
-        _quickPlayMode = false;
+        _quickPlayMode = true;
         UpdateStatus($"API base updated to {BaseAddress}", true);
     }
 
-    public LauncherViewState EnableQuickPlay()
+    // Clears session state and returns to quick-play mode.
+    public LauncherViewState Logout()
     {
         _quickPlayMode = true;
         _currentPlayer = null;
-        _lastScore = null;
-        _apiClient.ClearAuthentication();
-        UpdateStatus("Quick Play ready. Scores are not submitted.", true);
-        return Snapshot();
-    }
-
-    public LauncherViewState Logout()
-    {
-        _quickPlayMode = false;
-        _currentPlayer = null;
-        _lastScore = null;
+        _bestScore = null;
         _apiClient.ClearAuthentication();
         UpdateStatus("Signed out.");
         return Snapshot();
@@ -74,21 +65,18 @@ public sealed class LauncherShell : IDisposable
         _statusSuccess = success;
     }
 
+    // Called when a game session ends. Updates the local best score and status message.
     public LauncherViewState RecordGameFinished(int score)
     {
-        _lastScore = score > 0 ? score : null;
+        if (score > 0)
+            _bestScore = Math.Max(score, _bestScore ?? 0);
+
         if (_quickPlayMode)
-        {
             UpdateStatus("Quick Play finished.");
-        }
         else if (score > 0)
-        {
             UpdateStatus($"Final score: {score}", true);
-        }
         else
-        {
             UpdateStatus("No score recorded.");
-        }
 
         return Snapshot();
     }
@@ -111,6 +99,9 @@ public sealed class LauncherShell : IDisposable
         {
             _currentPlayer = result.Value.Username;
             _quickPlayMode = false;
+            // Seed the local best score from the server so it's accurate from the first game.
+            var best = await _apiClient.GetBestAsync(_currentPlayer);
+            _bestScore = best.Value?.Score;
             UpdateStatus("Logged in.", true);
         }
         else
@@ -132,15 +123,9 @@ public sealed class LauncherShell : IDisposable
     public async Task<ApiResult<IReadOnlyList<ScoreEntry>>> LoadLeaderboardAsync(int count)
     {
         var result = await _apiClient.GetLeaderboardAsync(count);
-        if (result.Success)
-        {
-            UpdateStatus($"Leaderboard updated at {DateTime.Now:T}", true);
-        }
-        else
-        {
-            UpdateStatus(result.Error ?? "Failed to load leaderboard.");
-        }
-
+        UpdateStatus(result.Success
+            ? $"Leaderboard updated at {DateTime.Now:T}"
+            : result.Error ?? "Failed to load leaderboard.", result.Success);
         return result;
     }
 
