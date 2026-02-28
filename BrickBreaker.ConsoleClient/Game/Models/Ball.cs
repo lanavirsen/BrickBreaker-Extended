@@ -1,7 +1,5 @@
 namespace BrickBreaker.ConsoleClient.Game.Models
 {
-    public enum BallType { Ball }
-
     public class Ball
     {
 
