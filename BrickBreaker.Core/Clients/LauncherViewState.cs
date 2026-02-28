@@ -2,7 +2,7 @@ namespace BrickBreaker.Core.Clients;
 
 public sealed record LauncherViewState(
     string PlayerLabel,
-    string LastScoreLabel,
+    string BestScoreLabel,
     bool CanStartGame,
     bool CanLogout,
     bool IsQuickPlay,
