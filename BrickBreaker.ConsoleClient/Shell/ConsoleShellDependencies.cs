@@ -19,7 +19,7 @@ public sealed class ConsoleShellDependencies
     public static ConsoleShellDependencies CreateDefault(string? preferredBase = null)
     {
         var apiBase = ApiConfiguration.ResolveBaseAddress(preferredBase);
-        var apiClient = new GameApiClient(apiBase);
+        var apiClient = new GameApiClient(apiBase, turnstileBypassToken: ApiConfiguration.ResolveBypassToken());
 
         return new ConsoleShellDependencies
         {

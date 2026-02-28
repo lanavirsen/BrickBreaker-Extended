@@ -49,13 +49,11 @@ public sealed class GameRenderer
 
     private void DrawBalls(Graphics g, GameRenderState state)
     {
-        using SolidBrush fill = new(Color.Red);
-        using Pen outline = new(Color.White, 2);
+        using SolidBrush fill = new(Color.FromArgb(111, 224, 255)); // light teal to match canvas palette
         foreach (var ball in state.Balls)
         {
             Rectangle rect = new(ball.X, ball.Y, ball.Radius * 2, ball.Radius * 2);
             g.FillEllipse(fill, rect);
-            g.DrawEllipse(outline, rect);
         }
     }
 

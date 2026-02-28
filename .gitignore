@@ -16,10 +16,16 @@ obj/
 !**/appsettings.Template.json
 !BrickBreaker.WebClient/wwwroot/appsettings.json
 
+# Desktop client local config (contains API URL and bypass token — keep out of source control)
+clientsettings.json
+!clientsettings.Template.json
+
 # OS noise
 .DS_Store
 Thumbs.db
 
-# AI
-**/codex.debug.log
+# AI agents
 AI_README.md
+CLAUDE.md
+.claude/
+**/codex.debug.log
