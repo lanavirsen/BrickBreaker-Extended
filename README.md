@@ -8,6 +8,16 @@ Play it live: https://brickbreaker-extended.netlify.app
 
 BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arcade game, deployed as a responsive web app that streams the .NET gameplay loop into a `<canvas>`. The browser client handles login, registration, CAPTCHA, score submission, and leaderboard views while sharing the same `GameEngine` used by the desktop builds. Console and WinForms shells remain in the repo to demonstrate how multiple UI layers can plug into the shared gameplay/session architecture without forking core logic.
 
+## Gameplay
+
+- **5 levels** with increasing brick density (15 → 25 → 35 → 45 → 55 bricks). Beyond level 5 the layout repeats while the level counter and ball speed keep climbing.
+- **Scoring** – each brick is worth 10 points × the current streak multiplier. The multiplier grows with every consecutive brick hit and resets to 1 when the ball touches the paddle. Floating `+N` and `×N` popups appear at the hit site.
+- **Ball speed** rises each level on a sub-linear curve (`7.5 + √(level − 1)`) applied whenever the ball bounces off the paddle, so the game gets faster without sudden spikes.
+- **Power-ups** drop from destroyed bricks with a 20% chance and fall until caught by the paddle or lost off-screen:
+  - **Multiball (M)** – splits into three balls by spawning two additional ones from the current ball's position.
+  - **Paddle Extender (E)** – widens the paddle for 10 seconds; the paddle blinks in the final second as a warning before it shrinks back.
+- **Game over** when the last ball falls below the paddle. There are no lives — keep all balls alive to keep playing.
+
 ## Screenshots
 
 ### Web client
@@ -25,17 +35,19 @@ BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arc
 ### Console client
 
 <p align="center">
-  <img src="docs/images/console-app-menu.png" width="32%">
-  <img src="docs/images/console-app-gameplay.png" width="32%">
-  <img src="docs/images/console-app-leaderboard.png" width="32%">
+  <img src="docs/images/console-app-menu.png" width="49%">
+  <img src="docs/images/console-app-leaderboard.png" width="49%">
+</p>
+<p align="center">
+  <img src="docs/images/console-app-gameplay.png">
 </p>
 
 ## Highlights
 
 - **Web-first experience** – `BrickBreaker.WebClient` is a Blazor WebAssembly front-end that centers the canvas inside a responsive two-column layout, keeps the leaderboard/account panels aligned, and shows warm-up placeholders while the API wakes up.
-- **Shared gameplay loop** – `BrickBreaker.Gameplay` wraps the `GameEngine` in a reusable session + render-state model so every client (web, WinForms, Spectre.Console) plays the same game with identical physics/power-ups.
+- **Shared gameplay loop** – `BrickBreaker.Gameplay` wraps the `GameEngine` in a reusable `GameSession` + `GameRenderState` model so all three clients (web, WinForms, console) share identical physics, level progression, power-up logic, and scoring without any duplicated game code.
 - **WinForms renderer @ 60 FPS** – `BrickBreaker.WinFormsClient` still ships with a borderless, high-frame-rate renderer and launcher UI to demonstrate a desktop host reusing the shared game session.
-- **Spectre.Console shell** – `BrickBreaker.ConsoleClient` highlights a terminal-first UX for auth, Quick Play, and leaderboard browsing without needing a graphical surface.
+- **Spectre.Console shell** – `BrickBreaker.ConsoleClient` renders the full game in a 60×24 character grid driven by the shared engine, alongside a Spectre.Console menu shell for auth, Quick Play, and leaderboard browsing.
 - **Supabase/PostgreSQL persistence** – When a connection string is available, credentials are hashed, scores are stored through `BrickBreaker.Storage`, and all clients can submit/query the same leaderboard. Disabled stores keep gameplay working offline.
 - **Automated tests** – `BrickBreaker.Tests` exercises authentication, password hashing, profanity filtering, and leaderboard ordering so domain logic stays correct regardless of the UI host.
 
