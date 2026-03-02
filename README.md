@@ -8,10 +8,26 @@ Play it live: https://brickbreaker-extended.netlify.app
 
 BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arcade game, deployed as a responsive web app that streams the .NET gameplay loop into a `<canvas>`. The browser client handles login, registration, CAPTCHA, score submission, and leaderboard views while sharing the same `GameEngine` used by the desktop builds. Console and WinForms shells remain in the repo to demonstrate how multiple UI layers can plug into the shared gameplay/session architecture without forking core logic.
 
-## Gameplay screenshot
+## Screenshots
+
+### Web client
 
 <p align="center">
   <img src="docs/images/web-gameplay.png">
+</p>
+
+### WinForms client
+
+<p align="center">
+  <img src="docs/images/winforms-gameplay.png">
+</p>
+
+### Console client
+
+<p align="center">
+  <img src="docs/images/console-app-menu.png" width="32%">
+  <img src="docs/images/console-app-gameplay.png" width="32%">
+  <img src="docs/images/console-app-leaderboard.png" width="32%">
 </p>
 
 ## Highlights

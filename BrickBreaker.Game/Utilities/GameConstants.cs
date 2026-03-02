@@ -4,8 +4,6 @@ namespace BrickBreaker.Game.Utilities
     {
         // Window Layout
         public const int PlayAreaMargin = 2;
-        public const int HudHeightOffset = 50;
-        public const int PaddleBottomMargin = 10;
 
         // Gameplay Constants
         public const int InitialBrickRows = 7;
