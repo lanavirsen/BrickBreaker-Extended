@@ -6,13 +6,17 @@ namespace BrickBreaker.ConsoleClient.Game.Systems;
 
 public sealed class ConsoleRenderer
 {
-    private const int ConsoleW = 60;
+    private const int ConsoleW = 62;
     private const int ConsoleH = 24;
-    private const int InnerW = ConsoleW - 2; // 58 columns inside the border
+    private const int InnerW = ConsoleW - 2; // 60 columns inside the border
     private const int InnerH = ConsoleH - 2; // 22 rows inside the border
     private const double PixelW = 622.0;
     private const double PixelH = 568.0;
     private const int PaddleHeightPx = 20; // Matches WinForms paddle draw height
+
+    // Tracks the horizontal offset from the previous frame so a full clear can be
+    // issued when a resize shifts the box, removing the ghost of the old position.
+    private int _lastLeft = -1;
 
     private static readonly ConsoleColor[] BrickLayerColors =
     {
@@ -30,23 +34,42 @@ public sealed class ConsoleRenderer
     {
         Console.ResetColor();
 
-        // HUD: row 0
-        Console.SetCursorPosition(2, 0);
+        // Centre the box horizontally if the terminal is wider than the game area.
+        // Clamp to 0 so a narrow window falls back to left-aligned without throwing.
+        int left = Math.Max(0, (GetWindowWidth() - ConsoleW) / 2);
+
+        // When the offset changes the old frame is now at a different column.
+        // A full clear removes the ghost before redrawing at the new position.
+        if (left != _lastLeft)
+        {
+            Console.Clear();
+            _lastLeft = left;
+        }
+
+        // HUD: three elements spread across row 0 — left, centre, right.
+        string scoreText = $"Score: {state.Score,7}";
+        string levelText = $"Level: {state.Level,2}";
+
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.Write($"Lives: {state.Balls.Count}  Score: {state.Score,7}  Level: {state.Level,2}      ");
+        Console.SetCursorPosition(left + 2, 0);
+        Console.Write($"Lives: {state.Balls.Count}");
+        Console.SetCursorPosition(left + (ConsoleW - scoreText.Length) / 2, 0);
+        Console.Write(scoreText);
+        Console.SetCursorPosition(left + ConsoleW - levelText.Length - 2, 0);
+        Console.Write(levelText);
         Console.ResetColor();
 
-        DrawGameBoard(state);
+        DrawGameBoard(state, left);
     }
 
-    private static void DrawGameBoard(GameRenderState state)
+    private static void DrawGameBoard(GameRenderState state, int left)
     {
-        Console.SetCursorPosition(0, 1);
+        Console.SetCursorPosition(left, 1);
         DrawTopBorder(state.IsPaused);
 
         for (int cy = 1; cy <= InnerH; cy++)
         {
-            Console.SetCursorPosition(0, cy + 1);
+            Console.SetCursorPosition(left, cy + 1);
             Console.Write('│');
 
             ConsoleColor? currentColor = null;
@@ -72,7 +95,7 @@ public sealed class ConsoleRenderer
             Console.Write('│');
         }
 
-        Console.SetCursorPosition(0, ConsoleH);
+        Console.SetCursorPosition(left, ConsoleH);
         Console.ResetColor();
         Console.Write('└');
         Console.Write(new string('─', ConsoleW - 2));
@@ -188,6 +211,15 @@ public sealed class ConsoleRenderer
         }
 
         return (ch, color);
+    }
+
+    // Returns the console window width, or 0 when output is redirected or the
+    // call fails, so the offset calculation safely falls back to left-aligned.
+    private static int GetWindowWidth()
+    {
+        if (Console.IsOutputRedirected) return 0;
+        try { return Console.WindowWidth; }
+        catch { return 0; }
     }
 
     // Derives a console color from the brick's Y pixel position using the same
