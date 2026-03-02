@@ -1,27 +1,55 @@
 > Continuation of the original group project. Frozen version: [BrickBreaker-Group](https://github.com/lanavirsen/BrickBreaker-Group)
 
-# BrickBreaker – Extended Edition
+# BrickBreaker - Extended Edition
 
 ![CI](https://github.com/lanavirsen/BrickBreaker-Extended/actions/workflows/ci.yml/badge.svg)  [![codecov](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended/branch/main/graph/badge.svg)](https://codecov.io/gh/lanavirsen/BrickBreaker-Extended)
 
 Play it live: https://brickbreaker-extended.netlify.app
 
-BrickBreaker is a Blazor WebAssembly remake of the classic paddle-and-bricks arcade game, deployed as a responsive web app that streams the .NET gameplay loop into a `<canvas>`. The browser client handles login, registration, CAPTCHA, score submission, and leaderboard views while sharing the same `GameEngine` used by the desktop builds. Console and WinForms shells remain in the repo to demonstrate how multiple UI layers can plug into the shared gameplay/session architecture without forking core logic.
+BrickBreaker - Extended Edition is a multi-client paddle-and-bricks arcade game built on a shared .NET gameplay engine. Three independent front-ends - a Blazor WebAssembly web app, a WinForms desktop client, and a Spectre.Console terminal client - all drive the same `GameEngine` through a common `GameSession` abstraction, keeping physics, level progression, and scoring identical across every platform. All three clients support login, score submission, and leaderboard browsing; the web client additionally integrates CAPTCHA verification.
 
-## Gameplay screenshot
+## Gameplay
+
+- **5 levels** with increasing brick density. Beyond level 5 the layout repeats while the level counter and ball speed keep climbing.
+- **Scoring** - each brick scores points multiplied by the current streak. The streak grows with every consecutive brick hit and resets when the ball touches the paddle.
+- **Ball speed** rises each level, so the game gets faster.
+- **Power-ups** drop from destroyed bricks and fall until caught by the paddle or lost off-screen:
+  - **Multiball (M)** - splits into three balls.
+  - **Paddle Extender (E)** - widens the paddle for 10 seconds; the paddle blinks as a warning before it shrinks back.
+- **Game over** when the last ball falls below the paddle.
+
+## Screenshots
+
+### Web client
 
 <p align="center">
   <img src="docs/images/web-gameplay.png">
 </p>
 
+### WinForms client
+
+<p align="center">
+  <img src="docs/images/winforms-gameplay.png">
+</p>
+
+### Console client
+
+<p align="center">
+  <img src="docs/images/console-app-menu.png" width="49%">
+  <img src="docs/images/console-app-leaderboard.png" width="49%">
+</p>
+<p align="center">
+  <img src="docs/images/console-app-gameplay.png">
+</p>
+
 ## Highlights
 
-- **Web-first experience** – `BrickBreaker.WebClient` is a Blazor WebAssembly front-end that centers the canvas inside a responsive two-column layout, keeps the leaderboard/account panels aligned, and shows warm-up placeholders while the API wakes up.
-- **Shared gameplay loop** – `BrickBreaker.Gameplay` wraps the `GameEngine` in a reusable session + render-state model so every client (web, WinForms, Spectre.Console) plays the same game with identical physics/power-ups.
-- **WinForms renderer @ 60 FPS** – `BrickBreaker.WinFormsClient` still ships with a borderless, high-frame-rate renderer and launcher UI to demonstrate a desktop host reusing the shared game session.
-- **Spectre.Console shell** – `BrickBreaker.ConsoleClient` highlights a terminal-first UX for auth, Quick Play, and leaderboard browsing without needing a graphical surface.
-- **Supabase/PostgreSQL persistence** – When a connection string is available, credentials are hashed, scores are stored through `BrickBreaker.Storage`, and all clients can submit/query the same leaderboard. Disabled stores keep gameplay working offline.
-- **Automated tests** – `BrickBreaker.Tests` exercises authentication, password hashing, profanity filtering, and leaderboard ordering so domain logic stays correct regardless of the UI host.
+- **Responsive web client** - `BrickBreaker.WebClient` is a Blazor WebAssembly front-end that centers the canvas inside a responsive two-column layout and shows loading placeholders while the API wakes from a cold start.
+- **Shared gameplay loop** - `BrickBreaker.Gameplay` wraps the `GameEngine` in a reusable `GameSession` + `GameRenderState` model so all three clients (web, WinForms, console) share identical physics, level progression, power-up logic, and scoring without any duplicated game code.
+- **WinForms renderer @ 60 FPS** - `BrickBreaker.WinFormsClient` provides a borderless, high-frame-rate GDI+ renderer and launcher UI, demonstrating a native desktop host built on the shared game session.
+- **Spectre.Console shell** - `BrickBreaker.ConsoleClient` renders the full game in a 62×24 character grid driven by the shared engine, alongside a Spectre.Console menu shell for auth, Quick Play, and leaderboard browsing.
+- **Supabase/PostgreSQL persistence** - When a connection string is available, credentials are hashed, scores are stored through `BrickBreaker.Storage`, and all clients can submit/query the same leaderboard. Disabled stores keep gameplay working offline.
+- **Automated tests** - `BrickBreaker.Tests` covers auth, leaderboard, game session behaviour, and shell logic so core functionality stays correct across all clients.
 
 ## Project layout
 
@@ -31,52 +59,46 @@ BrickBreaker/
 ├── BrickBreaker.Game/           Pure gameplay engine - physics, ball/paddle/brick logic, entities
 ├── BrickBreaker.Gameplay/       Shared GameSession + render models (used by all clients)
 ├── BrickBreaker.Core/           Domain models + services (Auth, Leaderboard, abstractions)
-├── BrickBreaker.Storage/        Supabase/PostgreSQL stores + configuration helpers
-│   ├── StorageConfiguration.cs  Resolves Supabase connection strings
-│   ├── UserStore.cs             Npgsql-backed implementation
-│   ├── LeaderboardStore.cs      Npgsql-backed implementation
-│   └── Disabled*.cs             Null-object stores for offline play
+├── BrickBreaker.Storage/        Supabase/PostgreSQL stores + Null-object offline fallbacks
 ├── BrickBreaker.Api/            ASP.NET Minimal API - auth, leaderboard, CAPTCHA endpoints
 ├── BrickBreaker.ConsoleClient/  Spectre.Console client with terminal renderer + Supabase auth
 ├── BrickBreaker.WinFormsClient/ WinForms client (launcher + Form1 gameplay)
-│   ├── Hosting/                 IGame implementation for desktop play
-│   └── WinUI/                   WinForms forms, drawing, input, assets
 ├── BrickBreaker.WebClient/      Blazor WebAssembly canvas client for browsers
-├── BrickBreaker.Tests/          xUnit tests for Auth + Leaderboard logic
+├── BrickBreaker.Tests/          xUnit tests for auth, leaderboard, game session, and shell logic
 └── README.md
 ```
 
 ## Run the game locally
 
-Prerequisites: .NET 9 SDK and (optionally) access to the Supabase/PostgreSQL instance referenced below.
-
-### For full functionality (auth + leaderboard)
-
-1. **Configure the API:**
-   ```bash
-   # Copy the template and configure JWT secret + Supabase connection string
-   cp BrickBreaker.Api/appsettings.Template.json BrickBreaker.Api/appsettings.json
-   ```
-
-2. **Run the API and WebClient:**
-   ```bash
-   # Terminal 1: Run the API backend
-   dotnet run --project BrickBreaker.Api
-
-   # Terminal 2: Run the Blazor WebAssembly client
-   dotnet run --project BrickBreaker.WebClient
-   ```
-
-### For offline/guest play
+Prerequisites: .NET 9 SDK.
 
 ```bash
-# Just run the WebClient (auth/leaderboard features disabled)
 dotnet run --project BrickBreaker.WebClient
-
-# Or try the desktop clients
 dotnet run --project BrickBreaker.WinFormsClient
 dotnet run --project BrickBreaker.ConsoleClient
 ```
+
+Auth and leaderboard require a reachable API. To run one locally:
+
+### Local API setup
+
+To run against a local API instead:
+
+1. **Configure the API:**
+   ```bash
+   # Copy the template and fill in JWT secret + Supabase connection string
+   cp BrickBreaker.Api/appsettings.Template.json BrickBreaker.Api/appsettings.json
+   ```
+
+2. **Start the API:**
+   ```bash
+   dotnet run --project BrickBreaker.Api
+   ```
+
+3. **Point a client at it:**
+   - **WebClient** - update `ApiBaseUrl` in `BrickBreaker.WebClient/wwwroot/appsettings.json`
+   - **ConsoleClient** - pass the URL as a CLI argument: `dotnet run --project BrickBreaker.ConsoleClient https://localhost:5001/`
+   - **WinFormsClient** - use the in-app Settings dialog to change the API URL
 
 ### Build
 
