@@ -46,10 +46,17 @@ public sealed class ConsoleRenderer
             _lastLeft = left;
         }
 
-        // HUD: row 0, inset by 2 from the box's left edge
-        Console.SetCursorPosition(left + 2, 0);
+        // HUD: three elements spread across row 0 — left, centre, right.
+        string scoreText = $"Score: {state.Score,7}";
+        string levelText = $"Level: {state.Level,2}";
+
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.Write($"Lives: {state.Balls.Count}  Score: {state.Score,7}  Level: {state.Level,2}      ");
+        Console.SetCursorPosition(left + 2, 0);
+        Console.Write($"Lives: {state.Balls.Count}");
+        Console.SetCursorPosition(left + (ConsoleW - scoreText.Length) / 2, 0);
+        Console.Write(scoreText);
+        Console.SetCursorPosition(left + ConsoleW - levelText.Length - 2, 0);
+        Console.Write(levelText);
         Console.ResetColor();
 
         DrawGameBoard(state, left);
