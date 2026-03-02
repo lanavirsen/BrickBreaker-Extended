@@ -1,4 +1,3 @@
-using System.Linq;
 using BrickBreaker.ConsoleClient.Ui.Enums;
 using BrickBreaker.ConsoleClient.Ui.Interfaces;
 using BrickBreaker.Core.Clients;
@@ -7,20 +6,27 @@ using System.Runtime.InteropServices;
 
 namespace BrickBreaker.ConsoleClient.Shell;
 
+// Top-level application controller. Owns the app-state machine and coordinates
+// all user-facing flows: login, registration, leaderboard, and gameplay.
 public sealed class ConsoleShell : IDisposable
 {
+    // UI and service dependencies injected at construction time.
     private readonly ILoginMenu _loginMenu;
     private readonly IGameplayMenu _gameplayMenu;
     private readonly IConsoleDialogs _dialogs;
     private readonly IConsoleRenderer _renderer;
     private readonly IGameApiClient _apiClient;
     private readonly IGameHost _gameHost;
+
+    // True when this shell created the ApiClient itself and must dispose it.
     private readonly bool _ownsApiClient;
 
+    // Session state — reset on logout or quick-play.
     private string? _currentUser;
     private bool _isLoggedIn;
     private GameMode _currentMode = GameMode.Normal;
 
+    // Accepts an optional dependency bundle; falls back to production defaults.
     public ConsoleShell(ConsoleShellDependencies? dependencies = null)
     {
         dependencies ??= ConsoleShellDependencies.CreateDefault();
@@ -34,6 +40,7 @@ public sealed class ConsoleShell : IDisposable
         _ownsApiClient = dependencies.OwnsApiClient;
     }
 
+    // Main entry point. Drives the app-state machine until the user exits.
     public async Task RunAsync()
     {
         AppState state = AppState.LoginMenu;
@@ -49,6 +56,7 @@ public sealed class ConsoleShell : IDisposable
         }
     }
 
+    // Displays the pre-login menu and routes each choice to its handler.
     private async Task<AppState> HandleLoginMenuAsync()
     {
         var choice = _loginMenu.Show();
@@ -63,6 +71,8 @@ public sealed class ConsoleShell : IDisposable
         };
     }
 
+    // Starts an unauthenticated session. Clears any stale credentials so a
+    // previous login cannot accidentally carry over into a quick-play run.
     private AppState SetQuickPlayAndStart()
     {
         ClearInputBuffer();
@@ -73,6 +83,7 @@ public sealed class ConsoleShell : IDisposable
         return AppState.Playing;
     }
 
+    // Runs the registration flow and returns to the login menu afterwards.
     private async Task<AppState> HandleRegisterAsync()
     {
         await DoRegisterAsync();
@@ -80,6 +91,7 @@ public sealed class ConsoleShell : IDisposable
         return AppState.LoginMenu;
     }
 
+    // Shows the leaderboard from the login menu, then returns to it.
     private async Task<AppState> HandleLeaderboardAsync()
     {
         await ShowLeaderboardAsync();
@@ -87,6 +99,7 @@ public sealed class ConsoleShell : IDisposable
         return AppState.LoginMenu;
     }
 
+    // Displays the post-login gameplay menu and routes each choice.
     private async Task<AppState> HandleGameplayMenuAsync()
     {
         var choice = _gameplayMenu.Show(_currentUser ?? "guest");
@@ -100,18 +113,21 @@ public sealed class ConsoleShell : IDisposable
         };
     }
 
+    // Marks the session as a scored run and starts the game.
     private AppState StartNormalPlay()
     {
         _currentMode = GameMode.Normal;
         return AppState.Playing;
     }
 
+    // Shows the player's personal best then returns to the gameplay menu.
     private async Task<AppState> ShowBestScoreAsyncAndStay()
     {
         await ShowBestScoreAsync();
         return AppState.GameplayMenu;
     }
 
+    // Shows the global leaderboard then returns to the gameplay menu.
     private async Task<AppState> DisplayLeaderboardAndStayAsync()
     {
         await ShowLeaderboardAsync();
@@ -119,6 +135,7 @@ public sealed class ConsoleShell : IDisposable
         return AppState.GameplayMenu;
     }
 
+    // Clears all session state and drops back to the login menu.
     private AppState Logout()
     {
         _currentUser = null;
@@ -127,16 +144,22 @@ public sealed class ConsoleShell : IDisposable
         return AppState.LoginMenu;
     }
 
+    // Runs one gameplay session. After the game ends, shows the final score and
+    // submits it to the leaderboard if the player is logged in on a normal run.
     private async Task<AppState> HandlePlayingAsync()
     {
         _renderer.ClearScreen();
         var score = _gameHost.Run();
 
+        // Position the score message near the bottom of the visible window so it
+        // doesn't overlap the game area that was just rendered.
         int lowerLine = Math.Max(GetWindowHeightSafe() - 4, 0);
 
         TrySetCursorPosition(0, lowerLine);
         _dialogs.ShowMessage($"\nFinal score: {score}");
 
+        // Only submit when there is something worth recording: a logged-in normal
+        // run with a non-zero score.
         if (_currentMode != GameMode.QuickPlay && _isLoggedIn && score > 0)
         {
             await _renderer.RunStatusAsync("Submitting score...", () => _apiClient.SubmitScoreAsync(_currentUser!, score));
@@ -146,6 +169,7 @@ public sealed class ConsoleShell : IDisposable
         return AppState.GameplayMenu;
     }
 
+    // Prompts for credentials and calls the registration API.
     private async Task DoRegisterAsync()
     {
         if (!EnsureApiConfigured())
@@ -162,6 +186,8 @@ public sealed class ConsoleShell : IDisposable
             : result.Error ?? "Registration failed.");
     }
 
+    // Prompts for credentials, calls the login API, and updates session state on
+    // success. Returns true if the user is now authenticated.
     private async Task<bool> DoLoginAsync()
     {
         if (!EnsureApiConfigured())
@@ -183,6 +209,7 @@ public sealed class ConsoleShell : IDisposable
         return false;
     }
 
+    // Fetches and renders the top-10 global leaderboard.
     private async Task ShowLeaderboardAsync()
     {
         _renderer.ClearScreen();
@@ -210,6 +237,7 @@ public sealed class ConsoleShell : IDisposable
         _dialogs.ShowLeaderboard(items);
     }
 
+    // Fetches and displays the current user's personal best score.
     private async Task ShowBestScoreAsync()
     {
         if (!EnsureApiConfigured() || !_isLoggedIn || string.IsNullOrWhiteSpace(_currentUser))
@@ -238,6 +266,8 @@ public sealed class ConsoleShell : IDisposable
         _dialogs.Pause();
     }
 
+    // Guard used before any API call. Shows an error and returns false when the
+    // base URL is not configured (i.e. running fully offline).
     private bool EnsureApiConfigured()
     {
         if (!string.IsNullOrWhiteSpace(_apiClient.BaseAddress))
@@ -249,9 +279,14 @@ public sealed class ConsoleShell : IDisposable
         return false;
     }
 
+    // Projects a ScoreEntry domain object to the anonymous tuple the dialog layer expects.
     private static (string Username, int Score, DateTimeOffset At) ToTuple(ScoreEntry entry)
         => (entry.Username, entry.Score, entry.At);
 
+    // Flushes any queued key events before starting a game so stale input cannot
+    // immediately fire in-game actions. Two strategies are used in sequence:
+    // the managed Console API first, then a Win32 flush for any events the managed
+    // layer may have missed.
     private static void ClearInputBuffer()
     {
         if (Console.IsInputRedirected)
@@ -273,7 +308,7 @@ public sealed class ConsoleShell : IDisposable
 
         try
         {
-            var handle = GetStdHandle(-10);
+            var handle = GetStdHandle(-10); // STD_INPUT_HANDLE = -10
             if (handle != IntPtr.Zero)
             {
                 FlushConsoleInputBuffer(handle);
@@ -284,6 +319,8 @@ public sealed class ConsoleShell : IDisposable
         }
     }
 
+    // Returns the console window height, or 0 if the output is redirected or the
+    // call fails (e.g. running inside a build pipeline or test runner).
     private static int GetWindowHeightSafe()
     {
         if (Console.IsOutputRedirected)
@@ -301,6 +338,7 @@ public sealed class ConsoleShell : IDisposable
         }
     }
 
+    // Moves the cursor, ignoring failures that occur when output is redirected.
     private static void TrySetCursorPosition(int left, int top)
     {
         if (Console.IsOutputRedirected)
@@ -317,6 +355,8 @@ public sealed class ConsoleShell : IDisposable
         }
     }
 
+    // Displays an error message in red, restoring the previous foreground colour
+    // afterwards so the caller's colour state is not disturbed.
     private void ShowDatabaseWarning(string message)
     {
         var previousColor = Console.ForegroundColor;
@@ -325,6 +365,8 @@ public sealed class ConsoleShell : IDisposable
         Console.ForegroundColor = previousColor;
     }
 
+    // Only disposes the ApiClient when this shell created it. Injected clients
+    // are owned by the caller and must not be disposed here.
     public void Dispose()
     {
         if (_ownsApiClient)
@@ -333,9 +375,11 @@ public sealed class ConsoleShell : IDisposable
         }
     }
 
+    // Win32 API — retrieves a handle to the standard input stream.
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr GetStdHandle(int nStdHandle);
 
+    // Win32 API — discards any unread input events from the console input buffer.
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool FlushConsoleInputBuffer(IntPtr hConsoleInput);
 }
