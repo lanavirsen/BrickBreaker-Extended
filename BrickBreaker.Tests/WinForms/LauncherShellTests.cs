@@ -13,16 +13,18 @@ namespace BrickBreaker.Tests.WinForms;
 
 public class LauncherShellTests
 {
+    // Quick-play mode should be active by default so the game is playable
+    // without requiring an account.
     [Fact]
-    public void EnableQuickPlayUpdatesState()
+    public void CanStartGameByDefaultWithoutLoggingIn()
     {
         using var shell = CreateShell();
-        shell.EnableQuickPlay();
         var view = shell.Snapshot();
+        Assert.True(view.CanStartGame);
         Assert.True(view.IsQuickPlay);
-        Assert.Contains("Quick Play", view.PlayerLabel);
     }
 
+    // Full happy-path flow: log in, finish a game, submit the score.
     [Fact]
     public async Task LoginAndSubmitScoreFlow()
     {
@@ -37,6 +39,7 @@ public class LauncherShellTests
         Assert.True(submit.Success);
     }
 
+    // A successful leaderboard fetch should update the status message.
     [Fact]
     public async Task LoadLeaderboardPopulatesStatus()
     {
@@ -48,6 +51,8 @@ public class LauncherShellTests
         Assert.Contains("Leaderboard updated", state.StatusMessage);
     }
 
+    // Builds a LauncherShell wired to a stub HTTP handler so no real network
+    // calls are made during tests.
     private static LauncherShell CreateShell()
     {
         var handler = new StubHandler();
@@ -60,6 +65,7 @@ public class LauncherShellTests
         return new LauncherShell(gameClient);
     }
 
+    // Routes stub requests to canned responses based on the URL path.
     private static HttpResponseMessage BuildResponse(HttpRequestMessage request)
     {
         var path = request.RequestUri!.AbsolutePath.Trim('/');
@@ -74,6 +80,7 @@ public class LauncherShellTests
         };
     }
 
+    // Minimal HttpMessageHandler that delegates to a swappable factory function.
     private sealed class StubHandler : HttpMessageHandler
     {
         public Func<HttpRequestMessage, HttpResponseMessage>? ResponseFactory { get; set; }
@@ -81,9 +88,7 @@ public class LauncherShellTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (ResponseFactory is null)
-            {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
-            }
 
             return Task.FromResult(ResponseFactory(request));
         }
