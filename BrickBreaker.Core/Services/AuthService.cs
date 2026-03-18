@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using BrickBreaker.Core.Abstractions;
 using BrickBreaker.Core.Models;
 
@@ -6,6 +7,10 @@ namespace BrickBreaker.Core.Services;
 // Application-layer service that encapsulates user registration and login workflows.
 public sealed class AuthService : IAuthService
 {
+    // Letters, digits, spaces, hyphens, underscores — max 20 characters.
+    private static readonly Regex ValidUsernamePattern =
+        new(@"^[A-Za-z0-9 _-]{1,20}$", RegexOptions.Compiled);
+
     private readonly IUserStore _users;
     private readonly IProfanityFilter _profanity;
 
@@ -40,6 +45,11 @@ public sealed class AuthService : IAuthService
         if (username.Length == 0)
         {
             return RegisterResult.Fail("username_required");
+        }
+
+        if (!ValidUsernamePattern.IsMatch(username))
+        {
+            return RegisterResult.Fail("username_invalid");
         }
 
         if (_profanity.ContainsProfanity(username))

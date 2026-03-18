@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 
 const string AuthLimiterPolicy = "auth-strict";
+const string ScoreLimiterPolicy = "score-submit";
 
 static string ResolveClientPartition(HttpContext context)
 {
@@ -125,6 +126,17 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }));
+
+    options.AddPolicy(ScoreLimiterPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ResolveClientPartition(context),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 40,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
 });
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
@@ -229,7 +241,7 @@ app.MapPost("/leaderboard/submit", async (SubmitScoreRequest request, ClaimsPrin
     var canonical = user.Identity?.Name?.Trim() ?? request.Username.Trim();
     await leaderboard.SubmitAsync(canonical, request.Score);
     return Results.Ok();
-}).RequireAuthorization();
+}).RequireAuthorization().RequireRateLimiting(ScoreLimiterPolicy);
 
 app.Run();
 
@@ -252,6 +264,7 @@ static async Task<IResult> HandleRegistrationAsync(RegisterRequest request, IAut
         return result.ErrorCode switch
         {
             "username_required" => ValidationError("username_required", "Choose a username to continue."),
+            "username_invalid" => ValidationError("username_invalid", "Username may only contain letters, numbers, spaces, hyphens, and underscores (max 20 characters)."),
             "username_profane" => ValidationError("username_profane", "That username is not allowed. Try another one."),
             "username_taken" => ValidationError("username_taken", "That username is already taken. Try another one."),
             "password_too_short" => ValidationError("password_too_short", "Passwords must be at least 5 characters long."),
