@@ -135,6 +135,38 @@ public sealed class AuthTests
         Assert.Equal("Alice", store.LastGetUsername);
     }
 
+    [Theory]
+    [InlineData("<img src=x onerror=alert(1)>")]
+    [InlineData("<script>alert(1)</script>")]
+    [InlineData("user@name")]
+    [InlineData("user!name")]
+    [InlineData("123456789012345678901")] // 21 characters
+    public async Task Register_Fails_WhenUsernameIsInvalid(string username)
+    {
+        var sut = CreateAuthService();
+
+        var result = await sut.RegisterAsync(username, "validpw");
+
+        Assert.False(result.Success);
+        Assert.Equal("username_invalid", result.ErrorCode);
+    }
+
+    [Theory]
+    [InlineData("Alice")]
+    [InlineData("cool-name")]
+    [InlineData("player_1")]
+    [InlineData("My Name")]
+    [InlineData("12345678901234567890")] // exactly 20 characters
+    public async Task Register_Succeeds_WithValidUsername(string username)
+    {
+        var store = new FakeUserStore();
+        var sut = CreateAuthService(store);
+
+        var result = await sut.RegisterAsync(username, "validpw");
+
+        Assert.True(result.Success);
+    }
+
     [Fact]
     public async Task Register_Fails_WhenProfanityDetected()
     {
